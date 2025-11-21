@@ -12,27 +12,29 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
   const isUser = message.role === Role.USER;
 
   return (
-    <div className={`flex w-full ${isUser ? 'justify-start' : 'justify-end'} mb-6`}>
-      <div className={`flex max-w-[90%] md:max-w-[80%] gap-3 ${isUser ? 'flex-row' : 'flex-row-reverse'}`}>
+    <div className={`flex w-full ${isUser ? 'justify-start' : 'justify-end'} mb-8 group`}>
+      <div className={`flex max-w-[90%] md:max-w-[80%] gap-4 ${isUser ? 'flex-row' : 'flex-row-reverse'}`}>
         
         {/* Avatar */}
-        <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
-          isUser ? 'bg-gray-700' : 'bg-blue-600 shadow-lg shadow-blue-600/20'
+        <div className={`flex-shrink-0 w-10 h-10 rounded-2xl flex items-center justify-center border border-white/10 shadow-lg backdrop-blur-md ${
+          isUser 
+            ? 'bg-gray-800/40 text-gray-300' 
+            : 'bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-blue-500/20'
         }`}>
           {isUser ? (
-            <User className="w-5 h-5 text-gray-300" />
+            <User className="w-5 h-5" />
           ) : (
-            <Bot className="w-5 h-5 text-white" />
+            <Bot className="w-6 h-6" />
           )}
         </div>
 
         {/* Bubble */}
-        <div className={`flex flex-col min-w-0 rounded-2xl p-4 ${
+        <div className={`flex flex-col min-w-0 rounded-2xl p-5 shadow-xl transition-all duration-200 ${
           isUser 
-            ? 'bg-gray-800 text-white rounded-tr-none' 
-            : 'bg-gradient-to-br from-blue-900/40 to-gray-800/40 border border-gray-700/50 text-gray-100 rounded-tl-none backdrop-blur-sm'
+            ? 'bg-white/5 border border-white/10 text-gray-100 rounded-tr-none backdrop-blur-md' 
+            : 'bg-gradient-to-br from-blue-600/10 to-purple-600/10 border border-white/10 text-gray-50 rounded-tl-none backdrop-blur-md'
         }`}>
-          <div className="prose prose-invert prose-sm max-w-none break-words leading-relaxed">
+          <div className="prose prose-invert prose-sm md:prose-base max-w-none break-words leading-relaxed text-gray-100/90">
             <ReactMarkdown>{message.content}</ReactMarkdown>
           </div>
 
@@ -42,7 +44,11 @@ export const MessageItem: React.FC<MessageItemProps> = ({ message }) => {
           )}
           
           {message.isStreaming && (
-            <span className="inline-block w-2 h-4 ml-1 bg-blue-400 animate-pulse" />
+            <div className="flex items-center gap-1 mt-2">
+               <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0s' }}></span>
+               <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+               <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></span>
+            </div>
           )}
         </div>
       </div>

@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="https://upload.wikimedia.org/wikipedia/commons/8/8a/Google_Gemini_logo.svg" />
+    <link rel="icon" type="image/svg+xml" href="https://api.iconify.design/lucide:bot.svg?color=%233b82f6" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>مساعد مراد الجهني الذكي</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -11,20 +11,34 @@
       body {
         font-family: 'Tajawal', sans-serif;
       }
-      /* Custom scrollbar for Webkit */
+      /* Custom scrollbar */
       ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
       }
       ::-webkit-scrollbar-track {
         background: transparent; 
       }
       ::-webkit-scrollbar-thumb {
-        background: #4b5563; 
-        border-radius: 4px;
+        background: rgba(255, 255, 255, 0.1); 
+        border-radius: 10px;
       }
       ::-webkit-scrollbar-thumb:hover {
-        background: #6b7280; 
+        background: rgba(255, 255, 255, 0.2); 
+      }
+      
+      /* Animated background blobs */
+      @keyframes float {
+        0% { transform: translate(0px, 0px) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+        100% { transform: translate(0px, 0px) scale(1); }
+      }
+      .blob {
+        animation: float 10s infinite ease-in-out;
+      }
+      .blob-delay {
+        animation-delay: 5s;
       }
     </style>
   <script type="importmap">
@@ -41,8 +55,15 @@
 }
 </script>
 </head>
-  <body class="bg-gray-900 text-gray-100 h-screen overflow-hidden">
-    <div id="root" class="h-full"></div>
+  <body class="bg-[#0f172a] text-gray-100 h-screen overflow-hidden selection:bg-blue-500/30">
+    <!-- Background Effects -->
+    <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
+      <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[100px] mix-blend-screen blob"></div>
+      <div class="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[100px] mix-blend-screen blob blob-delay"></div>
+      <div class="absolute top-[40%] left-[60%] w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[80px] mix-blend-screen"></div>
+      <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150"></div>
+    </div>
+    <div id="root" class="h-full relative z-0"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

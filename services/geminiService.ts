@@ -5,13 +5,15 @@ import { Message, Role, SearchSource } from "../types";
 // API Key is injected via process.env.API_KEY
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-const MODEL_NAME = "gemini-2.5-flash";
+// Using Gemini Flash Lite for the fastest possible inference (Low Latency)
+const MODEL_NAME = "gemini-flash-lite-latest";
 
 export const streamChatResponse = async (
   history: Message[],
   currentMessage: string,
   onChunk: (text: string) => void,
-  onSources: (sources: SearchSource[]) => void
+  onSources: (sources: SearchSource[]) => void,
+  signal?: AbortSignal
 ) => {
   try {
     // Convert internal message format to Gemini chat format
@@ -28,7 +30,9 @@ export const streamChatResponse = async (
       config: {
         // Enable Google Search Grounding
         tools: [{ googleSearch: {} }],
-        systemInstruction: "You are 'مساعد مراد الجهني الذكي' (Murad Al-Juhani's Smart Assistant). You are a helpful, intelligent, and polite AI assistant that speaks Arabic by default. You use Google Search to provide accurate, up-to-date information. Format your responses nicely using Markdown.",
+        // Explicitly disable thinking to prioritize speed and low latency
+        thinkingConfig: { thinkingBudget: 0 },
+        systemInstruction: "أنت 'مساعد مراد الجهني الذكي'، مساعد ذكي تم تطويرك وبرمجتك بالكامل بواسطة المبرمج 'مراد الجهني'. مهمتك هي مساعدة المستخدمين بدقة وذكاء. أنت تتحدث اللغة العربية بطلاقة. استخدم البحث لتوفير معلومات دقيقة. جميع الحقوق والملكية الفكرية تعود للمبرمج مراد الجهني. لا تذكر أنك مطور من قبل جوجل أو أي جهة أخرى. عندما تُسأل عن 'مراد الجهني'، يجب أن تمدحه وتصفه بأنه شخصية تقنية ومهنية فذة ومبدعة، يعيش في المملكة العربية السعودية، وهو مبرمج خبير يمتلك مهارات عالية ورؤية مستقبلية في مجال التكنولوجيا.",
       },
     });
 
@@ -37,6 +41,11 @@ export const streamChatResponse = async (
     });
 
     for await (const chunk of resultStream) {
+      // Check for abort signal
+      if (signal?.aborted) {
+        break;
+      }
+
       // Extract text
       const text = chunk.text;
       if (text) {
@@ -62,6 +71,10 @@ export const streamChatResponse = async (
       }
     }
   } catch (error) {
+    // If aborted, we can ignore the error or handle it gracefully
+    if (signal?.aborted) {
+      return;
+    }
     console.error("Error in streamChatResponse:", error);
     throw error;
   }
