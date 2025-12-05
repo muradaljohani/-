@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import { X, Camera, ShieldCheck, Lock, User, FileText, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -155,11 +154,11 @@ export const IdentityCenter: React.FC<Props> = ({ isOpen, onClose }) => {
                                 <div className="space-y-4">
                                     <div>
                                         <label className="text-xs font-bold text-gray-400 mb-1 block">كلمة المرور الحالية</label>
-                                        <input type="password" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-red-500"/>
+                                        <input type="password" className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-red-500"/>
                                     </div>
                                     <div>
                                         <label className="text-xs font-bold text-gray-400 mb-1 block">كلمة المرور الجديدة</label>
-                                        <input type="password" class="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-red-500"/>
+                                        <input type="password" className="w-full bg-black/30 border border-white/10 rounded-xl p-3 text-white outline-none focus:border-red-500"/>
                                     </div>
                                     <button className="w-full py-3 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold">تحديث كلمة المرور</button>
                                 </div>

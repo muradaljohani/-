@@ -1,175 +1,132 @@
 
 <!DOCTYPE html>
-<html lang="ar-SA" dir="rtl">
+<html lang="ar-SA" dir="rtl" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     
-    <!-- Primary SEO Meta Tags -->
-    <title>ميلاف مراد | المنصة الوطنية للوظائف والتدريب والذكاء الاصطناعي</title>
-    <meta name="description" content="منصة ميلاف مراد (Mylaf Murad): المحرك الأول للوظائف الحكومية والشركات في السعودية. سجل الآن في الدورات التدريبية المعتمدة، احصل على شهادات احترافية، واستفد من تحليل الذكاء الاصطناعي لمسارك المهني." />
-    <meta name="keywords" content="وظائف, توظيف السعودية, جدارة, ساعد, وظائف حكومية, شركات, تدريب منتهي بالتوظيف, دورات معتمدة, شهادات احترافية, ذكاء اصطناعي, ميلاف مراد, مراد الجهني, Murad Group, نفاذ, أبشر, مسار, هدف, صندوق الموارد البشرية" />
-    <meta name="author" content="Murad Aljohani - Murad IT Group" />
-    <meta name="robots" content="index, follow, max-image-preview:large" />
-    <meta name="theme-color" content="#0a0f1f" />
-    
-    <!-- Mobile Optimization -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-
-    <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
-
-    <!-- Custom Favicon -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f172a'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='20' fill='%23facc15'%3EM%3C/text%3E%3C/svg%3E" />
-    
-    <link rel="canonical" href="https://murad-group.com" />
-    
+    <!-- PERFORMANCE: Aggressive Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Added Amiri Font for Official Certificates -->
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-
-    <!-- Google Translate API Script (Hidden but functional if needed for visitors) -->
-    <script type="text/javascript">
-    function googleTranslateElementInit() {
-        new google.translate.TranslateElement({
-            pageLanguage: 'ar',
-            includedLanguages: 'ar,en,fr,de,es,it,ru,zh-CN,hi,tr,ur,ja',
-            layout: google.translate.TranslateElement.InlineLayout.HORIZONTAL,
-            autoDisplay: false
-        }, 'language_menu');
-    }
-    </script>
-    <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-
-    <style>
-    /* Global Arabic Enforcement */
-    :root {
-        --sat: env(safe-area-inset-top);
-        --sab: env(safe-area-inset-bottom);
-    }
-
-    body {
-        font-family: 'Tajawal', sans-serif !important;
-        overscroll-behavior-y: none;
-        -webkit-tap-highlight-color: transparent;
-        -webkit-font-smoothing: antialiased;
-        text-align: right;
-    }
-
-    /* Scrollbar Styling */
-    ::-webkit-scrollbar { width: 4px; height: 4px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 10px; }
-    ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.3); }
+    <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
+    <link rel="dns-prefetch" href="https://images.unsplash.com" />
+    <link rel="dns-prefetch" href="https://api.dicebear.com" />
+    <link rel="dns-prefetch" href="https://www.transparenttextures.com" />
+    <link rel="dns-prefetch" href="https://api.qrserver.com" />
     
+    <!-- SEO: Primary Meta Tags -->
+    <title>مجموعة ميلاف مراد | المنصة الوطنية الموحدة للتوظيف والتدريب</title>
+    <meta name="description" content="المنصة الوطنية الأولى في السعودية (Mylaf Murad Group). تصفح آلاف الوظائف الحكومية، دورات تدريبية معتمدة، حراج إلكتروني، وسوق خدمات. نظام متكامل يربط الباحثين عن عمل بأصحاب الشركات." />
+    <meta name="author" content="Murad Aljohani - Murad IT Group" />
+    <meta name="keywords" content="وظائف, تدريب, سوق, حراج, السعودية, تعليم, برمجة, تصميم, عمل عن بعد, فري لانسر, ميلاف, مراد" />
+    
+    <!-- SEO: Indexing & Robots -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    
+    <!-- LANGUAGE & GEO -->
+    <meta name="google" content="notranslate" />
+    <meta http-equiv="Content-Language" content="ar" />
+    <meta name="geo.region" content="SA" />
+    <meta name="geo.placename" content="Riyadh" />
+    <meta name="geo.position" content="24.7136;46.6753" />
+    <meta name="ICBM" content="24.7136, 46.6753" />
+
+    <!-- MOBILE & PWA -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <meta name="theme-color" content="#0f172a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Murad Group" />
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- FAVICON -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f172a'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='20' fill='%23facc15'%3EM%3C/text%3E%3C/svg%3E" />
+
+    <!-- CRITICAL CSS -->
+    <style>
+    :root { --sat: env(safe-area-inset-top); --sab: env(safe-area-inset-bottom); }
+    body { 
+        font-family: 'Tajawal', sans-serif !important; 
+        overscroll-behavior-y: none; 
+        -webkit-tap-highlight-color: transparent; 
+        text-align: right; 
+        background-color: #0f172a; 
+        color: #f3f4f6; 
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+    }
+    /* SEO: Content Visibility for Performance LCP */
+    .heavy-render {
+        content-visibility: auto;
+        contain-intrinsic-size: 1px 1000px; 
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
     .scrollbar-hide::-webkit-scrollbar { display: none; }
     .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-
-    .pb-safe { padding-bottom: var(--sab); }
-    .pt-safe { padding-top: var(--sat); }
-    .h-dvh { height: 100dvh; }
-
-    /* Animations */
-    @keyframes float {
-        0% { transform: translate(0px, 0px) scale(1); }
-        33% { transform: translate(30px, -50px) scale(1.1); }
-        66% { transform: translate(-20px, 20px) scale(0.9); }
-        100% { transform: translate(0px, 0px) scale(1); }
-    }
-    .blob { animation: float 10s infinite ease-in-out; }
-    .blob-delay { animation-delay: 5s; }
-
-    @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fade-in-up { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-
-    @keyframes scrollVertical {
-        0% { transform: translateY(0); }
-        100% { transform: translateY(-50%); }
-    }
-    .animate-scroll-vertical { animation: scrollVertical 60s linear infinite; }
-
-    /* Hide Google Translate UI elements to maintain premium look */
-    .goog-te-gadget { display: none !important; }
-    .goog-te-banner-frame { display: none !important; }
-    body { top: 0 !important; }
-
-    /* ========================================= */
-    /* 4 ADAPTIVE ENGINES (Mobile Optimization)  */
-    /* ========================================= */
-
-    /* 3. The 'Card-View' Data Tables (Finance & Admin) */
-    /* Transforms tables into stacked cards on mobile */
-    @media (max-width: 768px) {
-        .responsive-table {
-            display: block;
-            width: 100%;
-        }
-        .responsive-table thead {
-            display: none; /* Hide headers */
-        }
-        .responsive-table tbody, 
-        .responsive-table tr, 
-        .responsive-table td {
-            display: block;
-            width: 100%;
-        }
-        .responsive-table tr {
-            margin-bottom: 1rem;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 0.75rem;
-            padding: 1rem;
-        }
-        .responsive-table td {
-            text-align: right;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .responsive-table td:last-child {
-            border-bottom: none;
-        }
-        .responsive-table td::before {
-            content: attr(data-label);
-            font-weight: bold;
-            color: #94a3b8; /* Slate-400 */
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            margin-left: 1rem;
-        }
-    }
-
-    /* 4. The 'Thumb-Zone' Optimization */
-    @media (max-width: 768px) {
-        /* Prevent auto-zoom on iOS inputs */
-        input, select, textarea {
-            font-size: 16px !important; 
-        }
-        
-        /* Increase tap targets */
-        button, a, .clickable {
-            min-height: 44px;
-            min-width: 44px;
-        }
-        
-        /* Modal Adjustments */
-        .modal-content {
-            width: 95% !important;
-            max-height: 90vh !important;
-            overflow-y: auto;
-        }
-    }
+    #root { min-height: 100vh; display: flex; flex-direction: column; }
+    
+    /* A11y Skip Link */
+    .skip-link { position: absolute; top: -40px; left: 0; background: #000; color: white; padding: 8px; z-index: 9999; transition: top 0.3s; }
+    .skip-link:focus { top: 0; }
     </style>
-  <script type="importmap">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- MASTER STRUCTURED DATA (Organization Graph) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://murad-group.com/#organization",
+          "name": "مجموعة ميلاف مراد",
+          "url": "https://murad-group.com",
+          "logo": "https://murad-group.com/logo.png",
+          "sameAs": ["https://twitter.com/IpMurad", "https://linkedin.com/in/murad-aljohani"],
+          "founder": {
+            "@type": "Person",
+            "name": "Murad Aljohani",
+            "jobTitle": "CEO"
+          },
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "King Fahd Road",
+            "addressLocality": "Riyadh",
+            "addressRegion": "Riyadh",
+            "postalCode": "11564",
+            "addressCountry": "SA"
+          },
+          "contactPoint": {
+            "@type": "ContactPoint",
+            "telephone": "+966-50-000-0000",
+            "contactType": "customer service",
+            "areaServed": "SA",
+            "availableLanguage": ["Arabic", "English"]
+          }
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://murad-group.com/#website",
+          "url": "https://murad-group.com/",
+          "name": "أكاديمية ميلاف",
+          "publisher": { "@id": "https://murad-group.com/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://murad-group.com/?q={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        }
+      ]
+    }
+    </script>
+
+    <!-- Import Map -->
+    <script type="importmap">
 {
   "imports": {
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
@@ -182,34 +139,16 @@
     "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1",
     "tesseract.js": "https://aistudiocdn.com/tesseract.js@^5.0.5",
     "apexcharts": "https://aistudiocdn.com/apexcharts@^4.3.0",
-    "react-apexcharts": "https://aistudiocdn.com/react-apexcharts@^1.7.0"
+    "react-apexcharts": "https://aistudiocdn.com/react-apexcharts@^1.7.0",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.10.1"
   }
 }
 </script>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js')
-        .then(registration => {
-          console.log('Singularity PWA ServiceWorker registration successful');
-        })
-        .catch(err => {
-          console.log('ServiceWorker registration failed: ', err);
-        });
-    });
-  }
-</script>
-<!-- INJECTED: Murad Overlay System Controller -->
-<script type="module" src="/assets/js/overlay_system.js"></script>
-</head>
-  <body class="bg-[#0f172a] text-gray-100 h-dvh overflow-hidden selection:bg-blue-500/30 w-full">
-    <div class="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-      <div class="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[100px] mix-blend-screen blob"></div>
-      <div class="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[100px] mix-blend-screen blob blob-delay"></div>
-      <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150"></div>
-    </div>
-    <div id="root" class="h-full relative z-0"></div>
+    <script type="module" src="/assets/js/overlay_system.js"></script>
+  </head>
+  <body>
+    <a href="#main-content" class="skip-link">Skip to content</a>
+    <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
-    <script type="module" src="academy_expansion/app_bridge.js"></script>
   </body>
 </html>

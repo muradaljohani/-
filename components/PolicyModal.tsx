@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, Shield, FileText, Database, Server, AlertTriangle, Copyright, Gavel, Info, ChevronRight, Lock } from 'lucide-react';
 
@@ -196,7 +195,7 @@ export const PolicyModal: React.FC<Props> = ({ isOpen, onClose }) => {
            </div>
            
            <div className="p-4 bg-black/20 border-t border-white/5 text-center text-[10px] text-gray-500">
-              جميع الحقوق محفوظة لشركة مراد الجهني لتقنية المعلومات © {new Date().getFullYear()}
+              © 2025 شركة مراد الجهني لتقنية المعلومات. جميع الحقوق محفوظة.
            </div>
         </div>
 

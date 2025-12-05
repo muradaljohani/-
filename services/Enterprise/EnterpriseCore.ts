@@ -199,7 +199,7 @@ class SchemaGen {
     /**
      * Smart Mapping & Injection
      * Logic: Reads data -> Maps to Schema.org -> Injects to <head>
-     * Supports: JobPosting, Course, Product, BreadcrumbList, Organization
+     * Supports: JobPosting, Course, Product, BreadcrumbList, Organization, WebSite
      */
     public static inject(type: 'Job' | 'Course' | 'Product' | 'General', data: any) {
         let schema: any = { 
@@ -211,7 +211,8 @@ class SchemaGen {
         const orgSchema = {
             "@type": "Organization",
             "@id": "https://murad-group.com/#organization",
-            "name": "Murad Group | مجموعة مراد",
+            "name": "أكاديمية ميلاف مراد",
+            "alternateName": ["Mylaf Murad Academy", "ميلاف", "Murad Group"],
             "url": "https://murad-group.com",
             "logo": {
                 "@type": "ImageObject",
@@ -224,7 +225,47 @@ class SchemaGen {
         };
         schema["@graph"].push(orgSchema);
 
-        // 2. Specific Entity Schema
+        // 2. WebSite Schema (For Sitelinks Search Box & Site Name)
+        if (type === 'General') {
+            const websiteSchema = {
+                "@type": "WebSite",
+                "@id": "https://murad-group.com/#website",
+                "url": "https://murad-group.com/",
+                "name": "أكاديمية ميلاف مراد",
+                "alternateName": ["ميلاف", "منصة ميلاف"],
+                "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": "https://murad-group.com/?q={search_term_string}",
+                    "query-input": "required name=search_term_string"
+                }
+            };
+            schema["@graph"].push(websiteSchema);
+        }
+
+        // 3. BreadcrumbList (Digital Pyramid SEO)
+        // Automatically generates breadcrumbs based on context
+        const breadcrumbItems = [
+            { "@type": "ListItem", "position": 1, "name": "الرئيسية", "item": "https://murad-group.com/" }
+        ];
+
+        if (type === 'Job') {
+            breadcrumbItems.push({ "@type": "ListItem", "position": 2, "name": "الوظائف", "item": "https://murad-group.com/jobs" });
+            if (data.title) breadcrumbItems.push({ "@type": "ListItem", "position": 3, "name": data.title, "item": `https://murad-group.com/jobs/${data.id || ''}` });
+        } else if (type === 'Course') {
+            breadcrumbItems.push({ "@type": "ListItem", "position": 2, "name": "الأكاديمية", "item": "https://murad-group.com/academy" });
+            if (data.title) breadcrumbItems.push({ "@type": "ListItem", "position": 3, "name": data.title, "item": `https://murad-group.com/academy/${data.id || ''}` });
+        } else if (type === 'Product') {
+            breadcrumbItems.push({ "@type": "ListItem", "position": 2, "name": "السوق", "item": "https://murad-group.com/market" });
+            if (data.title) breadcrumbItems.push({ "@type": "ListItem", "position": 3, "name": data.title, "item": `https://murad-group.com/market/${data.id || ''}` });
+        }
+
+        const breadcrumbSchema = {
+            "@type": "BreadcrumbList",
+            "itemListElement": breadcrumbItems
+        };
+        schema["@graph"].push(breadcrumbSchema);
+
+        // 4. Specific Entity Schema
         if (type === 'Job') {
             const jobSchema = {
                 "@type": "JobPosting",
@@ -251,7 +292,7 @@ class SchemaGen {
                     "currency": "SAR",
                     "value": {
                         "@type": "QuantitativeValue",
-                        "minValue": 4000, // Intelligent estimation
+                        "minValue": 4000, 
                         "maxValue": 15000,
                         "unitText": "MONTH"
                     }
@@ -304,11 +345,11 @@ class SchemaGen {
             schema["@graph"].push(productSchema);
         }
 
-        // 3. Clear Old Schema
+        // 5. Clear Old Schema
         const oldScript = document.getElementById('murad-schema-gen');
         if (oldScript) oldScript.remove();
 
-        // 4. Inject New
+        // 6. Inject New
         const script = document.createElement('script');
         script.id = 'murad-schema-gen';
         script.type = 'application/ld+json';

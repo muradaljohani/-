@@ -617,6 +617,7 @@ export interface Course {
   dropOffRate?: number; 
   youtubePlaylistId?: string;
   lastSyncedAt?: string;
+  reviews?: Review[];
 }
 
 export interface Book {

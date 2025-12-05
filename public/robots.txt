@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Block admin areas
+Disallow: /admin
+Disallow: /private
+
+# Sitemap location
+Sitemap: https://murad-group.com/sitemap.xml

@@ -21,8 +21,10 @@ export const ExperienceValidationModal: React.FC<Props> = ({ isOpen, onClose }) 
       fullName: user?.name || '',
       email: user?.email || '',
       nationalId: user?.nationalId || '',
+      dob: user?.birthDate || '',
+      nationality: user?.nationality || '',
       specialization: '',
-      experienceYears: '',
+      experienceDuration: '', // Changed to text input for flexibility
       prevJobTitle: ''
   });
 
@@ -55,25 +57,6 @@ export const ExperienceValidationModal: React.FC<Props> = ({ isOpen, onClose }) 
 
   const handlePrint = () => window.print();
 
-  // Helper to calculate dates
-  const calculateDates = (yearsStr: string) => {
-      let years = 1;
-      if (yearsStr.includes('3')) years = 3;
-      if (yearsStr.includes('5')) years = 5;
-      if (yearsStr.includes('10')) years = 10;
-      
-      const end = new Date();
-      const start = new Date();
-      start.setFullYear(end.getFullYear() - years);
-      
-      return {
-          start: start.toLocaleDateString('en-GB'),
-          end: end.toLocaleDateString('en-GB')
-      };
-  };
-
-  const dates = calculateDates(formData.experienceYears);
-
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose}></div>
@@ -95,11 +78,11 @@ export const ExperienceValidationModal: React.FC<Props> = ({ isOpen, onClose }) 
         <div className="flex-1 overflow-y-auto bg-gray-50 print:bg-white print:overflow-visible scrollbar-thin">
             
             {step === 'form' && (
-                <div className="p-4 md:p-8 max-w-2xl mx-auto">
+                <div className="p-4 md:p-8 max-w-3xl mx-auto">
                     <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-8 flex gap-3">
                         <ShieldCheck className="w-6 h-6 text-yellow-600 shrink-0"/>
                         <p className="text-sm text-yellow-800 leading-relaxed">
-                            تتيح هذه الخدمة للمحترفين معادلة خبراتهم السابقة والحصول على شهادة كفاءة مهنية معتمدة من الأكاديمية.
+                            تتيح هذه الخدمة للمحترفين معادلة خبراتهم السابقة والحصول على شهادة كفاءة مهنية معتمدة. يرجى إدخال البيانات بدقة كما ستظهر في الشهادة.
                         </p>
                     </div>
 
@@ -115,21 +98,26 @@ export const ExperienceValidationModal: React.FC<Props> = ({ isOpen, onClose }) 
                             </div>
                         </div>
 
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">تاريخ الميلاد</label>
+                                <input required type="date" value={formData.dob} onChange={e=>setFormData({...formData, dob: e.target.value})} className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-900 focus:border-amber-500 outline-none" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">الجنسية</label>
+                                <input required type="text" value={formData.nationality} onChange={e=>setFormData({...formData, nationality: e.target.value})} className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-900 focus:border-amber-500 outline-none" placeholder="مثال: سعودي" />
+                            </div>
+                        </div>
+
                         <div>
                             <label className="block text-sm font-bold text-gray-700 mb-2">مجال الخبرة / التخصص</label>
-                            <input required type="text" value={formData.specialization} onChange={e=>setFormData({...formData, specialization: e.target.value})} className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-900 focus:border-amber-500 outline-none" placeholder="مثال: إدارة المشاريع..." />
+                            <input required type="text" value={formData.specialization} onChange={e=>setFormData({...formData, specialization: e.target.value})} className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-900 focus:border-amber-500 outline-none" placeholder="مثال: إدارة المشاريع، المحاسبة..." />
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                              <div>
-                                <label className="block text-sm font-bold text-gray-700 mb-2">عدد سنوات الخبرة</label>
-                                <select required value={formData.experienceYears} onChange={e=>setFormData({...formData, experienceYears: e.target.value})} className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-900 focus:border-amber-500 outline-none">
-                                    <option value="">اختر...</option>
-                                    <option value="1-3">1-3 سنوات</option>
-                                    <option value="3-5">3-5 سنوات</option>
-                                    <option value="5-10">5-10 سنوات</option>
-                                    <option value="+10">أكثر من 10 سنوات</option>
-                                </select>
+                                <label className="block text-sm font-bold text-gray-700 mb-2">مدة الخبرة (كتابة حرة)</label>
+                                <input required type="text" value={formData.experienceDuration} onChange={e=>setFormData({...formData, experienceDuration: e.target.value})} className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-900 focus:border-amber-500 outline-none" placeholder="مثال: 5 سنوات و 3 أشهر" />
                              </div>
                              <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">المسمى الوظيفي السابق</label>
@@ -219,7 +207,7 @@ export const ExperienceValidationModal: React.FC<Props> = ({ isOpen, onClose }) 
                                         <div className="text-[12px] tracking-[5px] text-[#d97706] uppercase font-bold mt-[2px]">CERTIFIED EXPERIENCE</div>
                                     </div>
 
-                                    {/* Text */}
+                                    {/* Text & Data Table */}
                                     <div className="flex flex-col items-center text-center gap-[15px] flex-grow justify-center">
                                         <p className="text-[20px] text-[#666] m-0 font-medium font-serif">
                                             تشهد إدارة أكاديمية ميلاف مراد بأن الأستاذ/ة:
@@ -228,15 +216,37 @@ export const ExperienceValidationModal: React.FC<Props> = ({ isOpen, onClose }) 
                                         <div className="text-[40px] text-[#1f2937] font-bold border-b border-[#ddd] pb-[5px] px-8 min-w-[300px]" style={{fontFamily: 'Amiri, serif'}}>
                                             {formData.fullName}
                                         </div>
+
+                                        {/* Embedded ID Data Table Inside Certificate */}
+                                        <div style={{
+                                            border: '1px solid #1e3a8a',
+                                            borderRadius: '8px',
+                                            backgroundColor: 'rgba(255,255,255,0.7)',
+                                            padding: '12px 25px',
+                                            margin: '15px 0',
+                                            display: 'grid',
+                                            gridTemplateColumns: '1fr 1fr',
+                                            columnGap: '40px',
+                                            rowGap: '8px',
+                                            fontSize: '16px',
+                                            textAlign: 'right',
+                                            minWidth: '600px',
+                                            boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                                        }}>
+                                            <div><span style={{color:'#666', fontSize:'14px'}}>رقم الهوية / الإقامة:</span> <span style={{fontWeight:'bold', fontFamily:'monospace'}}>{formData.nationalId}</span></div>
+                                            <div><span style={{color:'#666', fontSize:'14px'}}>الجنسية:</span> <span style={{fontWeight:'bold'}}>{formData.nationality}</span></div>
+                                            <div><span style={{color:'#666', fontSize:'14px'}}>تاريخ الميلاد:</span> <span style={{fontWeight:'bold', fontFamily:'monospace'}}>{formData.dob}</span></div>
+                                            <div><span style={{color:'#666', fontSize:'14px'}}>المرجع:</span> <span style={{fontWeight:'bold', fontFamily:'monospace'}}>EXP-{Date.now().toString().slice(-6)}</span></div>
+                                        </div>
                                         
                                         <div className="text-[18px] text-[#4b5563] leading-[1.8] font-serif max-w-[800px]">
-                                            قد عمل/ت لدينا تحت مسمى وظيفي:
-                                            <div className="text-[#1e3a8a] font-black text-[24px] my-[8px]">{formData.prevJobTitle}</div>
-                                            وذلك في الفترة من <b>{dates.start}</b> وحتى <b>{dates.end}</b>.
+                                            قد عمل/ت لدينا تحت مسمى وظيفي: <span className="text-[#1e3a8a] font-bold">{formData.prevJobTitle}</span>
+                                            <br/>
+                                            وذلك لمدة: <b>{formData.experienceDuration}</b>.
                                             <br/>
                                             وقد كان/ت طوال فترة عمله/ها مثالاً للكفاءة والالتزام المهني وحسن السيرة والسلوك.
                                             <br/>
-                                            أُعطيت له/ها هذه الشهادة بناءً على طلبه/ها دون أدنى مسؤولية على الأكاديمية تجاه حقوق الغير.
+                                            أُعطيت له/ها هذه الشهادة بناءً على طلبه/ها لتقديمها لمن يهمه الأمر.
                                         </div>
                                     </div>
 
@@ -277,7 +287,7 @@ export const ExperienceValidationModal: React.FC<Props> = ({ isOpen, onClose }) 
                                                     <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://murad-group.com/verify/EXP-${Date.now()}`} className="w-[60px] h-[60px] border border-[#ddd] p-[2px] bg-white block" alt="QR Code" />
                                                 </div>
                                                 <div className="border-t-2 border-[#1e3a8a] pt-[5px]">
-                                                    <div className="font-bold text-[#1e3a8a] text-[12px]">حرر بتاريخ: {dates.end}</div>
+                                                    <div className="font-bold text-[#1e3a8a] text-[12px]">حرر بتاريخ: {new Date().toLocaleDateString('en-GB')}</div>
                                                     <div className="text-[10px] text-[#666]">رمز التحقق (Scan to Verify)</div>
                                                 </div>
                                             </div>

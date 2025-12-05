@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, PlayCircle, FileText, CheckCircle2, Lock, Award, BookOpen, ChevronRight, Clock, Video, List, Trophy, Star } from 'lucide-react';
-import { CourseExtended } from '../../types';
+import { X, PlayCircle, FileText, CheckCircle2, Lock, Award, BookOpen, ChevronRight, Clock, Video, List, Trophy, Star, MessageSquare, Send, ThumbsUp } from 'lucide-react';
+import { CourseExtended, Review } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { ExamEngine } from './ExamEngine';
 import { CertificateGenerator } from '../CertificateGenerator';
@@ -19,6 +19,15 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
     const [showCert, setShowCert] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
     
+    // --- REVIEW SYSTEM STATES ---
+    const [activeTab, setActiveTab] = useState<'modules' | 'reviews'>('modules');
+    const [reviews, setReviews] = useState<Review[]>(course.reviews || [
+        { id: 'r1', reviewerName: 'محمد العتيبي', rating: 5, comment: 'دورة ممتازة وشرح واضح جداً', date: '2023-11-01' },
+        { id: 'r2', reviewerName: 'سارة', rating: 4, comment: 'محتوى جيد لكن يحتاج تفصيل أكثر في الجزء العملي', date: '2023-10-25' }
+    ]);
+    const [userRating, setUserRating] = useState(0);
+    const [userComment, setUserComment] = useState('');
+
     // Mock Modules if not present
     const modules = course.modules || [
         { id: 'm1', title: 'مقدمة في المنهج', type: 'video', duration: '05:00', isCompleted: true },
@@ -58,6 +67,42 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
         setShowCert(true);
     };
 
+    const handleSubmitReview = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (userRating === 0 || !userComment.trim()) return alert("يرجى اختيار التقييم وكتابة تعليق");
+        
+        const newReview: Review = {
+            id: `rev_${Date.now()}`,
+            reviewerName: user?.name || 'زائر',
+            rating: userRating,
+            comment: userComment,
+            date: new Date().toISOString().split('T')[0]
+        };
+        
+        setReviews([newReview, ...reviews]);
+        setUserRating(0);
+        setUserComment('');
+    };
+
+    const renderStars = (rating: number, interactive = false) => {
+        return (
+            <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                    <button 
+                        key={star} 
+                        type="button" 
+                        onClick={() => interactive && setUserRating(star)}
+                        className={`${interactive ? 'cursor-pointer hover:scale-110 transition-transform' : 'cursor-default'}`}
+                    >
+                        <Star 
+                            className={`w-4 h-4 ${star <= rating ? 'text-yellow-400 fill-yellow-400' : 'text-gray-600'}`} 
+                        />
+                    </button>
+                ))}
+            </div>
+        );
+    };
+
     return (
         <div className="fixed inset-0 z-[1000] bg-[#020617] flex font-sans" dir="rtl">
             {/* Sidebar */}
@@ -71,51 +116,101 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
                         <div className="bg-blue-600 h-full transition-all duration-500" style={{ width: `${((currentModuleIdx) / modules.length) * 100}%` }}></div>
                     </div>
                     <p className="text-xs text-gray-500 mt-2 text-left">{currentModuleIdx} / {modules.length} مكتمل</p>
+
+                    {/* TABS SWITCHER */}
+                    <div className="flex mt-6 bg-black/20 p-1 rounded-lg">
+                        <button onClick={()=>setActiveTab('modules')} className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${activeTab==='modules' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}>المحتوى</button>
+                        <button onClick={()=>setActiveTab('reviews')} className={`flex-1 py-2 text-xs font-bold rounded-md transition-all ${activeTab==='reviews' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}>التقييمات ({reviews.length})</button>
+                    </div>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                    {modules.map((mod, idx) => (
+                <div className="flex-1 overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-white/10">
+                    {activeTab === 'modules' ? (
+                        modules.map((mod, idx) => (
+                            <button 
+                                key={mod.id}
+                                onClick={() => { setCurrentModuleIdx(idx); setProgress(0); setIsPlaying(false); }}
+                                className={`w-full flex items-center gap-3 p-3 rounded-lg text-right transition-all ${
+                                    idx === currentModuleIdx 
+                                    ? 'bg-blue-600/10 border border-blue-600/30 text-white' 
+                                    : 'text-gray-400 hover:bg-white/5'
+                                }`}
+                            >
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] border ${
+                                    idx < currentModuleIdx ? 'bg-emerald-500 border-emerald-500 text-black' : 
+                                    idx === currentModuleIdx ? 'border-blue-500 text-blue-500' : 'border-gray-600 text-gray-600'
+                                }`}>
+                                    {idx < currentModuleIdx ? <CheckCircle2 className="w-3 h-3"/> : idx + 1}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-medium truncate">{mod.title}</div>
+                                    <div className="flex items-center gap-2 text-[10px] opacity-60 mt-0.5">
+                                        {mod.type === 'video' ? <Video className="w-3 h-3"/> : <FileText className="w-3 h-3"/>}
+                                        {mod.duration}
+                                    </div>
+                                </div>
+                                {idx === currentModuleIdx && isPlaying && <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>}
+                            </button>
+                        ))
+                    ) : (
+                        <div className="space-y-4 p-2">
+                            {/* Review Form */}
+                            {user && (
+                                <div className="bg-white/5 p-3 rounded-xl border border-white/5 mb-4">
+                                    <h4 className="text-white text-xs font-bold mb-2">أضف تقييمك</h4>
+                                    <div className="flex justify-center mb-2">
+                                        {renderStars(userRating, true)}
+                                    </div>
+                                    <textarea 
+                                        value={userComment}
+                                        onChange={(e) => setUserComment(e.target.value)}
+                                        placeholder="اكتب تعليقك..."
+                                        className="w-full bg-black/20 text-white text-xs p-2 rounded-lg border border-white/10 outline-none mb-2 min-h-[60px]"
+                                    />
+                                    <button 
+                                        onClick={handleSubmitReview}
+                                        disabled={!userRating || !userComment}
+                                        className="w-full bg-blue-600 hover:bg-blue-500 text-white py-1.5 rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                                    >
+                                        نشر التقييم
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* Reviews List */}
+                            {reviews.map((rev) => (
+                                <div key={rev.id} className="bg-[#1e293b] p-3 rounded-xl border border-white/5">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className="text-white text-xs font-bold">{rev.reviewerName}</span>
+                                        {renderStars(rev.rating)}
+                                    </div>
+                                    <p className="text-gray-400 text-xs leading-relaxed">{rev.comment}</p>
+                                    <div className="mt-2 pt-2 border-t border-white/5 flex justify-between text-[10px] text-gray-500">
+                                        <span>{rev.date}</span>
+                                        <button className="flex items-center gap-1 hover:text-white"><ThumbsUp className="w-3 h-3"/> مفيد</button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                {activeTab === 'modules' && (
+                    <div className="p-4 border-t border-white/10">
                         <button 
-                            key={mod.id}
-                            onClick={() => { setCurrentModuleIdx(idx); setProgress(0); setIsPlaying(false); }}
-                            className={`w-full flex items-center gap-3 p-3 rounded-lg text-right transition-all ${
-                                idx === currentModuleIdx 
-                                ? 'bg-blue-600/10 border border-blue-600/30 text-white' 
-                                : 'text-gray-400 hover:bg-white/5'
+                            onClick={() => setShowExam(true)}
+                            disabled={currentModuleIdx < modules.length - 1} // Only active at end
+                            className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
+                                currentModuleIdx >= modules.length - 1
+                                ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg hover:scale-105'
+                                : 'bg-gray-800 text-gray-500 cursor-not-allowed grayscale'
                             }`}
                         >
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] border ${
-                                idx < currentModuleIdx ? 'bg-emerald-500 border-emerald-500 text-black' : 
-                                idx === currentModuleIdx ? 'border-blue-500 text-blue-500' : 'border-gray-600 text-gray-600'
-                            }`}>
-                                {idx < currentModuleIdx ? <CheckCircle2 className="w-3 h-3"/> : idx + 1}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium truncate">{mod.title}</div>
-                                <div className="flex items-center gap-2 text-[10px] opacity-60 mt-0.5">
-                                    {mod.type === 'video' ? <Video className="w-3 h-3"/> : <FileText className="w-3 h-3"/>}
-                                    {mod.duration}
-                                </div>
-                            </div>
-                            {idx === currentModuleIdx && isPlaying && <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>}
+                            <Award className="w-5 h-5"/>
+                            الاختبار النهائي
                         </button>
-                    ))}
-                </div>
-
-                <div className="p-4 border-t border-white/10">
-                    <button 
-                        onClick={() => setShowExam(true)}
-                        disabled={currentModuleIdx < modules.length - 1} // Only active at end
-                        className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all ${
-                            currentModuleIdx >= modules.length - 1
-                            ? 'bg-gradient-to-r from-amber-500 to-orange-600 text-white shadow-lg hover:scale-105'
-                            : 'bg-gray-800 text-gray-500 cursor-not-allowed grayscale'
-                        }`}
-                    >
-                        <Award className="w-5 h-5"/>
-                        الاختبار النهائي
-                    </button>
-                </div>
+                    </div>
+                )}
             </div>
 
             {/* Main Stage */}

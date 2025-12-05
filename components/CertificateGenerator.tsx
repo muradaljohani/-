@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { Download, Loader2, Printer, CheckCircle2 } from 'lucide-react';
+import { Download, Loader2, Printer, CheckCircle2, User, FileText, Calendar } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { AssetProcessor } from '../services/System/AssetProcessor';
 
@@ -15,6 +15,15 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
     const certRef = useRef<HTMLDivElement>(null);
     const [isGenerating, setIsGenerating] = useState(false);
     const assetProcessor = AssetProcessor.getInstance();
+    
+    // Step state: 'details' (input) -> 'preview'
+    const [step, setStep] = useState<'details' | 'preview'>('details');
+    
+    const [extraData, setExtraData] = useState({
+        nationalId: '',
+        nationality: '',
+        dob: ''
+    });
 
     const handleDownload = async () => {
         if (!certRef.current) return;
@@ -45,7 +54,70 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-fade-in-up font-sans" dir="rtl">
             <div className="relative w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-center justify-center h-full">
                 
-                {/* 1. PREVIEW AREA */}
+                {/* STEP 1: Details Input */}
+                {step === 'details' && (
+                    <div className="bg-[#1e293b] p-8 rounded-3xl border border-white/10 shadow-2xl max-w-md w-full">
+                        <h2 className="text-2xl font-bold text-white mb-6 text-center">إكمال بيانات الشهادة</h2>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-gray-400 text-sm mb-1">رقم الهوية / الإقامة</label>
+                                <div className="flex items-center gap-2 bg-[#0f172a] rounded-xl border border-white/10 p-3">
+                                    <FileText className="w-5 h-5 text-blue-500"/>
+                                    <input 
+                                        type="text" 
+                                        value={extraData.nationalId} 
+                                        onChange={e => setExtraData({...extraData, nationalId: e.target.value})}
+                                        className="bg-transparent text-white outline-none w-full"
+                                        placeholder="10xxxxxxxxx"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-gray-400 text-sm mb-1">الجنسية</label>
+                                <div className="flex items-center gap-2 bg-[#0f172a] rounded-xl border border-white/10 p-3">
+                                    <User className="w-5 h-5 text-emerald-500"/>
+                                    <input 
+                                        type="text" 
+                                        value={extraData.nationality} 
+                                        onChange={e => setExtraData({...extraData, nationality: e.target.value})}
+                                        className="bg-transparent text-white outline-none w-full"
+                                        placeholder="سعودي"
+                                    />
+                                </div>
+                            </div>
+                            <div>
+                                <label className="block text-gray-400 text-sm mb-1">تاريخ الميلاد</label>
+                                <div className="flex items-center gap-2 bg-[#0f172a] rounded-xl border border-white/10 p-3">
+                                    <Calendar className="w-5 h-5 text-amber-500"/>
+                                    <input 
+                                        type="date" 
+                                        value={extraData.dob} 
+                                        onChange={e => setExtraData({...extraData, dob: e.target.value})}
+                                        className="bg-transparent text-white outline-none w-full"
+                                    />
+                                </div>
+                            </div>
+                            
+                            <button 
+                                onClick={() => {
+                                    if(!extraData.nationalId || !extraData.nationality || !extraData.dob) {
+                                        alert("يرجى إكمال جميع الحقول");
+                                        return;
+                                    }
+                                    setStep('preview');
+                                }} 
+                                className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg transition-all mt-4"
+                            >
+                                إصدار الشهادة
+                            </button>
+                            <button onClick={onClose} className="w-full text-gray-500 text-sm hover:text-white">إلغاء</button>
+                        </div>
+                    </div>
+                )}
+
+                {/* STEP 2: PREVIEW AREA */}
+                {step === 'preview' && (
+                <>
                 <div className="relative w-full flex justify-center items-center overflow-hidden rounded-xl bg-gray-900/50 border border-white/10 p-2 md:p-8">
                     {/* SCALING WRAPPER */}
                     <div className="relative w-full flex justify-center h-[230px] xs:h-[280px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[794px] transition-all duration-300">
@@ -92,7 +164,7 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                                             <div className="text-[10px] text-[#d97706] tracking-[1px] font-bold uppercase">MYLAF MURAD ACADEMY</div>
                                         </div>
                                     </div>
-                                    <h1 className="text-[42px] text-[#1e3a8a] m-0 font-bold" style={{fontFamily: 'Amiri, serif'}}>شهادة معتمدة</h1>
+                                    <h1 className="text-[42px] text-[#1e3a8a] m-0 font-bold" style={{fontFamily: 'Amiri, serif'}}>شهادة إتمام دورة</h1>
                                     <div className="text-[12px] tracking-[5px] text-[#d97706] uppercase font-bold mt-[2px]">CERTIFICATE OF COMPLETION</div>
                                 </div>
 
@@ -104,6 +176,24 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                                     
                                     <div className="text-[40px] text-[#1f2937] font-bold border-b border-[#ddd] pb-[5px] px-8 min-w-[300px]" style={{fontFamily: 'Amiri, serif'}}>
                                         {studentName}
+                                    </div>
+
+                                    {/* Data Table Embedded in Certificate */}
+                                    <div style={{
+                                        border: '1px solid #1e3a8a',
+                                        borderRadius: '8px',
+                                        backgroundColor: 'rgba(255,255,255,0.7)',
+                                        padding: '10px 30px',
+                                        margin: '10px 0',
+                                        display: 'flex',
+                                        gap: '40px',
+                                        fontSize: '16px',
+                                        textAlign: 'right',
+                                        boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
+                                    }}>
+                                        <div><span style={{color:'#666', fontSize:'14px'}}>رقم الهوية:</span> <span style={{fontWeight:'bold', fontFamily:'monospace'}}>{extraData.nationalId}</span></div>
+                                        <div><span style={{color:'#666', fontSize:'14px'}}>الجنسية:</span> <span style={{fontWeight:'bold'}}>{extraData.nationality}</span></div>
+                                        <div><span style={{color:'#666', fontSize:'14px'}}>الميلاد:</span> <span style={{fontWeight:'bold', fontFamily:'monospace'}}>{extraData.dob}</span></div>
                                     </div>
                                     
                                     <div className="text-[18px] text-[#4b5563] leading-[1.8] font-serif max-w-[800px]">
@@ -203,6 +293,8 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                         إغلاق
                     </button>
                 </div>
+                </>
+                )}
 
             </div>
         </div>
