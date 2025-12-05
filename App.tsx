@@ -1,144 +1,152 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+
+import React, { useState, useEffect } from 'react';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './components/Interactive/ToastContext';
+import { UnifiedPortalGate } from './components/Nexus/UnifiedPortalGate';
 import { Header } from './components/Header';
-import { MessageItem } from './components/MessageItem';
-import { ChatInput } from './components/ChatInput';
-import { streamChatResponse } from './services/geminiService';
-import { Message, Role } from './types';
+import { LandingPage } from './components/LandingPage';
+import { NationalJobsPortal } from './components/NationalJobsPortal';
+import { TrainingCenter } from './components/TrainingCenter';
+import { ServicesMarketplace } from './components/ServicesMarketplace';
+import { HarajPortal } from './components/HarajPortal';
+import { OmniCommand } from './components/Nexus/OmniCommand';
+import { GodModeHUD } from './components/GodModeHUD';
+import { UpsellModal } from './components/Subscription/UpsellModal';
+import { MuradOS } from './components/MuradOS';
+import { Trap } from './services/IronDome/Trap';
+import { Enterprise } from './services/Enterprise/EnterpriseCore';
+import { NexusBrain } from './services/Nexus/NexusBrain';
+import { BridgeToast } from './components/Nexus/BridgeToast';
+import { PublishPortal } from './components/PublishPortal';
+import { MilafBot } from './components/Interactive/MilafBot';
+import { CyberPreloader } from './components/Interactive/CyberPreloader';
+import { UniversalProfileHub } from './components/Nexus/UniversalProfileHub';
 
-function App() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 'welcome',
-      role: Role.MODEL,
-      content: 'أهلاً بك! أنا مساعد مراد الجهني الذكي. كيف يمكنني مساعدتك اليوم في البحث عن المعلومات أو الإجابة على استفساراتك؟',
-    }
-  ]);
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+const AppContent = () => {
+  const { user, isAuthenticated, checkUpsellTrigger, showLoginModal, setShowLoginModal } = useAuth();
+  
+  // Navigation State
+  const [currentView, setCurrentView] = useState('landing');
+  const [showOmni, setShowOmni] = useState(false);
+  
+  // Modals
+  const [showProfileHub, setShowProfileHub] = useState(false);
+  const [upsellReason, setUpsellReason] = useState<'HeavySeller' | 'JobSeeker' | 'Learner' | null>(null);
+  const [bridgeRec, setBridgeRec] = useState<any>(null);
+  
+  // Loading
+  const [isPreloading, setIsPreloading] = useState(false);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const handleStop = () => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      abortControllerRef.current = null;
-      setIsLoading(false);
+    Enterprise.init();
+    const brain = NexusBrain.getInstance();
+    const handleRec = (rec: any) => setBridgeRec(rec);
+    brain.subscribe(handleRec);
+    
+    if (user) {
+        const trigger = checkUpsellTrigger();
+        if (trigger.showUpsell && trigger.reason) {
+            setUpsellReason(trigger.reason);
+        }
     }
+
+    return () => { brain.unsubscribe(handleRec); };
+  }, [user]);
+
+  const handleCyberNavigate = (view: string) => {
+      if (view === currentView) return;
+      setIsPreloading(true);
+      setTimeout(() => {
+          setCurrentView(view);
+          setIsPreloading(false);
+      }, 1000);
   };
 
-  const handleSendMessage = async (content: string) => {
-    // Abort any ongoing request
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-    }
-
-    // Create new AbortController for this request
-    const abortController = new AbortController();
-    abortControllerRef.current = abortController;
-
-    const userMessage: Message = {
-      id: uuidv4(),
-      role: Role.USER,
-      content: content,
-    };
-
-    const aiMessageId = uuidv4();
-    const initialAiMessage: Message = {
-      id: aiMessageId,
-      role: Role.MODEL,
-      content: '',
-      isStreaming: true,
-      sources: []
-    };
-
-    setMessages((prev) => [...prev, userMessage, initialAiMessage]);
-    setIsLoading(true);
-
-    try {
-      // Get history excluding the optimistic messages we just added
-      const history = messages.filter(m => m.id !== 'welcome'); 
-
-      await streamChatResponse(
-        history,
-        content,
-        // On Chunk (Text)
-        (textChunk) => {
-          setMessages((prev) => 
-            prev.map((msg) => 
-              msg.id === aiMessageId 
-                ? { ...msg, content: msg.content + textChunk }
-                : msg
-            )
-          );
-        },
-        // On Sources (Grounding)
-        (newSources) => {
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === aiMessageId
-                ? { ...msg, sources: [...(msg.sources || []), ...newSources] }
-                : msg
-            )
-          );
-        },
-        // Pass the signal
-        abortController.signal
-      );
-    } catch (error) {
-      if (abortController.signal.aborted) return;
-      
-      console.error('Error sending message:', error);
-      setMessages((prev) => 
-        prev.map((msg) => 
-          msg.id === aiMessageId 
-            ? { ...msg, content: 'عذراً، حدث خطأ أثناء محاولة الاتصال بالخادم. يرجى المحاولة مرة أخرى لاحقاً.' }
-            : msg
-        )
-      );
-    } finally {
-      // Only update state if this is still the active controller
-      if (abortControllerRef.current === abortController) {
-        setMessages((prev) => 
-          prev.map((msg) => 
-            msg.id === aiMessageId 
-              ? { ...msg, isStreaming: false }
-              : msg
-          )
-        );
-        setIsLoading(false);
-        abortControllerRef.current = null;
-      }
-    }
+  const handleHoneypot = () => {
+      Trap.getInstance().activateTrap('App_Honeypot');
   };
 
   return (
-    <div className="flex flex-col h-full bg-transparent text-gray-100 font-sans">
-      <Header />
+    <div className="flex flex-col h-dvh bg-[#0f172a] text-gray-100 font-sans overflow-hidden">
       
-      <main className="flex-1 overflow-y-auto relative scroll-smooth">
-        <div className="max-w-4xl mx-auto p-4 pb-32">
-          {messages.map((msg) => (
-            <MessageItem key={msg.id} message={msg} />
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
+      {/* 1. GLOBAL HEADER */}
+      <Header 
+        isLanding={currentView === 'landing'}
+        onOpenOmni={() => setShowOmni(true)} 
+        onNewChat={() => handleCyberNavigate('landing')}
+        onOpenJobs={() => handleCyberNavigate('jobs')}
+        onOpenAcademy={() => handleCyberNavigate('academy')}
+        onOpenHaraj={() => handleCyberNavigate('haraj')}
+        onOpenMarket={() => handleCyberNavigate('market')}
+        onOpenTraining={() => handleCyberNavigate('training')}
+        onOpenPublish={() => handleCyberNavigate('publish')}
+        onOpenBusiness={() => setShowProfileHub(true)} // Profile Trigger
+      />
+      
+      {/* 2. MAIN CONTENT AREA */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden relative scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+          {currentView === 'landing' && (
+              <LandingPage 
+                  onStart={() => handleCyberNavigate('training')} 
+                  onSearch={() => {}} 
+                  onOpenJobs={() => handleCyberNavigate('jobs')} 
+                  onOpenTraining={() => handleCyberNavigate('training')} 
+                  onOpenMarket={() => handleCyberNavigate('market')} 
+              />
+          )}
+          {currentView === 'jobs' && <NationalJobsPortal onBack={() => handleCyberNavigate('landing')} />}
+          {currentView === 'training' && <TrainingCenter onClose={() => handleCyberNavigate('landing')} />}
+          {currentView === 'academy' && <TrainingCenter onClose={() => handleCyberNavigate('landing')} />} // Unified for now
+          {currentView === 'market' && <ServicesMarketplace isOpen={true} onClose={() => handleCyberNavigate('landing')} />}
+          {currentView === 'haraj' && <HarajPortal onBack={() => handleCyberNavigate('landing')} />}
+          {currentView === 'publish' && <PublishPortal onBack={() => handleCyberNavigate('landing')} />}
       </main>
 
-      <ChatInput 
-        onSend={handleSendMessage}
-        onStop={handleStop}
-        isLoading={isLoading} 
+      {/* 3. GLOBAL MODALS (The Layers) */}
+      
+      {/* The Nexus Gate (Login) */}
+      <UnifiedPortalGate 
+          isOpen={showLoginModal} 
+          onClose={() => setShowLoginModal(false)}
+          onLoginSuccess={() => {
+              setShowLoginModal(false);
+              setShowProfileHub(true); // Open profile on login
+          }} 
       />
+
+      {/* The Universal Profile Hub */}
+      <UniversalProfileHub 
+          isOpen={showProfileHub} 
+          onClose={() => setShowProfileHub(false)} 
+      />
+
+      {/* Other Overlays */}
+      <OmniCommand isOpen={showOmni} onClose={() => setShowOmni(false)} onNavigate={(type) => handleCyberNavigate(type === 'Job' ? 'jobs' : type === 'Course' ? 'training' : 'market')} />
+      <GodModeHUD />
+      <MuradOS />
+      {upsellReason && <UpsellModal reason={upsellReason} onClose={() => setUpsellReason(null)} onUpgrade={() => {}} />}
+      <BridgeToast recommendation={bridgeRec} onClose={() => setBridgeRec(null)} onAction={(link) => handleCyberNavigate(link)} />
+      
+      {/* Interactive Layers */}
+      <MilafBot />
+      <CyberPreloader isActive={isPreloading} />
+
+      {/* Security Honeypot */}
+      <div style={{ opacity: 0, position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>
+          <input type="text" name="honeypot_field_x" onChange={handleHoneypot} tabIndex={-1} autoComplete="off" />
+      </div>
     </div>
   );
-}
+};
+
+const App = () => {
+  return (
+    <ToastProvider>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ToastProvider>
+  );
+};
 
 export default App;
