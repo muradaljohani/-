@@ -45,8 +45,14 @@ export const Header: React.FC<HeaderProps> = ({ onNewChat, onOpenJobs, onOpenAca
   const handleNavClick = (e: React.MouseEvent, id: string, action?: () => void) => {
       e.preventDefault();
       brain.trackMenuClick(id);
-      if (action) action();
-      window.history.pushState({}, '', `/${id === 'training' ? 'academy' : id}`);
+      if (action) {
+          action();
+      } else {
+          // Fallback if no action provided (should typically not happen with correct props)
+          window.history.pushState({}, '', `/${id === 'training' ? 'academy' : id}`);
+          window.dispatchEvent(new PopStateEvent('popstate'));
+      }
+      setMobileMenuOpen(false);
   };
 
   const headerClass = isLanding ? "fixed top-0 w-full z-50 transition-all duration-300" : "sticky top-0 z-50 transition-all duration-300";
@@ -86,10 +92,10 @@ export const Header: React.FC<HeaderProps> = ({ onNewChat, onOpenJobs, onOpenAca
 
   const renderMobileNavItem = (id: string) => {
       switch(id) {
-          case 'jobs': return <button key="m_jobs" onClick={() => { onOpenJobs?.(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><Briefcase className="w-5 h-5 text-blue-400"/> بوابة الوظائف</button>;
-          case 'haraj': return <button key="m_haraj" onClick={() => { onOpenHaraj?.(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><Gavel className="w-5 h-5 text-amber-400"/> الحراج الإلكتروني</button>;
-          case 'market': return <button key="m_market" onClick={() => { onOpenMarket?.(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><ShoppingBag className="w-5 h-5 text-emerald-400"/> سوق الخدمات</button>;
-          case 'training': return <button key="m_training" onClick={() => { onOpenTraining?.(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><GraduationCap className="w-5 h-5 text-purple-400"/> مركز التدريب</button>;
+          case 'jobs': return <button key="m_jobs" onClick={(e) => handleNavClick(e, 'jobs', onOpenJobs)} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><Briefcase className="w-5 h-5 text-blue-400"/> بوابة الوظائف</button>;
+          case 'haraj': return <button key="m_haraj" onClick={(e) => handleNavClick(e, 'haraj', onOpenHaraj)} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><Gavel className="w-5 h-5 text-amber-400"/> الحراج الإلكتروني</button>;
+          case 'market': return <button key="m_market" onClick={(e) => handleNavClick(e, 'market', onOpenMarket)} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><ShoppingBag className="w-5 h-5 text-emerald-400"/> سوق الخدمات</button>;
+          case 'training': return <button key="m_training" onClick={(e) => handleNavClick(e, 'training', onOpenTraining)} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><GraduationCap className="w-5 h-5 text-purple-400"/> مركز التدريب</button>;
           default: return null;
       }
   };

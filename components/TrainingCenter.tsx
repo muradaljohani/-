@@ -5,7 +5,7 @@ import {
   Video, FileText, CheckCircle2, List, Play, ShieldCheck, ChevronRight, 
   Book, MonitorPlay, FileCheck, HelpCircle, Search, Filter, 
   PlusCircle, Settings, Save, Trash2, Eye, Download, Layout,
-  Activity, AlertTriangle, BrainCircuit, Users, RefreshCw, Briefcase, Key, Shield, Map, Tv
+  Activity, AlertTriangle, BrainCircuit, Users, RefreshCw, Briefcase, Key, Shield, Map, Tv, SlidersHorizontal
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { Course, CourseCategory } from '../types';
@@ -48,6 +48,7 @@ export const TrainingCenter: React.FC<{ onClose: () => void }> = ({ onClose }) =
     const [viewMode, setViewMode] = useState<'courses' | 'roadmap' | 'instructor' | 'vault'>('courses');
     const [adminMode, setAdminMode] = useState(false);
     const [showAdminLogin, setShowAdminLogin] = useState(false);
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
     
     // --- POWER MODALS ---
     const [liveClassOpen, setLiveClassOpen] = useState(false);
@@ -386,35 +387,40 @@ export const TrainingCenter: React.FC<{ onClose: () => void }> = ({ onClose }) =
             <VerifyPortal isOpen={verifyOpen} onClose={() => setVerifyOpen(false)} />
 
             {/* MAIN HEADER */}
-            <div className="bg-[#1e293b] border-b border-white/10 p-4 shadow-lg shrink-0 z-20 flex justify-between items-center">
-                <div className="flex items-center gap-4">
-                    <button onClick={onClose} className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors">
-                        <X className="w-5 h-5"/>
-                    </button>
-                    <div>
-                        <h1 className="text-xl font-black text-white flex items-center gap-2">
-                            <GraduationCap className="w-6 h-6 text-blue-500"/>
-                            أكاديمية ميلاف (LMS)
-                        </h1>
-                        <p className="text-[10px] text-gray-400 flex items-center gap-1">
-                            <BrainCircuit className="w-3 h-3 text-emerald-500"/> Adaptive Learning Engine v3.0
-                        </p>
+            <div className="bg-[#1e293b] border-b border-white/10 p-4 shadow-lg shrink-0 z-20 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div className="flex items-center justify-between w-full md:w-auto gap-4">
+                    <div className="flex items-center gap-4">
+                        <button onClick={onClose} className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-gray-400 hover:text-white transition-colors">
+                            <X className="w-5 h-5"/>
+                        </button>
+                        <div>
+                            <h1 className="text-xl font-black text-white flex items-center gap-2">
+                                <GraduationCap className="w-6 h-6 text-blue-500"/>
+                                أكاديمية ميلاف (LMS)
+                            </h1>
+                            <p className="text-[10px] text-gray-400 flex items-center gap-1">
+                                <BrainCircuit className="w-3 h-3 text-emerald-500"/> Adaptive Learning Engine v3.0
+                            </p>
+                        </div>
                     </div>
+                    <button onClick={() => setShowMobileFilters(!showMobileFilters)} className="md:hidden p-2 bg-white/5 hover:bg-white/10 rounded-lg text-gray-300">
+                        <SlidersHorizontal className="w-5 h-5"/>
+                    </button>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    {/* View Switchers */}
-                    <div className="bg-black/30 p-1 rounded-lg flex items-center hidden md:flex">
-                        <button onClick={() => setViewMode('courses')} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all ${viewMode === 'courses' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}>
+                <div className="flex items-center gap-3 w-full md:w-auto overflow-x-auto scrollbar-hide pb-2 md:pb-0">
+                    {/* View Switchers - Responsive */}
+                    <div className="bg-black/30 p-1 rounded-lg flex items-center shrink-0">
+                        <button onClick={() => setViewMode('courses')} className={`px-3 py-1.5 rounded-md text-xs font-bold transition-all whitespace-nowrap ${viewMode === 'courses' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}>
                             الكل
                         </button>
-                        <button onClick={() => setViewMode('vault')} className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 transition-all ${viewMode === 'vault' ? 'bg-red-600 text-white' : 'text-gray-400 hover:text-white'}`}>
-                            <Tv className="w-3 h-3"/> مكتبة الفيديو
+                        <button onClick={() => setViewMode('vault')} className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 transition-all whitespace-nowrap ${viewMode === 'vault' ? 'bg-red-600 text-white' : 'text-gray-400 hover:text-white'}`}>
+                            <Tv className="w-3 h-3"/> فيديو
                         </button>
-                        <button onClick={() => setViewMode('roadmap')} className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 transition-all ${viewMode === 'roadmap' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}>
-                            <Map className="w-3 h-3"/> المسارات
+                        <button onClick={() => setViewMode('roadmap')} className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 transition-all whitespace-nowrap ${viewMode === 'roadmap' ? 'bg-purple-600 text-white' : 'text-gray-400 hover:text-white'}`}>
+                            <Map className="w-3 h-3"/> مسارات
                         </button>
-                        <button onClick={() => setViewMode('instructor')} className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 transition-all ${viewMode === 'instructor' ? 'bg-amber-600 text-white' : 'text-gray-400 hover:text-white'}`}>
+                        <button onClick={() => setViewMode('instructor')} className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 transition-all whitespace-nowrap ${viewMode === 'instructor' ? 'bg-amber-600 text-white' : 'text-gray-400 hover:text-white'}`}>
                             <Video className="w-3 h-3"/> تدريس
                         </button>
                     </div>
@@ -422,47 +428,71 @@ export const TrainingCenter: React.FC<{ onClose: () => void }> = ({ onClose }) =
                     <div className="w-px h-6 bg-white/10 mx-2 hidden md:block"></div>
 
                     {/* NEW POWER BUTTONS */}
-                    <button onClick={() => setVerifyOpen(true)} className="hidden lg:flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors">
-                        <ShieldCheck className="w-3 h-3"/> الشهادات
-                    </button>
-                    <button onClick={() => setCorporateOpen(true)} className="hidden lg:flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-bold border border-blue-500/20 hover:bg-blue-500/20 transition-colors">
-                        <Briefcase className="w-3 h-3"/> للشركات
-                    </button>
-                    <button onClick={() => setLiveClassOpen(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-bold animate-pulse hover:bg-red-500 transition-colors shadow-lg shadow-red-900/50">
-                        <Video className="w-3 h-3"/> مباشر
-                    </button>
+                    <div className="flex gap-2 shrink-0">
+                        <button onClick={() => setVerifyOpen(true)} className="hidden lg:flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors whitespace-nowrap">
+                            <ShieldCheck className="w-3 h-3"/> الشهادات
+                        </button>
+                        <button onClick={() => setCorporateOpen(true)} className="hidden lg:flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-bold border border-blue-500/20 hover:bg-blue-500/20 transition-colors whitespace-nowrap">
+                            <Briefcase className="w-3 h-3"/> للشركات
+                        </button>
+                        <button onClick={() => setLiveClassOpen(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-bold animate-pulse hover:bg-red-500 transition-colors shadow-lg shadow-red-900/50 whitespace-nowrap">
+                            <Video className="w-3 h-3"/> مباشر
+                        </button>
+                    </div>
 
-                    <div className="w-px h-6 bg-white/10 mx-2"></div>
-                    <GamificationHUD />
-                    <button onClick={() => setShowAdminLogin(true)} className="text-xs font-bold text-gray-500 hover:text-white flex items-center gap-1 bg-black/20 px-3 py-1.5 rounded-lg border border-white/5">
+                    <div className="w-px h-6 bg-white/10 mx-2 hidden md:block"></div>
+                    <div className="hidden md:block"><GamificationHUD /></div>
+                    
+                    <button onClick={() => setShowAdminLogin(true)} className="text-xs font-bold text-gray-500 hover:text-white flex items-center gap-1 bg-black/20 px-3 py-1.5 rounded-lg border border-white/5 shrink-0">
                         <Lock className="w-3 h-3"/> Admin
                     </button>
                 </div>
             </div>
 
-            <div className="flex flex-1 overflow-hidden">
+            <div className="flex flex-1 overflow-hidden relative">
+                {/* Filters Sidebar - Responsive */}
                 {viewMode !== 'vault' && (
-                    <aside className="w-64 bg-[#0b1120] border-l border-white/10 p-6 hidden md:block overflow-y-auto">
-                        <LeaderboardWidget />
+                    <aside className={`
+                        fixed inset-y-0 right-0 w-64 bg-[#0b1120] border-l border-white/10 p-6 overflow-y-auto z-30 transition-transform duration-300
+                        ${showMobileFilters ? 'translate-x-0' : 'translate-x-full'}
+                        md:relative md:translate-x-0 md:block
+                    `}>
+                        <div className="md:hidden flex justify-between items-center mb-6">
+                            <h3 className="text-white font-bold">تصفية</h3>
+                            <button onClick={() => setShowMobileFilters(false)}><X className="w-5 h-5 text-gray-400"/></button>
+                        </div>
                         <div className="mb-8">
                             <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">التصنيف</h3>
                             <div className="space-y-2">
                                 {['All', ...CATEGORIES].map((cat) => (
-                                    <button key={cat as any} onClick={() => setActiveCategory(cat as any)} className={`w-full text-right text-sm py-2 px-3 rounded-lg transition-all ${activeCategory === cat ? 'bg-blue-600 text-white font-bold shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
+                                    <button key={cat as any} onClick={() => { setActiveCategory(cat as any); setShowMobileFilters(false); }} className={`w-full text-right text-sm py-2 px-3 rounded-lg transition-all ${activeCategory === cat ? 'bg-blue-600 text-white font-bold shadow-lg' : 'text-gray-400 hover:bg-white/5 hover:text-white'}`}>
                                         {cat}
                                     </button>
                                 ))}
                             </div>
                         </div>
+                        <div className="md:hidden">
+                            <LeaderboardWidget />
+                        </div>
                     </aside>
                 )}
+                
+                {/* Desktop Sidebar - Leaderboard Only (if space allows) */}
+                 {viewMode !== 'vault' && (
+                    <aside className="w-64 bg-[#0b1120] border-l border-white/10 p-6 hidden lg:block overflow-y-auto shrink-0">
+                        <LeaderboardWidget />
+                    </aside>
+                 )}
 
                 <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[#0f172a] to-[#1e293b] relative">
+                    {/* Backdrop for mobile filter */}
+                    {showMobileFilters && <div className="fixed inset-0 bg-black/50 z-20 md:hidden" onClick={() => setShowMobileFilters(false)}></div>}
+
                     {viewMode === 'instructor' && <InstructorDashboard />}
                     {viewMode === 'roadmap' && <CareerRoadmap />}
                     {viewMode === 'vault' && <VideoGallery />}
                     {viewMode === 'courses' && (
-                        <div className="p-6">
+                        <div className="p-4 md:p-6">
                             <div className="relative max-w-2xl mx-auto mb-8">
                                 <input type="text" placeholder="ابحث عن دورة..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full bg-[#1e293b] border border-white/10 rounded-2xl py-4 pr-12 pl-4 text-white shadow-xl focus:border-blue-500 outline-none transition-all"/>
                                 <Search className="absolute right-4 top-4.5 w-5 h-5 text-gray-400"/>
