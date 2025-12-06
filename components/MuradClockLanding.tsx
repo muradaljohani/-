@@ -138,13 +138,16 @@ export default function MuradClockLanding() {
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                  </button>
 
-                 {/* Sarcastic Joke Box */}
-                 <div className="bg-[#0b1120] border border-cyan-500/20 rounded-lg p-4 max-w-md text-center lg:text-right relative overflow-hidden group/joke hover:border-cyan-500/50 transition-colors cursor-default">
-                    <div className="absolute top-0 right-0 w-1 h-full bg-cyan-500"></div>
-                    <p className="text-xs text-slate-400 font-mono leading-relaxed italic relative z-10">
-                      <span className="text-cyan-500 font-bold text-lg mr-1">"</span>
-                      استخدم Google لتبحث عن المعلومات، واستخدم ChatGPT لتكتب رسائل الغرام.. وحينما تنتهي من اللعب، تعال لـ <span className="text-white font-bold">'مراد كلوك'</span> لنبدأ العمل الحقيقي.
-                      <span className="text-cyan-500 font-bold text-lg ml-1">"</span>
+                 {/* Sarcastic Joke Box - Styled for Cyberpunk Impact */}
+                 <div className="bg-[#0b1120] border-r-4 border-cyan-500 rounded-lg p-5 max-w-md text-center lg:text-right relative overflow-hidden group/joke hover:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all cursor-default w-full">
+                    <p className="text-sm font-mono leading-relaxed relative z-10">
+                      <span className="text-cyan-400 block mb-2 text-xs font-bold tracking-widest uppercase">/// System Message: Reality Check</span>
+                      <span className="text-gray-300">
+                        "استخدم Google لتبحث عن المعلومات، واستخدم ChatGPT لتكتب رسائل الغرام.. 
+                        <br/>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 font-bold">وحينما تنتهي من اللعب،</span> 
+                        تعال لـ <span className="text-white bg-cyan-900/50 px-1 rounded border border-cyan-500/30">'مراد كلوك'</span> لنبدأ العمل الحقيقي."
+                      </span>
                     </p>
                  </div>
               </div>
