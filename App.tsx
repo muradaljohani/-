@@ -28,7 +28,7 @@ import { MuradDopamine } from './components/Dopamine/MuradDopamine';
 import { MuradCloud } from './components/Cloud/MuradCloud';
 import { CloudMarketing } from './components/Cloud/CloudMarketing';
 import { MuradDomain } from './components/Domain/MuradDomain'; 
-import MuradClockLanding from './components/MuradClockLanding';
+import { MuradClockLanding } from './components/MuradClockLanding';
 import { ChevronLeft, Home } from 'lucide-react';
 import { SEOHelmet } from './components/SEOHelmet';
 

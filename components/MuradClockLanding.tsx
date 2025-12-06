@@ -1,15 +1,17 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User, Sparkles, Zap, Menu, X, ArrowLeft, Phone } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Zap, Menu, X, ArrowLeft, Phone, Share2, Check, AlertTriangle } from 'lucide-react';
 import { SEOHelmet } from './SEOHelmet';
 
-export default function MuradClockLanding() {
+export const MuradClockLanding: React.FC = () => {
   // --- CHAT SIMULATION STATE ---
   const [messages, setMessages] = useState([
     { id: 1, role: 'bot', text: 'مرحباً! أنا مراد كلوك. كيف يمكنني مساعدتك في إدارة منظومتك التعليمية اليوم؟' }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isShared, setIsShared] = useState(false);
+  
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLInputElement>(null); // Ref for input focus
 
@@ -55,12 +57,34 @@ export default function MuradClockLanding() {
     }
   };
 
+  const handleSharePage = async () => {
+    const shareData = {
+        title: 'مراد كلوك | Murad Clock',
+        text: 'اكتشف نظام مراد كلوك: الذكاء الاصطناعي لإدارة الأكاديميات والوقت.',
+        url: 'https://murad-group.com/murad-clock'
+    };
+
+    if (navigator.share) {
+        try {
+            await navigator.share(shareData);
+        } catch (err) {
+            console.error('Error sharing:', err);
+        }
+    } else {
+        navigator.clipboard.writeText(shareData.url);
+        setIsShared(true);
+        setTimeout(() => setIsShared(false), 2000);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0f172a] text-white font-sans selection:bg-cyan-500 selection:text-white overflow-x-hidden" dir="rtl">
       <SEOHelmet 
-        title="مراد كلوك | المستقبل الآن" 
-        description="نظام ذكاء اصطناعي متقدم لإدارة الأكاديميات. تجربة غامرة من شركة مراد الجهني." 
+        title="مراد كلوك | Murad Clock" 
+        description="نظام ذكاء اصطناعي متقدم لإدارة الأكاديميات وتنظيم الوقت. الحل التقني الأمثل للأفراد والشركات من مجموعة مراد." 
         path="/murad-clock"
+        keywords={['مراد كلوك', 'Murad Clock', 'ادارة الوقت', 'تنظيم المهام', 'ذكاء اصطناعي', 'أكاديمية']}
+        type="Product"
       />
 
       {/* --- WHATSAPP FLOATING BUTTON --- */}
@@ -98,7 +122,15 @@ export default function MuradClockLanding() {
              <span className="text-xl font-bold tracking-wide text-white">Murad<span className="text-cyan-400">Clock</span></span>
           </div>
           
-          <div className="flex gap-4">
+          <div className="flex gap-4 items-center">
+             <button 
+                onClick={handleSharePage}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 transition-all text-sm font-bold text-cyan-400"
+             >
+                {isShared ? <Check className="w-4 h-4"/> : <Share2 className="w-4 h-4"/>}
+                <span className="hidden md:inline">{isShared ? 'تم النسخ' : 'مشاركة النظام'}</span>
+             </button>
+             
              <button onClick={() => window.location.href = '/dopamine'} className="hidden md:flex px-6 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-bold transition-all items-center gap-2 group">
                 <span>تجربة النظام</span>
                 <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform rtl:rotate-180"/>
@@ -129,7 +161,7 @@ export default function MuradClockLanding() {
                  أكثر من مجرد نظام إدارة. إنه مساعدك الشخصي، مدير عملياتك، ومحرك نمو أكاديميتك. مدعوم بخوارزميات Murad Cloud العصبية.
               </p>
 
-              <div className="flex flex-col items-center lg:items-start gap-6 animate-fade-in-up" style={{animationDelay: '0.3s'}}>
+              <div className="flex flex-col items-center lg:items-start gap-8 animate-fade-in-up" style={{animationDelay: '0.3s'}}>
                  <button 
                     onClick={handleStartNow} 
                     className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white rounded-xl font-bold text-lg shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all transform hover:scale-105 hover:-translate-y-1 relative overflow-hidden group"
@@ -138,17 +170,29 @@ export default function MuradClockLanding() {
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                  </button>
 
-                 {/* Sarcastic Joke Box - Styled for Cyberpunk Impact */}
-                 <div className="bg-[#0b1120] border-r-4 border-cyan-500 rounded-lg p-5 max-w-md text-center lg:text-right relative overflow-hidden group/joke hover:shadow-[0_0_20px_rgba(6,182,212,0.15)] transition-all cursor-default w-full">
-                    <p className="text-sm font-mono leading-relaxed relative z-10">
-                      <span className="text-cyan-400 block mb-2 text-xs font-bold tracking-widest uppercase">/// System Message: Reality Check</span>
-                      <span className="text-gray-300">
-                        "استخدم Google لتبحث عن المعلومات، واستخدم ChatGPT لتكتب رسائل الغرام.. 
-                        <br/>
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 font-bold">وحينما تنتهي من اللعب،</span> 
-                        تعال لـ <span className="text-white bg-cyan-900/50 px-1 rounded border border-cyan-500/30">'مراد كلوك'</span> لنبدأ العمل الحقيقي."
-                      </span>
-                    </p>
+                 {/* Banner-Style Sarcastic Joke */}
+                 <div className="w-full relative overflow-hidden rounded-xl border border-cyan-500/30 bg-gradient-to-r from-[#0b1120] to-[#162032] shadow-[0_0_40px_rgba(6,182,212,0.1)] group/banner">
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/diagmonds-light.png')] opacity-10"></div>
+                    <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500 shadow-[0_0_15px_#22d3ee]"></div>
+                    
+                    <div className="p-6 relative z-10 flex flex-col gap-3">
+                        <div className="flex items-center gap-2 text-cyan-400 text-xs font-bold tracking-widest uppercase mb-1">
+                            <AlertTriangle className="w-4 h-4 animate-pulse"/>
+                            <span>System Message: Reality Check</span>
+                        </div>
+                        
+                        <p className="text-base md:text-lg font-medium leading-relaxed text-gray-200">
+                            "استخدم <span className="text-white font-bold">Google</span> لتبحث عن المعلومات، 
+                            واستخدم <span className="text-white font-bold">ChatGPT</span> لتكتب رسائل الغرام.. 
+                            <br className="hidden md:block"/>
+                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 font-black text-xl block mt-2">
+                                وحينما تنتهي من اللعب، تعال لـ 'مراد كلوك' لنبدأ العمل الحقيقي.
+                            </span>"
+                        </p>
+                    </div>
+                    
+                    {/* Animated Scanline */}
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent via-cyan-500/5 to-transparent -translate-y-full group-hover/banner:translate-y-full transition-transform duration-1000 pointer-events-none"></div>
                  </div>
               </div>
            </div>
@@ -252,7 +296,7 @@ export default function MuradClockLanding() {
             </div>
             
             <h3 className="text-lg md:text-xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-slate-200 via-white to-slate-200">
-               جميع الحقوق محفوظة شركة مراد الجهني لتقنية المعلومات العالمية
+                <span className="animate-pulse text-cyan-400">جميع الحقوق محفوظة</span> شركة مراد الجهني لتقنية المعلومات العالمية
             </h3>
             
             <p className="text-slate-600 text-sm font-mono mb-8 dir-ltr">
@@ -268,4 +312,4 @@ export default function MuradClockLanding() {
       </footer>
     </div>
   );
-}
+};
