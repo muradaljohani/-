@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Bot, X, Send, User, ChevronDown, Image as ImageIcon, Camera, Mic } from 'lucide-react';
+import { Bot, X, Send, User, ChevronDown, Image as ImageIcon, Camera, Mic, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from './ToastContext';
 import { streamChatResponse } from '../../services/geminiService';
@@ -22,12 +22,12 @@ export const MilafBot: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
-  // Initial Greeting
+  // Initial Greeting (Security Persona)
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       const greetingText = user 
-        ? `أهلاً بك يا ${user.name}. تواصل مع أكبر نظام عالمي "مراد كلوك". كيف يمكنني خدمتك اليوم؟`
-        : `مرحباً بك زائرنا الكريم. تواصل مع أكبر نظام عالمي "مراد كلوك". هل تبحث عن وظيفة، دورة تدريبية، أو معلومة عامة؟`;
+        ? `أهلاً بك يا ${user.name}. معك البوت الأمني لأكاديمية ميلاف مراد. نحن هنا لخدمتك وحمايتك. كيف يمكنني مساعدتك؟`
+        : `مرحباً بك. معك البوت الأمني لأكاديمية ميلاف مراد. نحن هنا لخدمتك وحمايتك. كيف يمكنني مساعدتك اليوم؟`;
         
       setMessages([{ 
           id: 'init', 
@@ -103,8 +103,6 @@ export const MilafBot: React.FC = () => {
             data: base64Data,
             mimeType: 'audio/webm', // Or the actual recorder mimeType if available
           });
-          // Automatically send after recording stops, or let user review?
-          // Let's set it as attachment and user can press send.
         };
         reader.readAsDataURL(audioBlob);
         
@@ -156,8 +154,6 @@ export const MilafBot: React.FC = () => {
         const botMsgId = (Date.now() + 1).toString();
         const botMsgPlaceholder: Message = { id: botMsgId, role: Role.MODEL, content: '', isStreaming: true };
         
-        // Use previous history for context
-        // If it's audio, we can send a prompt like "Please analyze this audio" if text is empty
         const promptText = userMsgText.trim() ? userMsgText : (currentAttachment?.type === 'audio' ? 'Please transcribe and respond to this audio.' : userMsgText);
 
         startStreaming(newHistory, promptText, currentAttachment || undefined, botMsgId);
@@ -186,7 +182,8 @@ export const MilafBot: React.FC = () => {
             // Optional source handling
         },
         abortControllerRef.current.signal,
-        user
+        user,
+        'milaf_security' // Explicitly select Security Persona
     );
 
     setIsTyping(false);
@@ -198,12 +195,12 @@ export const MilafBot: React.FC = () => {
       {(!isOpen) && (
         <button 
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center justify-center w-14 h-14 bg-black rounded-full border border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.4)] hover:scale-110 transition-transform"
+          className="group relative flex items-center justify-center w-14 h-14 bg-[#1e3a8a] rounded-full border border-white/20 shadow-[0_0_20px_rgba(30,58,138,0.5)] hover:scale-110 transition-transform"
         >
-          <Bot className="w-7 h-7 text-white" />
+          <ShieldCheck className="w-7 h-7 text-white" />
           <span className="absolute -top-1 -right-1 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
           </span>
         </button>
       )}
@@ -211,34 +208,34 @@ export const MilafBot: React.FC = () => {
       {isOpen && (
         <div className="w-full h-full sm:w-[400px] sm:h-[600px] flex flex-col bg-white border border-black/10 sm:rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
           
-          <div className="p-4 bg-black text-white border-b border-gray-800 flex justify-between items-center shrink-0">
+          <div className="p-4 bg-[#1e3a8a] text-white border-b border-white/10 flex justify-between items-center shrink-0">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center relative">
-                <Bot className="w-6 h-6 text-white" />
-                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-black rounded-full"></div>
+                <ShieldCheck className="w-6 h-6 text-white" />
+                <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#1e3a8a] rounded-full"></div>
               </div>
               <div>
-                <h3 className="text-white font-bold text-sm">نظام مراد كلوك (Murad Clock)</h3>
-                <div className="text-[10px] text-gray-400 font-mono flex items-center gap-1">
-                  <ActivityDot /> احدى ادوات مراد الجهني لتقنية المعلومات العالمية
+                <h3 className="text-white font-bold text-sm">أمن ميلاف (Security Bot)</h3>
+                <div className="text-[10px] text-blue-200 font-mono flex items-center gap-1">
+                  <ActivityDot /> إدارة الأمن السيبراني
                 </div>
               </div>
             </div>
             <div className="flex gap-2">
-                <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white p-2 hover:bg-white/10 rounded-full"><ChevronDown className="w-5 h-5"/></button>
+                <button onClick={() => setIsOpen(false)} className="text-blue-200 hover:text-white p-2 hover:bg-white/10 rounded-full"><ChevronDown className="w-5 h-5"/></button>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin bg-white">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin bg-slate-50">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex gap-2 ${msg.role === Role.USER ? 'flex-row-reverse' : 'flex-row'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === Role.USER ? 'bg-gray-200' : 'bg-black text-white'}`}>
-                  {msg.role === Role.USER ? <User className="w-4 h-4 text-black"/> : <Bot className="w-4 h-4 text-white"/>}
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === Role.USER ? 'bg-gray-200' : 'bg-[#1e3a8a] text-white'}`}>
+                  {msg.role === Role.USER ? <User className="w-4 h-4 text-black"/> : <ShieldCheck className="w-4 h-4 text-white"/>}
                 </div>
                 <div className={`p-3 rounded-2xl text-sm leading-relaxed max-w-[85%] border shadow-sm flex flex-col gap-2 ${
                   msg.role === Role.USER 
-                    ? 'bg-gray-100 text-black border-gray-200 rounded-tr-none' 
-                    : 'bg-black text-white border-black rounded-tl-none'
+                    ? 'bg-white text-black border-gray-200 rounded-tr-none' 
+                    : 'bg-[#1e293b] text-white border-[#1e293b] rounded-tl-none'
                 }`}>
                   {msg.attachment && msg.attachment.type === 'image' && (
                       <div className="rounded-lg overflow-hidden mb-1">
@@ -255,7 +252,7 @@ export const MilafBot: React.FC = () => {
                          <span className="text-xs">مقطع صوتي</span>
                       </div>
                   )}
-                  <div className="prose prose-sm max-w-none break-words">
+                  <div className="prose prose-sm prose-invert max-w-none break-words">
                     <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
                   {msg.isStreaming && (
@@ -266,8 +263,8 @@ export const MilafBot: React.FC = () => {
             ))}
             {isTyping && !messages[messages.length - 1]?.isStreaming && (
                <div className="flex gap-2">
-                 <div className="w-8 h-8 rounded-full bg-black flex items-center justify-center"><Bot className="w-4 h-4 text-white"/></div>
-                 <div className="bg-black px-4 py-3 rounded-2xl rounded-tl-none">
+                 <div className="w-8 h-8 rounded-full bg-[#1e3a8a] flex items-center justify-center"><ShieldCheck className="w-4 h-4 text-white"/></div>
+                 <div className="bg-[#1e293b] px-4 py-3 rounded-2xl rounded-tl-none">
                     <div className="flex gap-1">
                       <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce"></span>
                       <span className="w-1.5 h-1.5 bg-white rounded-full animate-bounce delay-100"></span>
@@ -300,7 +297,7 @@ export const MilafBot: React.FC = () => {
                     <span className="text-xs text-gray-500">{attachment.type === 'image' ? 'صورة مرفقة' : 'جاهز للإرسال'}</span>
                 </div>
             )}
-            <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2 items-center bg-gray-50 rounded-xl px-3 py-2 border border-gray-300 focus-within:border-black transition-colors shadow-inner">
+            <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex gap-2 items-center bg-gray-50 rounded-xl px-3 py-2 border border-gray-300 focus-within:border-[#1e3a8a] transition-colors shadow-inner">
               {/* File Inputs */}
               <input 
                   type="file" 
@@ -322,7 +319,7 @@ export const MilafBot: React.FC = () => {
               <button 
                 type="button" 
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2 text-gray-500 hover:text-black hover:bg-gray-200 rounded-lg transition-colors"
+                className="p-2 text-gray-500 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors"
                 title="إرفاق صورة من المعرض"
                 disabled={isRecording}
               >
@@ -331,7 +328,7 @@ export const MilafBot: React.FC = () => {
               <button 
                 type="button" 
                 onClick={() => cameraInputRef.current?.click()}
-                className="p-2 text-gray-500 hover:text-black hover:bg-gray-200 rounded-lg transition-colors"
+                className="p-2 text-gray-500 hover:text-[#1e3a8a] hover:bg-blue-50 rounded-lg transition-colors"
                 title="التقاط صورة"
                 disabled={isRecording}
               >
@@ -344,7 +341,7 @@ export const MilafBot: React.FC = () => {
                 onMouseUp={stopRecording}
                 onTouchStart={startRecording}
                 onTouchEnd={stopRecording}
-                className={`p-2 rounded-lg transition-colors ${isRecording ? 'text-red-500 bg-red-100 animate-pulse' : 'text-gray-500 hover:text-black hover:bg-gray-200'}`}
+                className={`p-2 rounded-lg transition-colors ${isRecording ? 'text-red-500 bg-red-100 animate-pulse' : 'text-gray-500 hover:text-[#1e3a8a] hover:bg-blue-50'}`}
                 title="اضغط واستمر للتحدث"
               >
                 <Mic className="w-5 h-5"/>
@@ -353,11 +350,11 @@ export const MilafBot: React.FC = () => {
               <input 
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder={isRecording ? "جاري التسجيل..." : "تواصل مع أكبر نظام عالمي مراد كلوك..."}
+                placeholder={isRecording ? "جاري التسجيل..." : "اكتب استفسارك هنا..."}
                 className="flex-1 bg-transparent text-black text-sm outline-none placeholder-gray-500"
                 disabled={isTyping || isRecording}
               />
-              <button type="submit" disabled={(!input && !attachment) || isTyping || isRecording} className="p-2 bg-black hover:bg-gray-800 text-white rounded-lg transition-colors disabled:opacity-50">
+              <button type="submit" disabled={(!input && !attachment) || isTyping || isRecording} className="p-2 bg-[#1e3a8a] hover:bg-blue-800 text-white rounded-lg transition-colors disabled:opacity-50">
                 <Send className="w-4 h-4 rtl:rotate-180"/>
               </button>
             </form>
@@ -371,7 +368,7 @@ export const MilafBot: React.FC = () => {
 
 const ActivityDot = () => (
   <span className="relative flex h-2 w-2 mr-1">
-    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
   </span>
 );
