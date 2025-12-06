@@ -74,7 +74,7 @@ const AppContent = () => {
   const [isPreloading, setIsPreloading] = useState(false);
   
   // Whitelist valid routes
-  const validRoutes = ['jobs', 'academy', 'training', 'market', 'haraj', 'publish', 'sitemap', 'support', 'group', 'corporate', 'dopamine', 'cloud', 'domains', 'verify', 'policy', 'reset-password', 'reset'];
+  const validRoutes = ['jobs', 'academy', 'training', 'market', 'haraj', 'publish', 'sitemap', 'support', 'group', 'corporate', 'dopamine', 'cloud', 'domains', 'verify', 'policy', 'reset-password', 'reset', 'about', 'services', 'contact', 'login'];
 
   // --- SMART ROUTER (DEEP LINK HANDLER) ---
   useEffect(() => {
@@ -87,6 +87,28 @@ const AppContent = () => {
             if (root === 'training') setCurrentView('academy');
             else if (root === 'corporate') setCurrentView('group');
             else if (root === 'reset-password') setCurrentView('reset');
+            
+            // Map new AI routes
+            else if (root === 'about') {
+                // Smart Route: Redirect to corporate about page
+                window.history.replaceState({}, '', '/group/about');
+                setCurrentView('group');
+            }
+            else if (root === 'contact') {
+                 window.history.replaceState({}, '', '/group/contact');
+                 setCurrentView('group');
+            }
+            else if (root === 'services') {
+                 // "Services" usually implies the Marketplace
+                 window.history.replaceState({}, '', '/market');
+                 setCurrentView('market');
+            }
+            else if (root === 'login') {
+                 // Handle login route by showing modal and staying on landing or redirecting
+                 window.history.replaceState({}, '', '/');
+                 setCurrentView('landing');
+                 setShowLoginModal(true);
+            }
             else setCurrentView(root);
         } else {
             setCurrentView('landing');
@@ -134,6 +156,12 @@ const AppContent = () => {
       Trap.getInstance().activateTrap('App_Honeypot');
   };
 
+  // Handle Landing Page Search -> Trigger MilafBot
+  const handleSmartSearch = (query: string) => {
+    // Dispatch event to open MilafBot with specific query
+    window.dispatchEvent(new CustomEvent('open-milaf-chat', { detail: { query } }));
+  };
+
   // SEO PATH HELPER
   const getHelmet = () => {
     switch(currentView) {
@@ -176,7 +204,7 @@ const AppContent = () => {
           {currentView === 'landing' && (
               <LandingPage 
                   onStart={() => handleCyberNavigate('training')} 
-                  onSearch={() => {}} 
+                  onSearch={handleSmartSearch} 
                   onOpenJobs={() => handleCyberNavigate('jobs')} 
                   onOpenTraining={() => handleCyberNavigate('training')} 
                   onOpenMarket={() => handleCyberNavigate('market')} 

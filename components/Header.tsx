@@ -157,7 +157,11 @@ export const Header: React.FC<HeaderProps> = ({ onNewChat, onOpenJobs, onOpenAca
                   )}
               </div>
 
-              <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden p-2 text-gray-300 hover:text-white bg-white/5 rounded-lg border border-white/5 z-50 relative">
+              <button 
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
+                  className="lg:hidden p-2 text-gray-300 hover:text-white bg-white/5 rounded-lg border border-white/5 z-50 relative"
+                  aria-label="Toggle Menu"
+              >
                   {mobileMenuOpen ? <X className="w-5 h-5"/> : <Menu className="w-5 h-5"/>}
               </button>
           </div>
@@ -165,9 +169,9 @@ export const Header: React.FC<HeaderProps> = ({ onNewChat, onOpenJobs, onOpenAca
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Menu Overlay - High Z-Index to cover everything */}
       {mobileMenuOpen && (
-          <div className="fixed inset-0 z-40 bg-[#0f172a]/95 backdrop-blur-xl lg:hidden animate-fade-in-up pt-20 px-6 pb-8 overflow-y-auto">
+          <div className="fixed inset-0 z-[60] bg-[#0f172a] lg:hidden animate-fade-in-up pt-20 px-6 pb-8 overflow-y-auto">
               <div className="space-y-2">
                   <div className="pb-4 mb-4 border-b border-white/10">
                       <button onClick={() => { onOpenAcademy?.(); setMobileMenuOpen(false); }} className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg">
@@ -187,9 +191,13 @@ export const Header: React.FC<HeaderProps> = ({ onNewChat, onOpenJobs, onOpenAca
                        <button onClick={() => { onOpenBusiness?.(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><Building2 className="w-5 h-5 text-blue-400"/> قطاع الأعمال</button>
                   </div>
 
-                  {!user && (
+                  {!user ? (
                       <button onClick={() => { setShowLoginModal(true); setMobileMenuOpen(false); }} className="w-full mt-6 py-3 border border-amber-500/50 text-amber-400 rounded-xl font-bold">
                           تسجيل الدخول
+                      </button>
+                  ) : (
+                      <button onClick={() => { setIsProfileHubOpen(true); setMobileMenuOpen(false); }} className="w-full mt-6 py-3 bg-blue-600/20 text-blue-300 border border-blue-500/50 rounded-xl font-bold flex items-center justify-center gap-2">
+                          <User className="w-5 h-5"/> حسابي
                       </button>
                   )}
               </div>

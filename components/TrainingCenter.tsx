@@ -427,12 +427,12 @@ export const TrainingCenter: React.FC<{ onClose: () => void }> = ({ onClose }) =
 
                     <div className="w-px h-6 bg-white/10 mx-2 hidden md:block"></div>
 
-                    {/* NEW POWER BUTTONS */}
+                    {/* NEW POWER BUTTONS - UNLOCKED FOR MOBILE */}
                     <div className="flex gap-2 shrink-0">
-                        <button onClick={() => setVerifyOpen(true)} className="hidden lg:flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors whitespace-nowrap">
+                        <button onClick={() => setVerifyOpen(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 text-xs font-bold border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors whitespace-nowrap">
                             <ShieldCheck className="w-3 h-3"/> الشهادات
                         </button>
-                        <button onClick={() => setCorporateOpen(true)} className="hidden lg:flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-bold border border-blue-500/20 hover:bg-blue-500/20 transition-colors whitespace-nowrap">
+                        <button onClick={() => setCorporateOpen(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-blue-500/10 text-blue-400 text-xs font-bold border border-blue-500/20 hover:bg-blue-500/20 transition-colors whitespace-nowrap">
                             <Briefcase className="w-3 h-3"/> للشركات
                         </button>
                         <button onClick={() => setLiveClassOpen(true)} className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-red-600 text-white text-xs font-bold animate-pulse hover:bg-red-500 transition-colors shadow-lg shadow-red-900/50 whitespace-nowrap">

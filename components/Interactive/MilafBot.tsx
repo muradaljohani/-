@@ -36,22 +36,46 @@ export const MilafBot: React.FC = () => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    const userMsgText = input;
+  // Event Listener for External Trigger (e.g., Landing Page Search)
+  useEffect(() => {
+      const handleExternalTrigger = (e: CustomEvent) => {
+          const query = e.detail?.query;
+          if (query) {
+              // Ensure window is open
+              setIsOpen(true);
+              // Small delay to allow state update if needed, though handled by functional update in handleSend
+              setTimeout(() => handleSend(query), 100);
+          }
+      };
+      window.addEventListener('open-milaf-chat' as any, handleExternalTrigger as any);
+      return () => window.removeEventListener('open-milaf-chat' as any, handleExternalTrigger as any);
+  }, []); 
+
+  const handleSend = async (overrideInput?: string) => {
+    const userMsgText = overrideInput || input;
+    if (!userMsgText.trim()) return;
+    
     setInput('');
     setIsTyping(true);
 
     const userMsg: Message = { id: Date.now().toString(), role: Role.USER, content: userMsgText };
-    const newHistory = [...messages, userMsg];
-    setMessages(newHistory);
+    
+    // Use functional state update to ensure we have latest messages
+    setMessages(prev => {
+        const newHistory = [...prev, userMsg];
+        // Prepare bot message placeholder
+        const botMsgId = (Date.now() + 1).toString();
+        const botMsgPlaceholder: Message = { id: botMsgId, role: Role.MODEL, content: '', isStreaming: true };
+        
+        // Trigger streaming with the updated history
+        startStreaming(newHistory, userMsgText, botMsgId);
+        
+        return [...newHistory, botMsgPlaceholder];
+    });
+  };
 
-    // Prepare bot message placeholder
-    const botMsgId = (Date.now() + 1).toString();
-    const botMsgPlaceholder: Message = { id: botMsgId, role: Role.MODEL, content: '', isStreaming: true };
-    setMessages(prev => [...prev, botMsgPlaceholder]);
-
-    // Create abort controller for this request
+  const startStreaming = async (history: Message[], userMsgText: string, botMsgId: string) => {
+      // Create abort controller for this request
     if (abortControllerRef.current) {
         abortControllerRef.current.abort();
     }
@@ -60,7 +84,7 @@ export const MilafBot: React.FC = () => {
     let fullText = '';
 
     await streamChatResponse(
-        newHistory,
+        history,
         userMsgText,
         undefined,
         (textChunk) => {
@@ -69,6 +93,9 @@ export const MilafBot: React.FC = () => {
         },
         (sources) => {
             // Optional: Handle sources if needed for the widget
+             if (sources && sources.length > 0) {
+                 // Sources are handled by component renderer usually, or we can append them
+            }
         },
         abortControllerRef.current.signal,
         user
@@ -76,7 +103,7 @@ export const MilafBot: React.FC = () => {
 
     setIsTyping(false);
     setMessages(prev => prev.map(m => m.id === botMsgId ? { ...m, isStreaming: false } : m));
-  };
+  }
 
   return (
     <div className={`fixed z-[9990] font-sans ${isOpen ? 'inset-0 sm:inset-auto sm:bottom-6 sm:right-6' : 'bottom-6 right-6'}`} dir="rtl">
