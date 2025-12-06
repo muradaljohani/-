@@ -1,162 +1,227 @@
 
-import React from 'react';
-import { Clock, CheckCircle2, Zap, BarChart3, Calendar, MessageSquare, ArrowLeft, PlayCircle, Star } from 'lucide-react';
-import { Footer } from './Footer';
+import React, { useState, useEffect, useRef } from 'react';
+import { Send, Bot, User, Sparkles, Zap, Menu, X, ArrowLeft } from 'lucide-react';
 import { SEOHelmet } from './SEOHelmet';
 
 export default function MuradClockLanding() {
-  const features = [
-    {
-      title: "استجابة فورية",
-      desc: "بوت ذكي يعمل على مدار الساعة للرد على استفسارات الطلاب وإدارة المواعيد.",
-      icon: <Zap className="w-6 h-6 text-amber-500" />
-    },
-    {
-      title: "جدولة أكاديمية",
-      desc: "نظام تنظيم وقت متقدم يربط بين جداول المحاضرات والمهام اليومية تلقائياً.",
-      icon: <Calendar className="w-6 h-6 text-blue-500" />
-    },
-    {
-      title: "تحليل ذكي",
-      desc: "تقارير أداء دقيقة تساعدك على فهم إنتاجيتك وتحسين استغلال وقتك.",
-      icon: <BarChart3 className="w-6 h-6 text-emerald-500" />
-    },
-    {
-      title: "دعم متكامل",
-      desc: "مدعوم من سحابة مراد (Murad Cloud) لضمان سرعة وموثوقية البيانات.",
-      icon: <Clock className="w-6 h-6 text-purple-500" />
-    }
-  ];
+  // --- CHAT SIMULATION STATE ---
+  const [messages, setMessages] = useState([
+    { id: 1, role: 'bot', text: 'مرحباً! أنا مراد كلوك. كيف يمكنني مساعدتك في إدارة منظومتك التعليمية اليوم؟' }
+  ]);
+  const [inputValue, setInputValue] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
+
+    // 1. Add User Message
+    const userMsg = { id: Date.now(), role: 'user', text: inputValue };
+    setMessages(prev => [...prev, userMsg]);
+    setInputValue('');
+    setIsTyping(true);
+
+    // 2. Simulate AI Thinking & Response
+    setTimeout(() => {
+      setIsTyping(false);
+      const botResponse = {
+        id: Date.now() + 1,
+        role: 'bot',
+        text: 'أهلاً بك في نظام مراد كلوك، أنا هنا لمساعدتك في إدارة أكاديميتك بأحدث تقنيات الذكاء الاصطناعي. نحن نوفر حلولاً للأتمتة، الجدولة، والتحليل الذكي لرفع كفاءة مؤسستك.'
+      };
+      setMessages(prev => [...prev, botResponse]);
+    }, 1500);
+  };
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-800" dir="rtl">
+    <div className="min-h-screen bg-[#0f172a] text-white font-sans selection:bg-cyan-500 selection:text-white overflow-x-hidden" dir="rtl">
       <SEOHelmet 
-        title="مراد كلوك | Murad Clock" 
-        description="نظام إدارة الوقت الذكي للأكاديميات. مدعوم بالذكاء الاصطناعي." 
+        title="مراد كلوك | المستقبل الآن" 
+        description="نظام ذكاء اصطناعي متقدم لإدارة الأكاديميات. تجربة غامرة من شركة مراد الجهني." 
         path="/murad-clock"
       />
 
-      {/* Navbar */}
-      <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-slate-100">
+      {/* --- BACKGROUND EFFECTS --- */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-20%] right-[-10%] w-[800px] h-[800px] bg-purple-600/20 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-[-20%] left-[-10%] w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[100px] animate-pulse" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-[40%] left-[20%] w-[300px] h-[300px] bg-blue-600/10 rounded-full blur-[80px]"></div>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10"></div>
+      </div>
+
+      {/* --- NAVBAR --- */}
+      <nav className="relative z-50 border-b border-white/5 bg-[#0f172a]/50 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer" onClick={() => window.location.href = '/'}>
-             <div className="w-10 h-10 bg-[#1e3a8a] rounded-xl flex items-center justify-center text-white shadow-lg">
-               <Clock className="w-6 h-6" />
+             <div className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-lg blur opacity-50 group-hover:opacity-100 transition duration-500"></div>
+                <div className="relative w-10 h-10 bg-[#0f172a] rounded-lg flex items-center justify-center border border-white/10">
+                  <Sparkles className="w-5 h-5 text-cyan-400" />
+                </div>
              </div>
-             <div className="flex flex-col">
-               <span className="text-xl font-black text-[#1e3a8a] leading-none">Murad<span className="text-amber-500">Clock</span></span>
-               <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">AI Powered</span>
-             </div>
+             <span className="text-xl font-bold tracking-wide text-white">Murad<span className="text-cyan-400">Clock</span></span>
           </div>
-
-          <div className="hidden md:flex items-center gap-8 text-sm font-bold text-slate-500">
-            <a href="#features" className="hover:text-[#1e3a8a] transition-colors">المميزات</a>
-            <a href="#about" className="hover:text-[#1e3a8a] transition-colors">عن النظام</a>
-            <a href="/support" className="hover:text-[#1e3a8a] transition-colors">الدعم الفني</a>
-          </div>
-
-          <div className="flex items-center gap-3">
-             <button onClick={() => window.dispatchEvent(new CustomEvent('open-login'))} className="text-slate-600 hover:text-[#1e3a8a] font-bold text-sm px-4">
-               تسجيل الدخول
-             </button>
-             <button onClick={() => window.location.href = '/dopamine'} className="bg-[#1e3a8a] hover:bg-blue-800 text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-lg shadow-blue-900/20 transition-all transform hover:-translate-y-1">
-               ابدأ التجربة
+          
+          <div className="flex gap-4">
+             <button onClick={() => window.location.href = '/dopamine'} className="hidden md:flex px-6 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-bold transition-all items-center gap-2 group">
+                <span>تجربة النظام</span>
+                <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform rtl:rotate-180"/>
              </button>
           </div>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <section className="relative pt-20 pb-32 overflow-hidden bg-gradient-to-b from-blue-50/50 to-white">
-        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/graphy.png')] opacity-[0.03]"></div>
-        
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10">
-           <div className="text-center lg:text-right">
-              <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-100 text-blue-700 text-xs font-bold mb-6 border border-blue-200">
-                 <Star className="w-3 h-3 fill-current" />
-                 الجيل الجديد من إدارة الأكاديميات
+      {/* --- HERO SECTION --- */}
+      <main className="relative z-10 pt-16 pb-32 px-4">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+           
+           {/* Text Content */}
+           <div className="text-center lg:text-right space-y-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-900/20 border border-cyan-500/30 text-cyan-400 text-xs font-bold tracking-wider shadow-[0_0_20px_rgba(6,182,212,0.3)] animate-fade-in-up">
+                 <Zap className="w-4 h-4 fill-current" />
+                 الجيل القادم من الذكاء الاصطناعي
               </div>
-              <h1 className="text-5xl lg:text-7xl font-black text-[#0f172a] mb-6 leading-tight">
-                مراد كلوك: نبض <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600">الذكاء الاصطناعي</span> لأكاديميتك
-              </h1>
-              <p className="text-lg text-slate-500 mb-10 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                مساعد ذكي متطور يدير المهام، ينظم الجداول، ويساعد الطلاب في رحلتهم التعليمية بدقة متناهية. جزء من منظومة مراد كلاود المتكاملة.
-              </p>
               
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                 <button onClick={() => window.location.href = '/dopamine'} className="px-8 py-4 bg-[#1e3a8a] text-white rounded-xl font-bold text-lg shadow-xl hover:shadow-2xl hover:bg-blue-900 transition-all flex items-center justify-center gap-2">
-                   جرب مراد كلوك الآن <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
-                 </button>
-                 <button className="px-8 py-4 bg-white text-slate-700 border border-slate-200 rounded-xl font-bold text-lg hover:border-blue-300 hover:text-blue-600 transition-all flex items-center justify-center gap-2">
-                   <PlayCircle className="w-5 h-5" /> شاهد الفيديو
+              <h1 className="text-5xl md:text-7xl font-black leading-tight tracking-tight animate-fade-in-up" style={{animationDelay: '0.1s'}}>
+                 مراد كلوك: <br/>
+                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-600 drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
+                   ذكاء يتحدث لغتك
+                 </span>
+              </h1>
+              
+              <p className="text-lg text-slate-400 max-w-xl mx-auto lg:mx-0 leading-relaxed animate-fade-in-up" style={{animationDelay: '0.2s'}}>
+                 أكثر من مجرد نظام إدارة. إنه مساعدك الشخصي، مدير عملياتك، ومحرك نمو أكاديميتك. مدعوم بخوارزميات Murad Cloud العصبية.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start animate-fade-in-up" style={{animationDelay: '0.3s'}}>
+                 <button onClick={() => window.location.href = '/dopamine'} className="px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white rounded-xl font-bold text-lg shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all transform hover:scale-105 hover:-translate-y-1 relative overflow-hidden group">
+                    <span className="relative z-10">ابدأ الآن مجاناً</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                  </button>
               </div>
            </div>
 
-           <div className="relative">
-              <div className="absolute inset-0 bg-blue-600/5 rounded-full blur-3xl transform scale-90"></div>
-              <img 
-                src="https://cdn.dribbble.com/users/4196683/screenshots/15699742/media/6594273030d529239855b38944549f2b.jpg?resize=1000x750&vertical=center" 
-                alt="Murad Clock Interface" 
-                className="relative z-10 w-full rounded-3xl shadow-2xl border-4 border-white transform hover:scale-[1.02] transition-transform duration-500"
-              />
+           {/* Interactive Chat Demo */}
+           <div className="relative animate-fade-in-up" style={{animationDelay: '0.4s'}}>
+              {/* Glow Behind Chat */}
+              <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-3xl blur-xl opacity-30 animate-pulse"></div>
+              
+              {/* Chat Interface */}
+              <div className="relative bg-[#0b1120]/80 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[500px]">
+                 {/* Chat Header */}
+                 <div className="p-4 border-b border-white/10 bg-white/5 flex items-center gap-3">
+                    <div className="relative">
+                       <div className="w-10 h-10 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg">
+                          <Bot className="w-6 h-6 text-white" />
+                       </div>
+                       <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0b1120] rounded-full"></div>
+                    </div>
+                    <div>
+                       <h3 className="font-bold text-white text-sm">المساعد الذكي</h3>
+                       <p className="text-[10px] text-cyan-400 font-mono">Murad Clock AI v2.0 • Online</p>
+                    </div>
+                 </div>
+
+                 {/* Chat Body */}
+                 <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                    {messages.map((msg) => (
+                       <div key={msg.id} className={`flex items-end gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-white/10 text-white' : 'bg-cyan-600/20 text-cyan-400 border border-cyan-500/30'}`}>
+                             {msg.role === 'user' ? <User className="w-4 h-4"/> : <Sparkles className="w-4 h-4"/>}
+                          </div>
+                          <div className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed ${
+                             msg.role === 'user' 
+                             ? 'bg-blue-600 text-white rounded-br-none shadow-lg shadow-blue-900/20' 
+                             : 'bg-white/5 text-slate-200 border border-white/10 rounded-bl-none'
+                          }`}>
+                             {msg.text}
+                          </div>
+                       </div>
+                    ))}
+                    
+                    {isTyping && (
+                       <div className="flex items-end gap-3">
+                          <div className="w-8 h-8 rounded-full bg-cyan-600/20 text-cyan-400 border border-cyan-500/30 flex items-center justify-center shrink-0">
+                             <Sparkles className="w-4 h-4"/>
+                          </div>
+                          <div className="bg-white/5 border border-white/10 rounded-2xl rounded-bl-none p-4 flex gap-1">
+                             <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce"></div>
+                             <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce delay-100"></div>
+                             <div className="w-2 h-2 bg-cyan-500 rounded-full animate-bounce delay-200"></div>
+                          </div>
+                       </div>
+                    )}
+                    <div ref={chatEndRef} />
+                 </div>
+
+                 {/* Chat Input */}
+                 <div className="p-4 bg-white/5 border-t border-white/10">
+                    <form onSubmit={handleSendMessage} className="flex items-center gap-2">
+                       <input 
+                          type="text" 
+                          value={inputValue}
+                          onChange={(e) => setInputValue(e.target.value)}
+                          placeholder="اسأل مراد كلوك عن أي شيء..." 
+                          className="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-colors"
+                       />
+                       <button 
+                          type="submit" 
+                          disabled={!inputValue.trim() || isTyping}
+                          className="p-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-cyan-900/20"
+                       >
+                          <Send className="w-4 h-4 rtl:rotate-180" />
+                       </button>
+                    </form>
+                 </div>
+              </div>
+
               {/* Floating Badge */}
-              <div className="absolute -bottom-6 -left-6 bg-white p-4 rounded-2xl shadow-xl border border-slate-50 flex items-center gap-3 z-20 animate-bounce-slow">
-                 <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center text-green-600">
-                    <CheckCircle2 className="w-6 h-6" />
-                 </div>
-                 <div>
-                    <div className="font-bold text-slate-900">نظام فعال</div>
-                    <div className="text-xs text-slate-500">جاهز للعمل 24/7</div>
-                 </div>
+              <div className="absolute -right-6 top-10 bg-white/10 backdrop-blur-md border border-white/20 p-3 rounded-xl flex items-center gap-3 animate-bounce-slow shadow-xl">
+                  <div className="bg-green-500/20 p-2 rounded-lg">
+                      <Zap className="w-4 h-4 text-green-400" />
+                  </div>
+                  <div>
+                      <div className="text-[10px] text-slate-400 font-bold uppercase">سرعة الاستجابة</div>
+                      <div className="text-sm font-bold text-white">0.2 ثانية</div>
+                  </div>
               </div>
            </div>
         </div>
-      </section>
+      </main>
 
-      {/* Features Grid */}
-      <section id="features" className="py-24 px-6 bg-white">
-         <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-               <h2 className="text-3xl font-black text-[#0f172a] mb-4">مميزات صممت للنمو</h2>
-               <p className="text-slate-500 max-w-2xl mx-auto">أدوات ذكية تساعدك على التركيز على ما يهم: التعليم والتطوير.</p>
+      {/* --- CUSTOM ISOLATED FOOTER --- */}
+      <footer className="relative z-10 mt-20 py-12 border-t border-white/5 bg-[#0b0f19]">
+         <div className="max-w-4xl mx-auto text-center px-6">
+            <div className="mb-8">
+               <div className="w-16 h-16 bg-gradient-to-br from-[#0f172a] to-[#1e293b] rounded-2xl flex items-center justify-center mx-auto border border-white/10 shadow-2xl shadow-cyan-900/20">
+                  <span className="text-3xl font-black text-white">M</span>
+               </div>
             </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-               {features.map((feat, idx) => (
-                 <div key={idx} className="group p-8 rounded-[2rem] border border-slate-100 bg-slate-50 hover:bg-white hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-6 group-hover:scale-110 transition-transform">
-                       {feat.icon}
-                    </div>
-                    <h3 className="text-xl font-bold text-slate-900 mb-3">{feat.title}</h3>
-                    <p className="text-sm text-slate-500 leading-relaxed">{feat.desc}</p>
-                 </div>
-               ))}
-            </div>
-         </div>
-      </section>
-
-      {/* About Section */}
-      <section id="about" className="py-24 px-6 bg-[#0f172a] text-white relative overflow-hidden">
-         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
-         <div className="max-w-5xl mx-auto text-center relative z-10">
-            <div className="w-20 h-20 mx-auto bg-white/10 rounded-3xl flex items-center justify-center mb-8 backdrop-blur-md border border-white/20">
-               <Clock className="w-10 h-10 text-white" />
-            </div>
-            <h2 className="text-4xl font-black mb-6">جزء من منظومة مراد كلاود</h2>
-            <p className="text-xl text-blue-100 font-light leading-relaxed mb-10">
-               يعمل مراد كلوك بتكامل تام مع باقي خدماتنا السحابية، مما يوفر تجربة سلسة وموحدة لإدارة العمليات الأكاديمية والتقنية. نحن نبني البنية التحتية لمستقبل التعليم.
+            
+            <h3 className="text-lg md:text-xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-slate-200 via-white to-slate-200">
+               جميع الحقوق محفوظة شركة مراد الجهني لتقنية المعلومات العالمية
+            </h3>
+            
+            <p className="text-slate-600 text-sm font-mono mb-8 dir-ltr">
+               © 2025 Murad Aljohani Global Information Technology Company
             </p>
-            <div className="flex flex-wrap justify-center gap-6 text-sm font-bold text-slate-400">
-               <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> أمان عالي</span>
-               <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> تحديثات مستمرة</span>
-               <span className="flex items-center gap-2"><CheckCircle2 className="w-4 h-4 text-emerald-500" /> دعم فني مباشر</span>
+            
+            <div className="flex justify-center gap-6 text-sm font-medium text-slate-500">
+               <a href="#" className="hover:text-cyan-400 transition-colors">سياسة الخصوصية</a>
+               <a href="#" className="hover:text-cyan-400 transition-colors">شروط الاستخدام</a>
+               <a href="#" className="hover:text-cyan-400 transition-colors">الدعم الفني</a>
             </div>
          </div>
-      </section>
-
-      <Footer />
+      </footer>
     </div>
   );
 }
