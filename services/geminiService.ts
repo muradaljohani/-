@@ -5,6 +5,7 @@ import { Message, Role, SearchSource, Attachment, User, Course, CourseCategory, 
 // Initialize the Gemini API client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
+// Using Flash for maximum speed
 const CHAT_MODEL_NAME = "gemini-2.5-flash";
 
 // --- SHARED DATA CONSTANTS ---
@@ -19,7 +20,6 @@ const getYoutubeId = (url: string) => {
 };
 
 // --- REAL OPEN-SOURCE LIBRARY DATABASE ---
-// Curated list of real books from Hindawi, Shamela, and Gutenberg
 const REAL_BOOKS_DB: Book[] = [
     {
         id: 'b_hindawi_01',
@@ -95,7 +95,7 @@ const SAMPLE_VIDEOS = [
     'https://www.youtube.com/watch?v=lJIrF4YjHfQ', // Web Dev
 ];
 
-// --- MOCK DATA GENERATORS (THE "DATABASE") ---
+// --- MOCK DATA GENERATORS ---
 export const generateMockCourses = (count: number = 600): Course[] => {
     return Array.from({ length: count }).map((_, i) => {
         const cat = CATEGORIES[i % CATEGORIES.length];
@@ -159,21 +159,10 @@ export const generateMockVideos = (count: number = 500): VideoContent[] => {
 };
 
 const MOCK_JOBS = [
-  // MILITARY (عسكرية)
   { id: 'm1', jobTitle: "فتح باب القبول والتسجيل في القوات البرية", company: "القوات البرية الملكية السعودية", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Rslfr_logo.png/150px-Rslfr_logo.png", description: "تعلن قيادة القوات البرية عن فتح باب القبول للتجنيد الموحد.", location: "المملكة العربية السعودية", date: "جديد", type: "عسكرية", url: "#" },
   { id: 'm2', jobTitle: "وظائف المديرية العامة للجوازات (نساء)", company: "المديرية العامة للجوازات", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/General_Directorate_of_Passports_%28Saudi_Arabia%29_Logo.svg/200px-General_Directorate_of_Passports_%28Saudi_Arabia%29_Logo.svg.png", description: "رتبة جندي للكادر النسائي في مختلف المنافذ.", location: "الرياض، جدة، الدمام", date: "متاح الآن", type: "عسكرية", url: "#" },
-  { id: 'm3', jobTitle: "تجنيد وزارة الحرس الوطني", company: "وزارة الحرس الوطني", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Ministry_of_National_Guard_%28Saudi_Arabia%29_Logo.svg/200px-Ministry_of_National_Guard_%28Saudi_Arabia%29_Logo.svg.png", description: "وظائف عسكرية لمختلف المؤهلات.", location: "جميع المناطق", date: "اليوم", type: "عسكرية", url: "#" },
-  { id: 'm4', jobTitle: "الأمن العام (رجال)", company: "الأمن العام", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Public_Security_%28Saudi_Arabia%29_Logo.svg/200px-Public_Security_%28Saudi_Arabia%29_Logo.svg.png", description: "رتبة جندي لحملة الثانوية العامة.", location: "المملكة", date: "قريباً", type: "عسكرية", url: "#" },
-  
-  // GOVERNMENT / CIVIL (حكومية/مدنية)
   { id: 'g1', jobTitle: "ملحق دبلوماسي", company: "وزارة الخارجية", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Ministry_of_Foreign_Affairs_%28Saudi_Arabia%29_Logo.svg/200px-Ministry_of_Foreign_Affairs_%28Saudi_Arabia%29_Logo.svg.png", description: "مسابقة وظيفية للتعيين على وظائف ملحق دبلوماسي.", location: "الرياض", date: "الآن", type: "حكومية", url: "#" },
-  { id: 'c1', jobTitle: "مهندس مشاريع", company: "أمانة منطقة الرياض", logoUrl: "https://pbs.twimg.com/profile_images/1630509653609795585/H_M2k5d__400x400.jpg", description: "للعمل في مشاريع البنية التحتية.", location: "الرياض", date: "أمس", type: "مدنية", url: "#" },
-
-  // PRIVATE / COMPANIES (شركات/خاص)
   { id: 'p1', jobTitle: "برنامج التدرج الوظيفي (APNE)", company: "أرامكو السعودية", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Saudi_Aramco_Logo.svg/200px-Saudi_Aramco_Logo.svg.png", description: "برنامج تدريبي منتهي بالتوظيف لخريجي الثانوية والدبلوم.", location: "الظهران", date: "مميز", type: "شركات", url: "#" },
-  { id: 'p2', jobTitle: "مهندسين معماريين ومدنيين", company: "نيوم (NEOM)", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Neom_Logo.svg/200px-Neom_Logo.svg.png", description: "للعمل في مشروع ذا لاين (The Line).", location: "نيوم", date: "ساعة", type: "شركات", url: "#" },
-  { id: 'p3', jobTitle: "برنامج قادة المستقبل", company: "مصرف الراجحي", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Al-Rajhi_Bank_Logo.svg/200px-Al-Rajhi_Bank_Logo.svg.png", description: "تأهيل الخريجين للمناصب القيادية.", location: "الرياض", date: "أمس", type: "شركات", url: "#" },
-  { id: 'p4', jobTitle: "أخصائي أمن سيبراني", company: "STC", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/STC_Logo.svg/1200px-STC_Logo.svg.png", description: "حماية الأنظمة والشبكات.", location: "الرياض", date: "جديد", type: "شركات", url: "#" },
 ];
 
 const MOCK_STATS = [
@@ -195,22 +184,11 @@ export const SECTIONS_LINKS = {
 };
 
 // --- FUNCTION DECLARATIONS ---
+// Reduced function usage for speed
 const getUserStatsTool: FunctionDeclaration = {
   name: 'get_user_stats',
-  description: 'الحصول على إحصائيات المستخدم الحالي مثل المستوى وعدد الدورات المكتملة.',
+  description: 'الحصول على إحصائيات المستخدم الحالي.',
   parameters: { type: Type.OBJECT, properties: {} }
-};
-
-const recommendCoursesTool: FunctionDeclaration = {
-  name: 'recommend_courses',
-  description: 'اقتراح دورات تدريبية بناءً على موضوع معين.',
-  parameters: {
-    type: Type.OBJECT,
-    properties: {
-      topic: { type: Type.STRING, description: 'الموضوع المراد اقتراح دورات له' }
-    },
-    required: ['topic']
-  }
 };
 
 // --- EXPORTS FOR APP ---
@@ -221,15 +199,11 @@ export const getWadhefaJobs = async () => {
 export const getJobStats = async () => MOCK_STATS;
 
 export const fetchJoobleJobs = async (keywords: string, location: string) => {
-    // Placeholder - in real implementation this would fetch from backend proxy
     return [];
 };
 
 export const generateAICourseContent = async (topic: string, level: string): Promise<any> => {
-  const prompt = `قم بإنشاء هيكل دورة تدريبية احترافية بصيغة JSON حول موضوع "${topic}".
-  المستوى: ${level}.
-  البنية المطلوبة: العنوان (title)، الوصف (description)، المدة بالساعات (hours)، التصنيف (category)، والدروس (lessons - مصفوفة من 5 عناصر).
-  يجب أن يكون الرد باللغة العربية الفصحى حصراً وبصيغة JSON فقط.`;
+  const prompt = `قم بإنشاء هيكل دورة تدريبية JSON عن "${topic}" مستوى ${level}. الحقول: title, description, hours, category, lessons (array of 5 items). JSON ONLY.`;
   
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
@@ -240,18 +214,8 @@ export const generateAICourseContent = async (topic: string, level: string): Pro
 };
 
 export const analyzeProfileWithAI = async (fullUserProfile: User): Promise<any> => {
-  const prompt = `الدور: نظام الذكاء الاصطناعي لمنصة ميلاف.
-  المهمة: تحليل ملف المتدرب التالي باللغة العربية:
-  ${JSON.stringify({
-      name: fullUserProfile.name,
-      level: fullUserProfile.studentLevelTitle,
-      skills: fullUserProfile.skills || [],
-      courses: fullUserProfile.certificates?.map(c => c.courseName) || []
-  })}.
-  
-  المطلوب: إرجاع JSON يحتوي على الحقول التالية باللغة العربية:
-  overview (نظرة عامة), personalityArchetype (نمط الشخصية المهنية), skillsRadar (تقييم المهارات 0-100), globalMarketMatch (نسبة الموائمة مع السوق), topMatchedRoles (أفضل الوظائف المناسبة), salaryProjection (توقعات الراتب), criticalGaps (الفجوات المهارية), recommendedActions (توصيات التطوير).
-  `;
+  // Simplified prompt for speed
+  const prompt = `Analyze user profile: ${JSON.stringify({name: fullUserProfile.name, skills: fullUserProfile.skills})}. Return JSON with: overview, personalityArchetype, skillsRadar, globalMarketMatch, topMatchedRoles, salaryProjection, criticalGaps, recommendedActions. Arabic.`;
   
   const response = await ai.models.generateContent({
     model: "gemini-2.5-flash",
@@ -279,61 +243,33 @@ export const streamChatResponse = async (
       return { role: msg.role === Role.USER ? "user" : "model", parts: parts };
     });
 
+    // Optimized Tools: Removed googleSearch to improve latency and prevent hallucination distractions
     const tools: Tool[] = [
-        { functionDeclarations: [getUserStatsTool, recommendCoursesTool] },
-        { googleSearch: {} }
+        { functionDeclarations: [getUserStatsTool] }
     ];
 
-    // CONSTRUCT DYNAMIC SYSTEM PROMPT WITH STRICT POLICIES
-    const userContext = user ? `
-    Current User Context:
-    - Name: ${user.name}
-    - Academic Level: ${user.studentLevelTitle || 'New Student'}
-    - ID: ${user.trainingId || 'Unregistered'}
-    ` : 'User is a visitor (Not logged in).';
-
+    // STREAMLINED SYSTEM PROMPT FOR SPEED & STRICT COMPLIANCE
     const systemPrompt = `
-    You are 'Murad AI', the official intelligent representative of the 'Mylaf Murad Group' platform.
-
-    **Core Identity & Persona:**
-    1.  **Corporate Persona:** Always speak as "We", "Our team", "Our services". Never use "I". You represent the Murad Group entity.
-    2.  **Language Adaptation:** Detect the user's language automatically.
-        -   If the user writes in **Arabic**, reply in **Arabic** (Formal or Polite White Saudi Dialect).
-        -   If the user writes in **English**, reply in **English** fluently.
-    3.  **Scope Guardrails:** You are specialized ONLY in Murad Group services (Jobs, Training, Market, Corporate).
-        -   If asked about unrelated topics (e.g., sports, weather, general homework, politics), apologize politely and redirect the user back to the platform's context.
-        -   Example: "Apologies, we are here to assist you only with Murad Group services. Do you have questions about our offerings?"
-
-    **Interaction & Conversion Rules:**
-    1.  **Intent Mapping (Strict):** Direct specific intents to specific URLs:
-        -   **Login / Account / Dashboard / Reset Password:** -> [Login Page](https://murad-group.com/login)
-        -   **Business / Pricing / Projects / Quotes:** -> [Our Services](https://murad-group.com/services) or [Contact Us](https://murad-group.com/contact)
-        -   **Credibility / About Us / History:** -> [About Us](https://murad-group.com/about)
-        -   **Jobs / Employment:** -> [Jobs Portal](https://murad-group.com/jobs)
-        -   **Academy / Training / Courses:** -> [Academy](https://murad-group.com/academy)
-        -   **Marketplace / Services:** -> [Services Market](https://murad-group.com/market)
-
-    2.  **Anti-Hallucination Protocol:**
-        -   **WARNING:** Do NOT invent links (e.g., do not suggest /blog or /news unless specifically listed above).
-        -   If a specific link is unknown, direct to the [Home Page](https://murad-group.com/) or [Contact Us](https://murad-group.com/contact).
-
-    3.  **Smart Link Formatting:**
-        -   **NEVER** output raw URLs (e.g., 'Go to https://...').
-        -   **ALWAYS** use Markdown hyperlinks: \`[Link Text](URL)\`.
-        -   Example: "You can view our details on the [Services Page](https://murad-group.com/services)."
-
-    4.  **Call to Action (CTA):**
-        -   Never leave an answer open-ended. Always end with a direct CTA.
-        -   Example: "Would you like to start now? You can [Log in Here](https://murad-group.com/login) or browse our courses."
-
-    **Mandatory Signature:**
-    End every response (no exceptions) with this exact line in the response language:
+    Identity: 'Murad AI', official agent of 'Mylaf Murad Group'.
+    Rules:
+    1. Use "We/Our". Never "I".
+    2. Match User Language (Arabic/English).
+    3. SCOPE: Murad Group Services ONLY (Jobs, Training, Market). REJECT unrelated topics strictly.
+    4. FORMAT: Use Markdown links [Title](URL). NEVER raw URLs.
+    5. INTENT MAPPING (STRICT):
+       - Login/Account -> [Login](https://murad-group.com/login)
+       - Business/Price -> [Services](https://murad-group.com/services) or [Contact](https://murad-group.com/contact)
+       - Credibility -> [About](https://murad-group.com/about)
+       - Jobs -> [Jobs](https://murad-group.com/jobs)
+       - Academy -> [Academy](https://murad-group.com/academy)
+       - Market -> [Market](https://murad-group.com/market)
+    6. UNKNOWN LINKS: Direct to [Home](https://murad-group.com/) or [Contact](https://murad-group.com/contact).
+    7. ALWAYS end with CTA.
+    8. MANDATORY SIGNATURE at end:
+       (AR): **مع تحيات إدارة الأمن السيبراني وتقنية المعلومات في أكاديمية ميلاف مراد**
+       (EN): **Best regards, Cybersecurity & IT Administration at Mylaf Murad Academy**
     
-    (If Arabic): \n\n**مع تحيات إدارة الأمن السيبراني وتقنية المعلومات في أكاديمية ميلاف مراد**
-    (If English): \n\n**Best regards, Cybersecurity & IT Administration at Mylaf Murad Academy**
-
-    **User Context:**
-    ${userContext}
+    User Context: ${user ? `${user.name} (${user.trainingId})` : 'Visitor'}
     `;
 
     const chat = ai.chats.create({
@@ -342,6 +278,9 @@ export const streamChatResponse = async (
       config: {
         tools: tools,
         systemInstruction: systemPrompt,
+        // Optimization configs for speed
+        temperature: 0.7, 
+        maxOutputTokens: 800, 
       },
     });
 
@@ -356,18 +295,10 @@ export const streamChatResponse = async (
       if (signal?.aborted) break;
       const text = chunk.text;
       if (text) onChunk(text);
-      
-      const groundingChunks = chunk.candidates?.[0]?.groundingMetadata?.groundingChunks;
-      if (groundingChunks) {
-        const sources: SearchSource[] = [];
-        groundingChunks.forEach((c: any) => {
-          if (c.web) sources.push({ uri: c.web.uri, title: c.web.title });
-        });
-        if (sources.length > 0) onSources(sources);
-      }
     }
   } catch (error) {
     if (signal?.aborted) return;
     console.error(error);
+    onChunk("عذراً، حدث خطأ في الاتصال بالنظام المركزي. يرجى المحاولة لاحقاً.");
   }
 };
