@@ -26,13 +26,15 @@ import { SupportPortal } from './components/Support/SupportPortal';
 import { MuradGroupPortal } from './components/Corporate/MuradGroupPortal';
 import { MuradDopamine } from './components/Dopamine/MuradDopamine';
 import { MuradCloud } from './components/Cloud/MuradCloud';
+import { CloudMarketing } from './components/Cloud/CloudMarketing';
 import { MuradDomain } from './components/Domain/MuradDomain'; 
+import MuradClockLanding from './components/MuradClockLanding';
 import { ChevronLeft, Home } from 'lucide-react';
 import { SEOHelmet } from './components/SEOHelmet';
 
 // --- BREADCRUMBS COMPONENT (Hierarchical UI) ---
 const Breadcrumbs = ({ currentView, onNavigate }: { currentView: string, onNavigate: (view: string) => void }) => {
-    if (currentView === 'landing' || currentView === 'support' || currentView === 'group' || currentView === 'dopamine' || currentView === 'cloud' || currentView === 'domains') return null;
+    if (currentView === 'landing' || currentView === 'support' || currentView === 'group' || currentView === 'dopamine' || currentView === 'cloud' || currentView === 'cloud-system' || currentView === 'domains' || currentView === 'murad-clock') return null;
 
     const map: Record<string, string> = {
         'jobs': 'بوابة الوظائف',
@@ -42,7 +44,8 @@ const Breadcrumbs = ({ currentView, onNavigate }: { currentView: string, onNavig
         'haraj': 'الحراج الإلكتروني',
         'publish': 'بوابة النشر',
         'sitemap': 'خريطة الموقع',
-        'domains': 'حجز النطاقات'
+        'domains': 'حجز النطاقات',
+        'murad-clock': 'مراد كلوك'
     };
     
     const pathSegments = window.location.pathname.split('/').filter(Boolean);
@@ -74,7 +77,7 @@ const AppContent = () => {
   const [isPreloading, setIsPreloading] = useState(false);
   
   // Whitelist valid routes
-  const validRoutes = ['jobs', 'academy', 'training', 'market', 'haraj', 'publish', 'sitemap', 'support', 'group', 'corporate', 'dopamine', 'cloud', 'domains', 'verify', 'policy', 'reset-password', 'reset', 'about', 'services', 'contact', 'login'];
+  const validRoutes = ['jobs', 'academy', 'training', 'market', 'haraj', 'publish', 'sitemap', 'support', 'group', 'corporate', 'dopamine', 'cloud', 'cloud-system', 'domains', 'murad-clock', 'verify', 'policy', 'reset-password', 'reset', 'about', 'services', 'contact', 'login'];
 
   // --- SMART ROUTER (DEEP LINK HANDLER) ---
   useEffect(() => {
@@ -172,6 +175,8 @@ const AppContent = () => {
         case 'domains': return <SEOHelmet title="مراد دومين | حجز نطاقات" description="حجز نطاقات واستضافة مواقع بأسعار منافسة. الوكيل الرسمي للنطاق السعودي." path="/domains" type="Product" />;
         case 'sitemap': return <SEOHelmet title="خريطة الموقع الشاملة" description="فهرس شامل لجميع روابط وأقسام منصة ميلاف." path="/sitemap" type="General" />;
         case 'cloud': return <SEOHelmet title="ميلاف كلاود | المدونة التقنية" description="مقالات تقنية متخصصة في البرمجة والذكاء الاصطناعي." path="/cloud" type="Article" />;
+        case 'cloud-system': return <SEOHelmet title="نظام مراد كلوك" description="النظام الذكي لإدارة الوقت والعمليات." path="/cloud-system" type="Product" />;
+        case 'murad-clock': return <SEOHelmet title="مراد كلوك | Murad Clock" description="نبض الذكاء الاصطناعي لأكاديميتك. نظام إدارة الوقت والمهام." path="/murad-clock" type="Product" />;
         default: return <SEOHelmet title="مجموعة ميلاف مراد" description="المنصة الوطنية الموحدة للتوظيف والتدريب والخدمات الرقمية." path="/" type="General" />;
     }
   };
@@ -181,7 +186,8 @@ const AppContent = () => {
       
       {getHelmet()}
       
-      {currentView !== 'sitemap' && currentView !== 'support' && currentView !== 'group' && currentView !== 'dopamine' && currentView !== 'cloud' && currentView !== 'domains' && (
+      {/* Header logic: Hide global header on standalone systems */}
+      {currentView !== 'sitemap' && currentView !== 'support' && currentView !== 'group' && currentView !== 'dopamine' && currentView !== 'cloud' && currentView !== 'cloud-system' && currentView !== 'domains' && currentView !== 'murad-clock' && (
           <Header 
             isLanding={currentView === 'landing'}
             onOpenOmni={() => setShowOmni(true)} 
@@ -193,6 +199,8 @@ const AppContent = () => {
             onOpenTraining={() => handleCyberNavigate('training')}
             onOpenPublish={() => handleCyberNavigate('publish')}
             onOpenDomains={() => handleCyberNavigate('domains')}
+            onOpenCloud={() => handleCyberNavigate('cloud-system')}
+            onOpenMuradClock={() => handleCyberNavigate('murad-clock')}
             onOpenBusiness={() => setShowProfileHub(true)} 
           />
       )}
@@ -220,7 +228,9 @@ const AppContent = () => {
           {currentView === 'group' && <MuradGroupPortal onNavigate={handleCyberNavigate} />}
           {currentView === 'dopamine' && <MuradDopamine onExit={() => handleCyberNavigate('landing')} />}
           {currentView === 'cloud' && <MuradCloud onExit={() => handleCyberNavigate('landing')} />}
+          {currentView === 'cloud-system' && <CloudMarketing onNavigate={handleCyberNavigate} />}
           {currentView === 'domains' && <MuradDomain onExit={() => handleCyberNavigate('landing')} />}
+          {currentView === 'murad-clock' && <MuradClockLanding />}
           
           {/* Fallback for utility pages */}
           {(currentView === 'verify' || currentView === 'policy' || currentView === 'reset') && (
@@ -247,7 +257,8 @@ const AppContent = () => {
       {upsellReason && <UpsellModal reason={upsellReason} onClose={() => setUpsellReason(null)} onUpgrade={() => {}} />}
       <BridgeToast recommendation={bridgeRec} onClose={() => setBridgeRec(null)} onAction={(link) => handleCyberNavigate(link)} />
       
-      {currentView !== 'support' && currentView !== 'group' && currentView !== 'dopamine' && currentView !== 'cloud' && currentView !== 'domains' && <MilafBot />}
+      {/* Bot Logic: Ensure bot is always available except maybe on pure text pages, but user requested "Keep bot" */}
+      <MilafBot /> 
       <CyberPreloader isActive={isPreloading} />
 
       <div style={{ opacity: 0, position: 'absolute', top: 0, left: 0, pointerEvents: 'none' }}>

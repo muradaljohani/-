@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Crown, Gavel, UploadCloud, Landmark, Menu, X, GraduationCap, Briefcase, ShoppingBag, DownloadCloud, Command, Wallet, Gift, Building2, Fingerprint, Scale, Zap, LogIn, User, Globe } from 'lucide-react';
+import { Crown, Gavel, UploadCloud, Landmark, Menu, X, GraduationCap, Briefcase, ShoppingBag, DownloadCloud, Command, Wallet, Gift, Building2, Fingerprint, Scale, Zap, LogIn, User, Globe, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PartnerCommandCenter } from './Expansion/PartnerCommandCenter';
 import { DigitalPassport } from './Governance/DigitalPassport';
@@ -19,10 +19,16 @@ interface HeaderProps {
   onOpenOmni?: () => void;
   onOpenBusiness?: () => void; 
   onOpenDomains?: () => void; 
+  onOpenCloud?: () => void;
+  onOpenMuradClock?: () => void; 
   isLanding?: boolean; 
 }
 
-export const Header: React.FC<HeaderProps> = ({ onNewChat, onOpenJobs, onOpenAcademy, onOpenHaraj, onOpenMarket, onOpenPublish, onOpenTraining, onOpenOmni, onOpenBusiness, onOpenDomains, isLanding = false }) => {
+export const Header: React.FC<HeaderProps> = ({ 
+  onNewChat, onOpenJobs, onOpenAcademy, onOpenHaraj, onOpenMarket, 
+  onOpenPublish, onOpenTraining, onOpenOmni, onOpenBusiness, 
+  onOpenDomains, onOpenCloud, onOpenMuradClock, isLanding = false 
+}) => {
   const { user, brain, setShowLoginModal } = useAuth();
   
   // Modals Local State
@@ -48,8 +54,11 @@ export const Header: React.FC<HeaderProps> = ({ onNewChat, onOpenJobs, onOpenAca
       if (action) {
           action();
       } else {
-          // Fallback if no action provided (should typically not happen with correct props)
-          window.history.pushState({}, '', `/${id === 'training' ? 'academy' : id}`);
+          let path = `/${id}`;
+          if (id === 'training') path = '/academy';
+          if (id === 'murad-clock') path = '/murad-clock';
+          
+          window.history.pushState({}, '', path);
           window.dispatchEvent(new PopStateEvent('popstate'));
       }
       setMobileMenuOpen(false);
@@ -77,138 +86,111 @@ export const Header: React.FC<HeaderProps> = ({ onNewChat, onOpenJobs, onOpenAca
               </a>
           );
           case 'training': return (
-              <a key="training" href="/training" onClick={(e) => handleNavClick(e, 'training', onOpenTraining)} className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all font-bold text-xs lg:text-sm group whitespace-nowrap" title="دورات تدريبية معتمدة">
+              <a key="training" href="/training" onClick={(e) => handleNavClick(e, 'training', onOpenTraining)} className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all font-bold text-xs lg:text-sm group whitespace-nowrap" title="الدورات التدريبية المعتمدة">
                   <GraduationCap className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform"/> التدريب
               </a>
           );
-          case 'academy': return (
-              <a key="academy" href="/academy" onClick={(e) => handleNavClick(e, 'academy', onOpenAcademy)} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/20 transition-all font-bold text-xs lg:text-sm whitespace-nowrap" title="القبول الموحد للأكاديمية">
-                  <Landmark className="w-4 h-4"/> القبول الموحد
-              </a>
-          );
-          default: return null;
-      }
-  };
-
-  const renderMobileNavItem = (id: string) => {
-      switch(id) {
-          case 'jobs': return <button key="m_jobs" onClick={(e) => handleNavClick(e, 'jobs', onOpenJobs)} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><Briefcase className="w-5 h-5 text-blue-400"/> بوابة الوظائف</button>;
-          case 'haraj': return <button key="m_haraj" onClick={(e) => handleNavClick(e, 'haraj', onOpenHaraj)} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><Gavel className="w-5 h-5 text-amber-400"/> الحراج الإلكتروني</button>;
-          case 'market': return <button key="m_market" onClick={(e) => handleNavClick(e, 'market', onOpenMarket)} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><ShoppingBag className="w-5 h-5 text-emerald-400"/> سوق الخدمات</button>;
-          case 'training': return <button key="m_training" onClick={(e) => handleNavClick(e, 'training', onOpenTraining)} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><GraduationCap className="w-5 h-5 text-purple-400"/> مركز التدريب</button>;
           default: return null;
       }
   };
 
   return (
-    <>
-    <header className={headerClass} role="banner">
-      <div className={`${bgClass} px-4 py-3`}>
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          
-          {/* Logo */}
-          <a href="/" className="flex items-center gap-3 cursor-pointer shrink-0 z-50 no-underline" onClick={(e) => { e.preventDefault(); if(onNewChat) onNewChat(); }} aria-label="Mylaf Murad Home">
-            <div className="relative bg-gradient-to-br from-blue-900 to-[#0f172a] border border-white/10 w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center overflow-hidden shadow-lg group">
-              <span className="text-lg sm:text-xl font-black text-white group-hover:scale-110 transition-transform">M</span>
+    <header className={`${headerClass} ${bgClass}`}>
+      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+        
+        {/* LOGO AREA */}
+        <div className="flex items-center gap-4">
+            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-white p-2">
+                <Menu className="w-6 h-6"/>
+            </button>
+            <div className="flex items-center gap-3 cursor-pointer" onClick={(e) => handleNavClick(e, 'landing', onNewChat)}>
+                <div className="relative group">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-amber-500 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
+                    <div className="relative w-10 h-10 bg-[#0f172a] rounded-lg flex items-center justify-center border border-white/10">
+                        <span className="font-black text-white text-xl">M</span>
+                    </div>
+                </div>
+                <div className="flex flex-col">
+                    <h1 className="text-white font-black text-lg leading-none tracking-tight">ميلاف <span className="text-amber-500">مراد</span></h1>
+                    <span className="text-[9px] text-gray-400 font-bold tracking-widest uppercase">National Platform</span>
+                </div>
             </div>
-            <div className="flex flex-col justify-center">
-              <h1 className="text-base sm:text-lg font-black text-white leading-none tracking-tight flex items-center gap-1">
-                ميلاف مراد
-                <Crown className="w-3 h-3 text-amber-400 fill-amber-400" />
-              </h1>
-              <span className="text-[8px] sm:text-[10px] text-gray-400 font-mono tracking-widest uppercase">National Academy</span>
-            </div>
-          </a>
+        </div>
 
-          {/* Navigation */}
-          <nav className="hidden lg:flex items-center gap-1 bg-white/5 p-1 rounded-2xl border border-white/5 backdrop-blur-md absolute left-1/2 transform -translate-x-1/2" role="navigation">
-              <button onClick={onOpenOmni} className="flex items-center gap-2 px-3 py-2 rounded-xl text-gray-400 hover:text-white hover:bg-white/10 transition-all font-mono text-xs" title="Universal Search (Cmd+K)">
-                  <Command className="w-4 h-4"/>
-              </button>
-              <div className="w-px h-6 bg-white/10 mx-1"></div>
-              {/* Murad Domain Link - Placed in header as requested */}
-              <a href="/domains" onClick={(e) => handleNavClick(e, 'domains', onOpenDomains)} className="flex items-center gap-2 px-3 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all font-bold text-xs lg:text-sm group whitespace-nowrap border-l border-white/10 ml-1 pl-3">
-                  <Globe className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform"/> 
-                  نطاقات
-              </a>
-              {menuOrder.map(id => renderNavButton(id))}
-          </nav>
+        {/* DESKTOP NAV (Adaptive Order) */}
+        <nav className="hidden lg:flex items-center gap-1">
+            {menuOrder.map(id => renderNavButton(id))}
+        </nav>
 
-          {/* Right Actions */}
-          <div className="flex items-center gap-3">
-              <div className="hidden lg:flex items-center gap-3">
-                  {user && (
-                      <>
-                        <button onClick={() => setIsPrimeOpen(true)} className="flex items-center gap-2 px-3 py-2 rounded-xl border border-amber-500/30 text-amber-400 hover:bg-amber-500/10 transition-all text-xs font-bold">
-                            <Crown className="w-4 h-4"/> Elite
-                        </button>
-                        <button onClick={() => setIsProfileHubOpen(true)} className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl text-white text-xs font-bold shadow-lg hover:shadow-blue-600/30 transition-all">
-                            <User className="w-4 h-4"/> حسابي
-                        </button>
-                      </>
-                  )}
-                  {!user && (
-                      <button 
-                        onClick={() => setShowLoginModal(true)} 
-                        className="px-5 py-2.5 bg-[#1e3a8a] text-amber-400 border border-amber-500/50 rounded-xl text-xs font-bold transition-all shadow-[0_0_15px_rgba(245,158,11,0.2)] hover:bg-[#172554] hover:border-amber-400 flex items-center gap-2"
-                      >
-                          <LogIn className="w-4 h-4"/> دخول / تسجيل
-                      </button>
-                  )}
-              </div>
+        {/* ACTIONS AREA */}
+        <div className="flex items-center gap-3">
+            <button onClick={onOpenOmni} className="hidden md:flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 px-3 py-2 rounded-xl text-xs transition-all w-32 justify-between group">
+                <span className="group-hover:text-white">بحث شامل...</span>
+                <span className="bg-white/10 px-1.5 rounded text-[10px]">⌘K</span>
+            </button>
 
-              <button 
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)} 
-                  className="lg:hidden p-2 text-gray-300 hover:text-white bg-white/5 rounded-lg border border-white/5 z-50 relative"
-                  aria-label="Toggle Menu"
-              >
-                  {mobileMenuOpen ? <X className="w-5 h-5"/> : <Menu className="w-5 h-5"/>}
-              </button>
-          </div>
+            <div className="h-6 w-px bg-white/10 hidden md:block"></div>
 
+            {user ? (
+                <div className="flex items-center gap-3">
+                    <button onClick={() => setIsPartnerOpen(true)} className="hidden md:flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-500 text-white shadow-lg hover:scale-105 transition-transform" title="لوحة الشركاء">
+                        <Gift className="w-4 h-4"/>
+                    </button>
+                    
+                    <div className="relative group cursor-pointer" onClick={() => setIsProfileHubOpen(true)}>
+                         <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 pl-1 pr-3 py-1 rounded-full border border-white/10 transition-all">
+                             <div className="relative">
+                                 <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-8 h-8 rounded-full border border-white/20"/>
+                                 {user.isIdentityVerified && <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-0.5 rounded-full border-2 border-[#0f172a]"><Fingerprint className="w-2 h-2"/></div>}
+                             </div>
+                             <div className="flex flex-col items-start">
+                                 <span className="text-xs font-bold text-white max-w-[80px] truncate">{user.name.split(' ')[0]}</span>
+                                 <span className="text-[9px] text-emerald-400 font-mono">{user.wallet?.balance || 0} SAR</span>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+            ) : (
+                <button 
+                    onClick={() => setShowLoginModal(true)}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-lg shadow-blue-900/20 transform hover:-translate-y-0.5"
+                >
+                    <LogIn className="w-4 h-4"/> دخول
+                </button>
+            )}
         </div>
       </div>
 
-      {/* Mobile Menu Overlay - High Z-Index to cover everything */}
+      {/* MOBILE MENU OVERLAY */}
       {mobileMenuOpen && (
-          <div className="fixed inset-0 z-[60] bg-[#0f172a] lg:hidden animate-fade-in-up pt-20 px-6 pb-8 overflow-y-auto">
-              <div className="space-y-2">
-                  <div className="pb-4 mb-4 border-b border-white/10">
-                      <button onClick={() => { onOpenAcademy?.(); setMobileMenuOpen(false); }} className="w-full bg-blue-600 text-white p-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg">
-                          <Landmark className="w-5 h-5"/> القبول الموحد
-                      </button>
-                  </div>
-                  
-                  {menuOrder.map(id => renderMobileNavItem(id))}
-                  
-                  {/* Mobile Domain Link */}
-                  <button onClick={() => { onOpenDomains?.(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold">
-                      <Globe className="w-5 h-5 text-emerald-400"/> مراد دومين
-                  </button>
-
-                  <div className="pt-4 mt-4 border-t border-white/10">
-                       <button onClick={() => { onOpenPublish?.(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><UploadCloud className="w-5 h-5 text-pink-400"/> بوابة النشر</button>
-                       <button onClick={() => { onOpenBusiness?.(); setMobileMenuOpen(false); }} className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/10 text-gray-300 text-sm font-bold"><Building2 className="w-5 h-5 text-blue-400"/> قطاع الأعمال</button>
-                  </div>
-
-                  {!user ? (
-                      <button onClick={() => { setShowLoginModal(true); setMobileMenuOpen(false); }} className="w-full mt-6 py-3 border border-amber-500/50 text-amber-400 rounded-xl font-bold">
-                          تسجيل الدخول
-                      </button>
-                  ) : (
-                      <button onClick={() => { setIsProfileHubOpen(true); setMobileMenuOpen(false); }} className="w-full mt-6 py-3 bg-blue-600/20 text-blue-300 border border-blue-500/50 rounded-xl font-bold flex items-center justify-center gap-2">
-                          <User className="w-5 h-5"/> حسابي
-                      </button>
-                  )}
+          <div className="lg:hidden absolute top-16 left-0 w-full bg-[#0f172a] border-b border-white/10 shadow-2xl animate-fade-in-up">
+              <div className="p-4 space-y-2">
+                  <a href="/jobs" onClick={(e) => handleNavClick(e, 'jobs', onOpenJobs)} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 text-white">
+                      <Briefcase className="w-5 h-5 text-blue-400"/> بوابة الوظائف
+                  </a>
+                  <a href="/academy" onClick={(e) => handleNavClick(e, 'academy', onOpenTraining)} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 text-white">
+                      <GraduationCap className="w-5 h-5 text-purple-400"/> التدريب
+                  </a>
+                  <a href="/market" onClick={(e) => handleNavClick(e, 'market', onOpenMarket)} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 text-white">
+                      <ShoppingBag className="w-5 h-5 text-emerald-400"/> السوق
+                  </a>
+                  <a href="/haraj" onClick={(e) => handleNavClick(e, 'haraj', onOpenHaraj)} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 text-white">
+                      <Gavel className="w-5 h-5 text-amber-400"/> الحراج
+                  </a>
+                  <a href="/murad-clock" onClick={(e) => handleNavClick(e, 'murad-clock', onOpenMuradClock)} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 text-white">
+                      <Clock className="w-5 h-5 text-blue-400"/> مراد كلوك
+                  </a>
               </div>
           </div>
       )}
+      
+      {/* Modals */}
+      {isPartnerOpen && <PartnerCommandCenter onClose={() => setIsPartnerOpen(false)} />}
+      {isPassportOpen && user && <DigitalPassport user={user} onClose={() => setIsPassportOpen(false)} />}
+      {isTribunalOpen && <TribunalCourt onClose={() => setIsTribunalOpen(false)} />}
+      {isPrimeOpen && <PrimeDashboard onClose={() => setIsPrimeOpen(false)} />}
+      <UniversalProfileHub isOpen={isProfileHubOpen} onClose={() => setIsProfileHubOpen(false)} />
+
     </header>
-    <UniversalProfileHub isOpen={isProfileHubOpen} onClose={() => setIsProfileHubOpen(false)} />
-    {isPartnerOpen && <PartnerCommandCenter onClose={() => setIsPartnerOpen(false)} />}
-    {user && isPassportOpen && <DigitalPassport user={user} onClose={() => setIsPassportOpen(false)} />}
-    {isTribunalOpen && <TribunalCourt onClose={() => setIsTribunalOpen(false)} />}
-    {user && isPrimeOpen && <PrimeDashboard onClose={() => setIsPrimeOpen(false)} />}
-    </>
   );
 };

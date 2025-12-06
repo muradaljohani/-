@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { PolicyModal } from './PolicyModal';
 import { AssetProcessor } from '../services/System/AssetProcessor';
-import { BadgeCheck, LifeBuoy, Building2, Zap, Globe } from 'lucide-react';
+import { BadgeCheck, LifeBuoy, Building2, Zap, Globe, Clock } from 'lucide-react';
 import { SEODirectory } from './SEODirectory';
 
 interface FooterProps {
@@ -71,8 +71,8 @@ export const Footer: React.FC<FooterProps> = ({ compact = false, className = '' 
                         <li><a href="/group" onClick={(e) => handleNav(e, '/group')} className="text-indigo-600 font-bold hover:text-indigo-700 hover:translate-x-1 transition-all inline-block flex items-center gap-2"><Building2 className="w-4 h-4"/> شركة مراد الجهني (Corporate)</a></li>
                         <li><a href="/dopamine" onClick={(e) => handleNav(e, '/dopamine')} className="text-purple-600 font-bold hover:text-purple-700 hover:translate-x-1 transition-all inline-block flex items-center gap-2"><Zap className="w-4 h-4"/> مراد دوبامين (Site Builder)</a></li>
                         <li><a href="/support" onClick={(e) => handleNav(e, '/support')} className="text-emerald-600 font-bold hover:text-emerald-700 hover:translate-x-1 transition-all inline-block flex items-center gap-2"><LifeBuoy className="w-4 h-4"/> مركز مراد كير (Murad Care)</a></li>
-                        {/* Murad Domain added directly under Murad Care */}
                         <li><a href="/domains" onClick={(e) => handleNav(e, '/domains')} className="text-teal-600 font-bold hover:text-teal-700 hover:translate-x-1 transition-all inline-block flex items-center gap-2"><Globe className="w-4 h-4"/> مراد دومين (Murad Domain)</a></li>
+                        <li><a href="/murad-clock" onClick={(e) => handleNav(e, '/murad-clock')} className="text-blue-700 font-bold hover:text-blue-800 hover:translate-x-1 transition-all inline-block flex items-center gap-2"><Clock className="w-4 h-4"/> مراد كلوك (Murad Clock)</a></li>
                         <li><a href="/sitemap" onClick={(e) => handleNav(e, '/sitemap')} className="text-gray-600 hover:text-blue-600 hover:translate-x-1 transition-all inline-block font-bold">خريطة الموقع (Sitemap)</a></li>
                         <li><button onClick={() => setIsPolicyOpen(true)} className="text-gray-600 hover:text-blue-600 hover:translate-x-1 transition-all inline-block">سياسة الخصوصية</button></li>
                         <li><button onClick={() => setIsPolicyOpen(true)} className="text-gray-600 hover:text-blue-600 hover:translate-x-1 transition-all inline-block">شروط الاستخدام</button></li>
