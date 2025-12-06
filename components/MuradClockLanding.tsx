@@ -2,11 +2,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User, Sparkles, Zap, Menu, X, ArrowLeft, Phone, Share2, Check, AlertTriangle } from 'lucide-react';
 import { SEOHelmet } from './SEOHelmet';
+import { streamChatResponse } from '../services/geminiService';
+import { Message, Role } from '../types';
+import ReactMarkdown from 'react-markdown';
 
 export const MuradClockLanding: React.FC = () => {
-  // --- CHAT SIMULATION STATE ---
-  const [messages, setMessages] = useState([
-    { id: 1, role: 'bot', text: 'مرحباً! أنا مراد كلوك. كيف يمكنني مساعدتك في إدارة منظومتك التعليمية اليوم؟' }
+  // --- CHAT STATE ---
+  const [messages, setMessages] = useState<Message[]>([
+    { id: 'init', role: Role.MODEL, content: 'مرحباً! أنا مراد كلوك. عالم جديد من المستقبل. كيف يمكنني مساعدتك اليوم في أي مجال؟' }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -14,6 +17,7 @@ export const MuradClockLanding: React.FC = () => {
   
   const chatEndRef = useRef<HTMLDivElement>(null);
   const chatInputRef = useRef<HTMLInputElement>(null); // Ref for input focus
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = () => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -23,26 +27,53 @@ export const MuradClockLanding: React.FC = () => {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim()) return;
 
-    // 1. Add User Message
-    const userMsg = { id: Date.now(), role: 'user', text: inputValue };
-    setMessages(prev => [...prev, userMsg]);
+    const userText = inputValue;
     setInputValue('');
     setIsTyping(true);
 
-    // 2. Simulate AI Thinking & Response
-    setTimeout(() => {
-      setIsTyping(false);
-      const botResponse = {
-        id: Date.now() + 1,
-        role: 'bot',
-        text: 'أهلاً بك في نظام مراد كلوك، أنا هنا لمساعدتك في إدارة أكاديميتك بأحدث تقنيات الذكاء الاصطناعي. نحن نوفر حلولاً للأتمتة، الجدولة، والتحليل الذكي لرفع كفاءة مؤسستك.'
-      };
-      setMessages(prev => [...prev, botResponse]);
-    }, 1500);
+    // 1. Add User Message
+    const userMsg: Message = { id: Date.now().toString(), role: Role.USER, content: userText };
+    
+    // Optimistic Update
+    setMessages(prev => {
+        const newHistory = [...prev, userMsg];
+        const botMsgId = (Date.now() + 1).toString();
+        const botMsgPlaceholder: Message = { id: botMsgId, role: Role.MODEL, content: '', isStreaming: true };
+        
+        // Trigger API Call
+        startStreaming(newHistory, userText, botMsgId);
+        
+        return [...newHistory, botMsgPlaceholder];
+    });
+  };
+
+  const startStreaming = async (history: Message[], userMsgText: string, botMsgId: string) => {
+    if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+    }
+    abortControllerRef.current = new AbortController();
+
+    let fullText = '';
+
+    await streamChatResponse(
+        history.filter(m => !m.isStreaming), // Filter out placeholders
+        userMsgText,
+        undefined, // No attachment for landing page demo
+        (textChunk) => {
+            fullText += textChunk;
+            setMessages(prev => prev.map(m => m.id === botMsgId ? { ...m, content: fullText } : m));
+        },
+        () => {}, // No sources handling for landing
+        abortControllerRef.current.signal,
+        null // Guest user context
+    );
+
+    setIsTyping(false);
+    setMessages(prev => prev.map(m => m.id === botMsgId ? { ...m, isStreaming: false } : m));
   };
 
   const handleStartNow = () => {
@@ -166,7 +197,7 @@ export const MuradClockLanding: React.FC = () => {
                     onClick={handleStartNow} 
                     className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-500 hover:to-blue-600 text-white rounded-xl font-bold text-lg shadow-[0_0_30px_rgba(6,182,212,0.4)] transition-all transform hover:scale-105 hover:-translate-y-1 relative overflow-hidden group"
                  >
-                    <span className="relative z-10">ابدأ الآن مجاناً</span>
+                    <span className="relative z-10">جرب المحادثة الآن</span>
                     <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                  </button>
 
@@ -203,7 +234,7 @@ export const MuradClockLanding: React.FC = () => {
               <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500 to-purple-600 rounded-3xl blur-xl opacity-30 animate-pulse"></div>
               
               {/* Chat Interface */}
-              <div className="relative bg-[#0b1120]/80 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[500px]">
+              <div className="relative bg-[#0b1120]/80 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[600px]">
                  {/* Chat Header */}
                  <div className="p-4 border-b border-white/10 bg-white/5 flex items-center gap-3">
                     <div className="relative">
@@ -221,16 +252,16 @@ export const MuradClockLanding: React.FC = () => {
                  {/* Chat Body */}
                  <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                     {messages.map((msg) => (
-                       <div key={msg.id} className={`flex items-end gap-3 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === 'user' ? 'bg-white/10 text-white' : 'bg-cyan-600/20 text-cyan-400 border border-cyan-500/30'}`}>
-                             {msg.role === 'user' ? <User className="w-4 h-4"/> : <Sparkles className="w-4 h-4"/>}
+                       <div key={msg.id} className={`flex gap-2 ${msg.role === Role.USER ? 'flex-row-reverse' : 'flex-row'}`}>
+                          <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${msg.role === Role.USER ? 'bg-white/10 text-white' : 'bg-cyan-600/20 text-cyan-400 border border-cyan-500/30'}`}>
+                             {msg.role === Role.USER ? <User className="w-4 h-4"/> : <Sparkles className="w-4 h-4"/>}
                           </div>
-                          <div className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed ${
-                             msg.role === 'user' 
+                          <div className={`max-w-[85%] p-3 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                             msg.role === Role.USER 
                              ? 'bg-blue-600 text-white rounded-br-none shadow-lg shadow-blue-900/20' 
                              : 'bg-white/5 text-slate-200 border border-white/10 rounded-bl-none'
                           }`}>
-                             {msg.text}
+                             <ReactMarkdown>{msg.content}</ReactMarkdown>
                           </div>
                        </div>
                     ))}
@@ -258,7 +289,7 @@ export const MuradClockLanding: React.FC = () => {
                           type="text" 
                           value={inputValue}
                           onChange={(e) => setInputValue(e.target.value)}
-                          placeholder="اسأل مراد كلوك عن أي شيء..." 
+                          placeholder="اسأل مراد كلوك عن أي شيء (برمجة، تاريخ، عام...)" 
                           className="flex-1 bg-black/30 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-cyan-500/50 transition-colors"
                        />
                        <button 
