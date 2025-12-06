@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Search, ShieldCheck, LifeBuoy, FileText, MessageSquare, CheckCircle2, AlertCircle, ArrowRight, Globe, Lock, Activity, Server, Database, Headset, ChevronLeft, Home } from 'lucide-react';
+import { Search, ShieldCheck, LifeBuoy, FileText, MessageSquare, CheckCircle2, AlertCircle, ArrowRight, Globe, Lock, Activity, Server, Database, Headset, ChevronLeft, Home, Cloud } from 'lucide-react';
 import { SupportTicketWizard } from './SupportTicketWizard';
 import { KnowledgeBaseSEO } from './KnowledgeBaseSEO';
 import { TicketTracker } from './TicketTracker';
@@ -34,6 +35,11 @@ export const SupportPortal: React.FC<Props> = ({ onExit }) => {
         window.history.pushState({}, '', fullPath);
         const event = new PopStateEvent('popstate');
         window.dispatchEvent(event);
+    };
+
+    const handleGlobalNav = (path: string) => {
+        window.history.pushState({}, '', path);
+        window.dispatchEvent(new PopStateEvent('popstate'));
     };
 
     // Simulated "System Status"
@@ -117,7 +123,7 @@ export const SupportPortal: React.FC<Props> = ({ onExit }) => {
 
                     {/* MAIN ACTIONS */}
                     <div className="max-w-7xl mx-auto px-6 -mt-16 relative z-20">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             
                             <div onClick={() => navigateTo('ticket')} className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:-translate-y-2 transition-all cursor-pointer group relative overflow-hidden">
                                 <div className="absolute top-0 left-0 w-1 h-full bg-blue-500 group-hover:h-full transition-all duration-300"></div>
@@ -125,7 +131,7 @@ export const SupportPortal: React.FC<Props> = ({ onExit }) => {
                                     <FileText className="w-7 h-7 text-blue-600 group-hover:text-white"/>
                                 </div>
                                 <h3 className="text-xl font-bold text-[#0f172a] mb-2 group-hover:text-blue-700 transition-colors">رفع شكوى / تذكرة</h3>
-                                <p className="text-slate-500 text-sm leading-relaxed">واجهت مشكلة تقنية أو مالية؟ ارفع بلاغ رسمي وسيقوم فريقنا المختص بالرد وحل المشكلة خلال 24 ساعة عمل.</p>
+                                <p className="text-slate-500 text-sm leading-relaxed">واجهت مشكلة تقنية أو مالية؟ ارفع بلاغ رسمي وسيقوم فريقنا المختص بالرد.</p>
                                 <div className="mt-6 flex items-center text-blue-600 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity -translate-x-4 group-hover:translate-x-0 duration-300">
                                     بدء الخدمة <ArrowRight className="w-4 h-4 mr-2 rtl:rotate-180"/>
                                 </div>
@@ -137,7 +143,7 @@ export const SupportPortal: React.FC<Props> = ({ onExit }) => {
                                     <Activity className="w-7 h-7 text-emerald-600 group-hover:text-white"/>
                                 </div>
                                 <h3 className="text-xl font-bold text-[#0f172a] mb-2 group-hover:text-emerald-700 transition-colors">متابعة الطلبات</h3>
-                                <p className="text-slate-500 text-sm leading-relaxed">لديك تذكرة سابقة؟ أدخل رقم التذكرة (Ticket ID) لمعرفة حالتها الحالية، الردود الجديدة، والوقت المتوقع للحل.</p>
+                                <p className="text-slate-500 text-sm leading-relaxed">أدخل رقم التذكرة (Ticket ID) لمعرفة حالتها الحالية والردود الجديدة.</p>
                                 <div className="mt-6 flex items-center text-emerald-600 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity -translate-x-4 group-hover:translate-x-0 duration-300">
                                     تتبع الآن <ArrowRight className="w-4 h-4 mr-2 rtl:rotate-180"/>
                                 </div>
@@ -149,9 +155,21 @@ export const SupportPortal: React.FC<Props> = ({ onExit }) => {
                                     <Globe className="w-7 h-7 text-purple-600 group-hover:text-white"/>
                                 </div>
                                 <h3 className="text-xl font-bold text-[#0f172a] mb-2 group-hover:text-purple-700 transition-colors">الدليل المعرفي (KB)</h3>
-                                <p className="text-slate-500 text-sm leading-relaxed">تصفح قاعدة بيانات ضخمة تحتوي على حلول فورية، شروحات، وأدلة استخدام لجميع خدمات منصة ميلاف.</p>
+                                <p className="text-slate-500 text-sm leading-relaxed">تصفح قاعدة بيانات ضخمة تحتوي على حلول فورية، شروحات، وأدلة استخدام.</p>
                                 <div className="mt-6 flex items-center text-purple-600 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity -translate-x-4 group-hover:translate-x-0 duration-300">
                                     تصفح الحلول <ArrowRight className="w-4 h-4 mr-2 rtl:rotate-180"/>
+                                </div>
+                            </div>
+
+                            <div onClick={() => handleGlobalNav('/cloud')} className="bg-white p-8 rounded-2xl shadow-xl border border-slate-100 hover:-translate-y-2 transition-all cursor-pointer group relative overflow-hidden">
+                                <div className="absolute top-0 left-0 w-1 h-full bg-cyan-500 group-hover:h-full transition-all duration-300"></div>
+                                <div className="w-14 h-14 bg-cyan-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-cyan-600 transition-colors shadow-sm">
+                                    <Cloud className="w-7 h-7 text-cyan-600 group-hover:text-white"/>
+                                </div>
+                                <h3 className="text-xl font-bold text-[#0f172a] mb-2 group-hover:text-cyan-700 transition-colors">مراد كلاود</h3>
+                                <p className="text-slate-500 text-sm leading-relaxed">الموسوعة التقنية الشاملة. مقالات، شروحات برمجية، ووثائق النظام.</p>
+                                <div className="mt-6 flex items-center text-cyan-600 text-sm font-bold opacity-0 group-hover:opacity-100 transition-opacity -translate-x-4 group-hover:translate-x-0 duration-300">
+                                    دخول الموسوعة <ArrowRight className="w-4 h-4 mr-2 rtl:rotate-180"/>
                                 </div>
                             </div>
 
