@@ -21,8 +21,8 @@ export const MilafBot: React.FC = () => {
   useEffect(() => {
     if (isOpen && messages.length === 0) {
       const greetingText = user 
-        ? `أهلاً بك يا ${user.name} في إمبراطوريتك الرقمية. أنا "ميلاف"، مساعدك الشخصي الذكي. كيف يمكنني خدمتك اليوم؟\n\nمع تحيات ادارة الامن السبراني وتقنية المعلومات في اكادمية ميلاف مراد`
-        : `مرحباً بك زائرنا الكريم. أنا نظام الذكاء الاصطناعي الخاص بالمنصة. هل تبحث عن وظيفة، دورة تدريبية، أو معلومة عامة؟ اسألني أي شيء.\n\nمع تحيات ادارة الامن السبراني وتقنية المعلومات في اكادمية ميلاف مراد`;
+        ? `أهلاً بك يا ${user.name}. تواصل مع أكبر نظام عالمي "مراد كلوك". كيف يمكنني خدمتك اليوم؟\n\nمع تحيات إدارة الأمن السيبراني وتقنية المعلومات في أكاديمية ميلاف مراد`
+        : `مرحباً بك زائرنا الكريم. تواصل مع أكبر نظام عالمي "مراد كلوك". هل تبحث عن وظيفة، دورة تدريبية، أو معلومة عامة؟\n\nمع تحيات إدارة الأمن السيبراني وتقنية المعلومات في أكاديمية ميلاف مراد`;
         
       setMessages([{ 
           id: 'init', 
@@ -134,7 +134,7 @@ export const MilafBot: React.FC = () => {
                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 border-2 border-[#0f172a] rounded-full"></div>
               </div>
               <div>
-                <h3 className="text-white font-bold text-sm">المساعد الذكي (Mylaf AI)</h3>
+                <h3 className="text-white font-bold text-sm">نظام مراد كلوك (Murad Clock)</h3>
                 <div className="text-[10px] text-cyan-400 font-mono flex items-center gap-1">
                   <ActivityDot /> متصل (Online)
                 </div>
@@ -187,7 +187,7 @@ export const MilafBot: React.FC = () => {
               <input 
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder="اسألني أي شيء (ذكاء اصطناعي)..."
+                placeholder="تواصل مع أكبر نظام عالمي مراد كلوك..."
                 className="flex-1 bg-transparent text-white text-sm outline-none placeholder-gray-600"
                 disabled={isTyping}
               />
