@@ -440,7 +440,7 @@ export interface SearchSource {
 }
 
 export interface Attachment {
-  type: 'image';
+  type: 'image' | 'audio';
   data: string; 
   mimeType: string;
   url?: string; 

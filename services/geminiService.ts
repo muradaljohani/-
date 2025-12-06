@@ -237,7 +237,7 @@ export const streamChatResponse = async (
   try {
     const chatHistory = history.map((msg) => {
       const parts: any[] = [{ text: msg.content }];
-      if (msg.attachment?.type === 'image') {
+      if (msg.attachment?.type === 'image' || msg.attachment?.type === 'audio') {
         parts.push({ inlineData: { mimeType: msg.attachment.mimeType, data: msg.attachment.data } });
       }
       return { role: msg.role === Role.USER ? "user" : "model", parts: parts };
@@ -323,7 +323,7 @@ export const streamChatResponse = async (
     });
 
     const messageParts: any[] = [{ text: currentMessage }];
-    if (currentAttachment?.type === 'image') {
+    if (currentAttachment?.type === 'image' || currentAttachment?.type === 'audio') {
       messageParts.push({ inlineData: { mimeType: currentAttachment.mimeType, data: currentAttachment.data } });
     }
 
