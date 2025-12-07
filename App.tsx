@@ -29,12 +29,13 @@ import { MuradCloud } from './components/Cloud/MuradCloud';
 import { CloudMarketing } from './components/Cloud/CloudMarketing';
 import { MuradDomain } from './components/Domain/MuradDomain'; 
 import { MuradClockLanding } from './components/MuradClockLanding';
+import { MuradMeta } from './components/Meta/MuradMeta';
 import { ChevronLeft, Home } from 'lucide-react';
 import { SEOHelmet } from './components/SEOHelmet';
 
 // --- BREADCRUMBS COMPONENT (Hierarchical UI) ---
 const Breadcrumbs = ({ currentView, onNavigate }: { currentView: string, onNavigate: (view: string) => void }) => {
-    if (currentView === 'landing' || currentView === 'support' || currentView === 'group' || currentView === 'dopamine' || currentView === 'cloud' || currentView === 'cloud-system' || currentView === 'domains' || currentView === 'murad-clock') return null;
+    if (currentView === 'landing' || currentView === 'support' || currentView === 'group' || currentView === 'dopamine' || currentView === 'cloud' || currentView === 'cloud-system' || currentView === 'domains' || currentView === 'murad-clock' || currentView === 'meta') return null;
 
     const map: Record<string, string> = {
         'jobs': 'بوابة الوظائف',
@@ -45,7 +46,8 @@ const Breadcrumbs = ({ currentView, onNavigate }: { currentView: string, onNavig
         'publish': 'بوابة النشر',
         'sitemap': 'خريطة الموقع',
         'domains': 'حجز النطاقات',
-        'murad-clock': 'مراد كلوك'
+        'murad-clock': 'مراد كلوك',
+        'meta': 'مراد ميتا'
     };
     
     const pathSegments = window.location.pathname.split('/').filter(Boolean);
@@ -77,7 +79,7 @@ const AppContent = () => {
   const [isPreloading, setIsPreloading] = useState(false);
   
   // Whitelist valid routes
-  const validRoutes = ['jobs', 'academy', 'training', 'market', 'haraj', 'publish', 'sitemap', 'support', 'group', 'corporate', 'dopamine', 'cloud', 'cloud-system', 'domains', 'murad-clock', 'verify', 'policy', 'reset-password', 'reset', 'about', 'services', 'contact', 'login'];
+  const validRoutes = ['jobs', 'academy', 'training', 'market', 'haraj', 'publish', 'sitemap', 'support', 'group', 'corporate', 'dopamine', 'cloud', 'cloud-system', 'domains', 'murad-clock', 'meta', 'verify', 'policy', 'reset-password', 'reset', 'about', 'services', 'contact', 'login'];
 
   // --- SMART ROUTER (DEEP LINK HANDLER) ---
   useEffect(() => {
@@ -177,6 +179,7 @@ const AppContent = () => {
         case 'cloud': return <SEOHelmet title="ميلاف كلاود | المدونة التقنية" description="مقالات تقنية متخصصة في البرمجة والذكاء الاصطناعي." path="/cloud" type="Article" />;
         case 'cloud-system': return <SEOHelmet title="نظام مراد كلوك" description="النظام الذكي لإدارة الوقت والعمليات." path="/cloud-system" type="Product" />;
         case 'murad-clock': return <SEOHelmet title="مراد كلوك | Murad Clock" description="نبض الذكاء الاصطناعي لأكاديميتك. نظام إدارة الوقت والمهام." path="/murad-clock" type="Product" />;
+        case 'meta': return <SEOHelmet title="مراد ميتا | أدوات الملفات" description="مجموعة أدوات تحويل ومعالجة الملفات (PDF Tools). مجاني وسريع." path="/meta" type="Product" />;
         default: return <SEOHelmet title="مجموعة ميلاف مراد" description="المنصة الوطنية الموحدة للتوظيف والتدريب والخدمات الرقمية." path="/" type="General" />;
     }
   };
@@ -187,7 +190,7 @@ const AppContent = () => {
       {getHelmet()}
       
       {/* Header logic: Hide global header on standalone systems */}
-      {currentView !== 'sitemap' && currentView !== 'support' && currentView !== 'group' && currentView !== 'dopamine' && currentView !== 'cloud' && currentView !== 'cloud-system' && currentView !== 'domains' && currentView !== 'murad-clock' && (
+      {currentView !== 'sitemap' && currentView !== 'support' && currentView !== 'group' && currentView !== 'dopamine' && currentView !== 'cloud' && currentView !== 'cloud-system' && currentView !== 'domains' && currentView !== 'murad-clock' && currentView !== 'meta' && (
           <Header 
             isLanding={currentView === 'landing'}
             onOpenOmni={() => setShowOmni(true)} 
@@ -231,6 +234,7 @@ const AppContent = () => {
           {currentView === 'cloud-system' && <CloudMarketing onNavigate={handleCyberNavigate} />}
           {currentView === 'domains' && <MuradDomain onExit={() => handleCyberNavigate('landing')} />}
           {currentView === 'murad-clock' && <MuradClockLanding />}
+          {currentView === 'meta' && <MuradMeta onExit={() => handleCyberNavigate('landing')} />}
           
           {/* Fallback for utility pages */}
           {(currentView === 'verify' || currentView === 'policy' || currentView === 'reset') && (

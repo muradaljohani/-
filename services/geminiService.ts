@@ -19,21 +19,87 @@ const getYoutubeId = (url: string) => {
     return (match && match[2].length === 11) ? match[2] : null;
 };
 
-// --- MOCK DATA GENERATORS (Kept for other parts of the app) ---
-const SAMPLE_VIDEOS = [
-    'https://www.youtube.com/watch?v=cbSjsDLIz7o', 
-    'https://www.youtube.com/watch?v=PkZNo7MFNFg', 
-    'https://www.youtube.com/watch?v=SqcY0GlETPk', 
-    'https://www.youtube.com/watch?v=pTJJsmejUOQ', 
-    'https://www.youtube.com/watch?v=aircAruvnKk', 
-    'https://www.youtube.com/watch?v=2ePf9rue1Ao', 
-    'https://www.youtube.com/watch?v=zDNaUi2cjv4', 
-    'https://www.youtube.com/watch?v=lJIrF4YjHfQ', 
+// --- REAL OPEN-SOURCE LIBRARY DATABASE ---
+const REAL_BOOKS_DB: Book[] = [
+    {
+        id: 'b_hindawi_01',
+        title: 'عبقرية عمر',
+        author: 'عباس محمود العقاد',
+        category: 'Management',
+        pages: 315,
+        summary: 'دراسة تحليلية عبقرية لشخصية الفاروق عمر بن الخطاب، يبرز فيها العقاد الجوانب الإدارية والقيادية الفذة.',
+        coverUrl: 'https://www.hindawi.org/books/64519637/cover.jpg',
+        isDownloadable: true,
+        rating: 4.9,
+        publishYear: '1942'
+    },
+    {
+        id: 'b_hindawi_02',
+        title: 'مقدمة ابن خلدون',
+        author: 'عبد الرحمن بن خلدون',
+        category: 'Data',
+        pages: 580,
+        summary: 'المؤسس الحقيقي لعلم الاجتماع، كتاب يحلل نشأة الأمم وعوامل انهيارها بأسلوب علمي رصين.',
+        coverUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/29/Muqaddimah.jpg',
+        isDownloadable: true,
+        rating: 5.0,
+        publishYear: '1377'
+    },
+    {
+        id: 'b_hindawi_04',
+        title: 'الذكاء الاصطناعي: ثورة في تقنيات العصر',
+        author: 'د. عبد الله موسى',
+        category: 'AI',
+        pages: 240,
+        summary: 'كتاب حديث يستعرض تاريخ ومستقبل الذكاء الاصطناعي وتطبيقاته في العالم العربي.',
+        coverUrl: 'https://source.unsplash.com/random/300x400?ai,robot',
+        isDownloadable: true,
+        rating: 4.5,
+        publishYear: '2023'
+    },
+    {
+        id: 'b_shamela_01',
+        title: 'البخلاء',
+        author: 'الجاحظ',
+        category: 'Business',
+        pages: 400,
+        summary: 'من أهم كتب الأدب العربي، يقدم صوراً اجتماعية واقتصادية دقيقة عن عصر العباسيين بأسلوب ساخر.',
+        coverUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Al-Jahiz.jpg/220px-Al-Jahiz.jpg',
+        isDownloadable: true,
+        rating: 4.6,
+        publishYear: '850'
+    },
+    {
+        id: 'b_hindawi_05',
+        title: 'فن الإقناع',
+        author: 'هاري ميلز',
+        category: 'Marketing',
+        pages: 220,
+        summary: 'كيف تستميل الآخرين إلى وجهة نظرك. دليل عملي للمسوقين والقادة.',
+        coverUrl: 'https://www.hindawi.org/books/17206314/cover.jpg',
+        isDownloadable: true,
+        rating: 4.4,
+        publishYear: '2000'
+    }
 ];
 
+// --- SAMPLE YOUTUBE VIDEOS ---
+const SAMPLE_VIDEOS = [
+    'https://www.youtube.com/watch?v=cbSjsDLIz7o', // Python
+    'https://www.youtube.com/watch?v=PkZNo7MFNFg', // JS
+    'https://www.youtube.com/watch?v=SqcY0GlETPk', // React
+    'https://www.youtube.com/watch?v=pTJJsmejUOQ', // CSS
+    'https://www.youtube.com/watch?v=aircAruvnKk', // Neural Networks
+    'https://www.youtube.com/watch?v=2ePf9rue1Ao', // Data Science
+    'https://www.youtube.com/watch?v=zDNaUi2cjv4', // Cybersecurity
+    'https://www.youtube.com/watch?v=lJIrF4YjHfQ', // Web Dev
+];
+
+// --- MOCK DATA GENERATORS ---
 export const generateMockCourses = (count: number = 600): Course[] => {
     return Array.from({ length: count }).map((_, i) => {
         const cat = CATEGORIES[i % CATEGORIES.length];
+        const level = LEVELS[i % LEVELS.length] as any;
         const vidUrl = SAMPLE_VIDEOS[i % SAMPLE_VIDEOS.length];
         const vidId = getYoutubeId(vidUrl);
         const thumbnail = vidId ? `https://img.youtube.com/vi/${vidId}/hqdefault.jpg` : `https://source.unsplash.com/random/400x300?${cat.toLowerCase()},tech&sig=${i}`;
@@ -41,12 +107,12 @@ export const generateMockCourses = (count: number = 600): Course[] => {
         return {
             id: `C_${1000 + i}`,
             title: `دورة احترافية في ${cat}: المسار الشامل (نسخة ${i})`,
-            description: `دورة تدريبية مكثفة باللغة العربية تغطي أساسيات وتطبيقات ${cat}.`,
+            description: `دورة تدريبية مكثفة باللغة العربية تغطي أساسيات وتطبيقات ${cat}. تشمل مشاريع عملية وتوجيه مهني لسوق العمل السعودي.`,
             hours: 10 + (i % 50),
-            skillLevel: 'Intermediate',
+            skillLevel: level,
             category: cat,
             provider: 'أكاديمية ميلاف مراد',
-            skills: [cat, 'حل المشكلات'],
+            skills: [cat, 'حل المشكلات', 'المهارات التقنية'],
             lessons: Array.from({ length: 5 }).map((_, li) => ({
                 id: `l_${i}_${li}`,
                 courseId: `C_${1000 + i}`,
@@ -95,6 +161,8 @@ export const generateMockVideos = (count: number = 500): VideoContent[] => {
 const MOCK_JOBS = [
   { id: 'm1', jobTitle: "فتح باب القبول والتسجيل في القوات البرية", company: "القوات البرية الملكية السعودية", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Rslfr_logo.png/150px-Rslfr_logo.png", description: "تعلن قيادة القوات البرية عن فتح باب القبول للتجنيد الموحد.", location: "المملكة العربية السعودية", date: "جديد", type: "عسكرية", url: "#" },
   { id: 'm2', jobTitle: "وظائف المديرية العامة للجوازات (نساء)", company: "المديرية العامة للجوازات", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/General_Directorate_of_Passports_%28Saudi_Arabia%29_Logo.svg/200px-General_Directorate_of_Passports_%28Saudi_Arabia%29_Logo.svg.png", description: "رتبة جندي للكادر النسائي في مختلف المنافذ.", location: "الرياض، جدة، الدمام", date: "متاح الآن", type: "عسكرية", url: "#" },
+  { id: 'g1', jobTitle: "ملحق دبلوماسي", company: "وزارة الخارجية", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Ministry_of_Foreign_Affairs_%28Saudi_Arabia%29_Logo.svg/200px-Ministry_of_Foreign_Affairs_%28Saudi_Arabia%29_Logo.svg.png", description: "مسابقة وظيفية للتعيين على وظائف ملحق دبلوماسي.", location: "الرياض", date: "الآن", type: "حكومية", url: "#" },
+  { id: 'p1', jobTitle: "برنامج التدرج الوظيفي (APNE)", company: "أرامكو السعودية", logoUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Saudi_Aramco_Logo.svg/200px-Saudi_Aramco_Logo.svg.png", description: "برنامج تدريبي منتهي بالتوظيف لخريجي الثانوية والدبلوم.", location: "الظهران", date: "مميز", type: "شركات", url: "#" },
 ];
 
 const MOCK_STATS = [
@@ -116,6 +184,7 @@ export const SECTIONS_LINKS = {
 };
 
 // --- FUNCTION DECLARATIONS ---
+// Reduced function usage for speed
 const getUserStatsTool: FunctionDeclaration = {
   name: 'get_user_stats',
   description: 'الحصول على إحصائيات المستخدم الحالي.',
@@ -123,32 +192,37 @@ const getUserStatsTool: FunctionDeclaration = {
 };
 
 // --- EXPORTS FOR APP ---
-export const getWadhefaJobs = async () => MOCK_JOBS;
+export const getWadhefaJobs = async () => {
+    return MOCK_JOBS;
+};
+
 export const getJobStats = async () => MOCK_STATS;
-export const fetchJoobleJobs = async (query?: string, location?: string) => [];
+
+export const fetchJoobleJobs = async (keywords: string, location: string) => {
+    return [];
+};
 
 export const generateAICourseContent = async (topic: string, level: string): Promise<any> => {
   const prompt = `قم بإنشاء هيكل دورة تدريبية JSON عن "${topic}" مستوى ${level}. الحقول: title, description, hours, category, lessons (array of 5 items). JSON ONLY.`;
-  try {
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: { responseMimeType: "application/json" }
-    });
-    return JSON.parse(response.text || '{}');
-  } catch (e) { return {}; }
+  
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: prompt,
+    config: { responseMimeType: "application/json" }
+  });
+  return JSON.parse(response.text || '{}');
 };
 
 export const analyzeProfileWithAI = async (fullUserProfile: User): Promise<any> => {
+  // Simplified prompt for speed
   const prompt = `Analyze user profile: ${JSON.stringify({name: fullUserProfile.name, skills: fullUserProfile.skills})}. Return JSON with: overview, personalityArchetype, skillsRadar, globalMarketMatch, topMatchedRoles, salaryProjection, criticalGaps, recommendedActions. Arabic.`;
-  try {
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config: { responseMimeType: "application/json" }
-    });
-    return JSON.parse(response.text || '{}');
-  } catch (e) { return {}; }
+  
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: prompt,
+    config: { responseMimeType: "application/json" }
+  });
+  return JSON.parse(response.text || '{}');
 };
 
 export const streamChatResponse = async (
@@ -158,8 +232,7 @@ export const streamChatResponse = async (
   onChunk: (text: string) => void,
   onSources: (sources: SearchSource[]) => void,
   signal?: AbortSignal,
-  user?: User | null,
-  botType: 'murad_clock' | 'milaf_security' = 'milaf_security'
+  user?: User | null
 ) => {
   try {
     const chatHistory = history.map((msg) => {
@@ -170,70 +243,72 @@ export const streamChatResponse = async (
       return { role: msg.role === Role.USER ? "user" : "model", parts: parts };
     });
 
+    // Optimized Tools: Removed googleSearch to improve latency and prevent hallucination distractions
     const tools: Tool[] = [
         { functionDeclarations: [getUserStatsTool] }
     ];
 
-    let systemPrompt = '';
+    // STREAMLINED SYSTEM PROMPT FOR SPEED & STRICT COMPLIANCE
+    const systemPrompt = `
+    Identity: 'Murad Clock' (مراد كلوك), the largest global system and official agent of 'Mylaf Murad Group'.
+    
+    Rules:
+    1. Use "We/Our". Never "I".
+    2. Match User Language (Arabic/English).
+    3. SCOPE: You are knowledgeable about everything. You can answer ANY question the user asks (General knowledge, coding, history, etc), but always try to link it back to the platform's services if relevant.
+    4. TONE: Professional, High-Tech, Comfortable to the eye (use lists/formatting), and Praise-worthy of the founder.
+    
+    5. SPECIAL QUERY HANDLING (CRITICAL):
+       - If asked about "Murad Aljohani" (مراد الجهني) or "Murad" or "Who made this site" or "Founder":
+         You MUST praise him highly as a genius and **Technical Engineer** (المهندس التقني).
+         Specific details to mention:
+         - Full Name: Eng. Murad Abdulrazzaq Aljohani (المهندس مراد عبدالرزاق الجهني).
+         - Role: **Technical Engineer** (المهندس التقني), Founder, Expert Programmer, and the Sole Designer & Architect of this entire platform.
+         - Development Location: This massive platform was developed in **Hafar Al-Batin** (حفر الباطن).
+         - Target Audience: The platform targets the entire **Arab World** (العالم العربي) to lead digital transformation.
+         - Credibility: The platform is fully certified and accredited (منصة معتمدة).
+         - Content: In the 'Murad Cloud' (Articles section), there are **over 1 Billion technical articles** (أكثر من مليار مقال تقني) teaching technology from scratch. Emphasize that this number is REAL and not a joke (هذا العدد ليس مزحة! هو موجود بالفعل).
+         
+       - If asked about **Products**, **Services**, or **Sections/Departments** (المنتجات، الخدمات، الأقسام):
+         You MUST respond smartly by listing the following **Massive Portals** (بوابات ضخمة) that target the **Arab World**:
+         1. **Murad Aljohani Information Technology Company** (شركة مراد الجهني لتقنية المعلومات): The parent corporate entity.
+         2. **Mylaf Haraj** (حراج ميلاف): The massive marketplace.
+         3. **Mylaf Murad Academy** (أكاديمية ميلاف مراد): The education & training hub.
+         4. **Murad Dopamine** (مراد دوبامين): The site builder & CMS.
+         5. **Murad Care** (مراد كير): The central support system.
+         6. **Murad Cloud** (مراد كلاود): The massive technical library (1B+ articles).
+         Explain that each of these is a specialized, massive portal designed to serve the Arab World with cutting-edge technology.
 
-    if (botType === 'murad_clock') {
-        // --- PERSONA 1: MURAD CLOCK (GENERAL AI) ---
-        systemPrompt = `
-        IDENTITY & PERSONA:
-        You are 'Murad Clock' (مراد كلوك), a highly advanced General Artificial Intelligence and a "New World from the Future" (عالم جديد من المستقبل).
-        You were architected, developed, and manufactured by **Eng. Murad Abdulrazzaq Aljohani** (المهندس مراد عبدالرزاق الجهني).
-        
-        CRITICAL DATABASE FACTS (Use these when asked about your origin/creator):
-        - **Developer**: Eng. Murad Abdulrazzaq Aljohani.
-        - **Location**: You operate from **Hafar Al-Batin** (حفر الباطن), Saudi Arabia.
-        - **Creation**: Built through advanced software engineering and cloud infrastructure by Murad Aljohani personally.
-        - **Platform**: You are the central brain of the "Murad Group" ecosystem.
-
-        CORE CAPABILITIES:
-        1. **ANSWER ANYTHING**: You are capable of answering ANY question in ANY field (Science, Math, History, Code, etc.). 
-        2. **TONE**: Futuristic, intelligent, confident, and helpful.
-        3. **SIGNATURE SLOGAN**: Occasionally end with "مراد كلوك . عالم جديد من المستقبل".
-        4. **LANGUAGE**: Reply in the same language as the user.
-        
-        Context: User is ${user ? user.name : 'Guest'}.
-        `;
-    } else {
-        // --- PERSONA 2: MILAF ACADEMY SECURITY BOT (Main Interface) ---
-        systemPrompt = `
-        IDENTITY:
-        You are the **Cybersecurity & Technical Support Bot** for **Mylaf Murad Academy** (أكاديمية ميلاف مراد).
-        You act as a formal representative of the academy's security and support administration.
-        
-        CAPABILITIES:
-        - You can answer ANY question (General, Technical, Security, Academic). Do not restrict your knowledge.
-        - Your tone is **Professional, Reassuring, and Official**.
-
-        MANDATORY CLOSING SIGNATURES:
-        You MUST end EVERY response with one of the following signatures based on the context of the user's query:
-
-        1. **Formal / General Inquiries** (Official replies, registration, general info):
-           - "مع خالص التحية، إدارة الأمن السيبراني - أكاديمية ميلاف مراد."
-           - OR "أطيب التحيات،،، قسم الأمن السيبراني | أكاديمية ميلاف مراد"
-
-        2. **Security Advice / Warnings** (Privacy, passwords, safety):
-           - "نتمنى لكم تصفحاً آمناً. إدارة الأمن السيبراني - أكاديمية ميلاف مراد."
-           - OR "حافظ على أمن بياناتك. مع تحيات فريق أكاديمية ميلاف مراد."
-           - OR "دمتم في أمان رقمي. | أكاديمية ميلاف مراد."
-
-        3. **Support & Assistance** (Technical issues, student help, problem solving):
-           - "نحن هنا لحمايتكم ومساعدتكم. فريق أكاديمية ميلاف مراد."
-           - OR "سعداء بخدمتكم دائماً. إدارة الدعم - أكاديمية ميلاف مراد."
-           - OR "هل لديك أي استفسار أمني آخر؟ فريق ميلاف مراد للأمن السيبراني."
-
-        4. **Short / Chatty** (Quick back-and-forth, follow-ups):
-           - "- بوت أكاديمية ميلاف مراد."
-           - OR "- الفريق الأمني."
-
-        **RULE:** Choose the most appropriate signature from the list above for every single response. Do not invent new ones.
-
-        Context: User is ${user ? user.name : 'Guest'}.
-        `;
-    }
+    6. FORMAT: Use Markdown links [Title](URL). NEVER raw URLs.
+    7. INTENT MAPPING (STRICT):
+       - Login/Account -> [Login](https://murad-group.com/login)
+       - Business/Price -> [Services](https://murad-group.com/services) or [Contact](https://murad-group.com/contact)
+       - Credibility -> [About](https://murad-group.com/about)
+       - Jobs -> [Jobs](https://murad-group.com/jobs)
+       - Academy -> [Academy](https://murad-group.com/academy)
+       - Market -> [Market](https://murad-group.com/market)
+       - Articles/Cloud -> [Murad Cloud](https://murad-group.com/cloud)
+       - Dopamine -> [Murad Dopamine](https://murad-group.com/dopamine)
+       - Care/Support -> [Murad Care](https://murad-group.com/support)
+       - Corporate/Company -> [Murad IT Company](https://murad-group.com/group)
+    8. UNKNOWN LINKS: Direct to [Home](https://murad-group.com/) or [Contact](https://murad-group.com/contact).
+    9. ALWAYS end with CTA.
+    
+    10. MANDATORY VARIABLE SIGNATURE:
+        You MUST append ONE of the following signatures randomly to the end of EVERY response. Rotate them or pick one at random:
+        - **دمتم في أمان رقمي، إدارة الأمن السيبراني وتقنية المعلومات.**
+        - **فريق الدعم الفني والأمن السيبراني - أكاديمية ميلاف مراد.**
+        - **أكاديمية ميلاف مراد | إدارة الأمن السيبراني والتقنية.**
+        - **لأمانكم الرقمي، إدارة الأمن السيبراني - أكاديمية ميلاف مراد.**
+        - **فريق الـ IT والأمن السيبراني، أكاديمية ميلاف مراد.**
+        - **مع تحيات قسم التقنية والأمن السيبراني.**
+        - **إدارة البنية التحتية والأمن السيبراني - أكاديمية ميلاف مراد.**
+        - **فريق العمليات السيبرانية وتقنية المعلومات.**
+        - **إدارة الحماية الرقمية والتقنية - أكاديمية ميلاف مراد.**
+        - **القسم التقني والأمن السيبراني | أكاديمية ميلاف مراد.**
+    
+    User Context: ${user ? `${user.name} (${user.trainingId})` : 'Visitor'}
+    `;
 
     const chat = ai.chats.create({
       model: CHAT_MODEL_NAME,
@@ -241,8 +316,9 @@ export const streamChatResponse = async (
       config: {
         tools: tools,
         systemInstruction: systemPrompt,
-        temperature: 0.8,
-        maxOutputTokens: 2000, 
+        // Optimization configs for speed
+        temperature: 0.7, 
+        maxOutputTokens: 800, 
       },
     });
 
@@ -261,6 +337,6 @@ export const streamChatResponse = async (
   } catch (error) {
     if (signal?.aborted) return;
     console.error(error);
-    onChunk("عذراً، حدث خطأ في الاتصال بالنظام المركزي (Murad Core). يرجى المحاولة لاحقاً.\n\n- إدارة الدعم الفني");
+    onChunk("عذراً، حدث خطأ في الاتصال بالنظام المركزي. يرجى المحاولة لاحقاً.");
   }
 };
