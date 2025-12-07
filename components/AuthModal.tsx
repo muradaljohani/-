@@ -22,12 +22,9 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
-  const { login, register } = useAuth();
+  const { login, signInWithGoogle } = useAuth(); // Import new function
   
   // State
-  const [view, setView] = useState<'login' | 'register'>('login');
-  
-  // Login State
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPass, setLoginPass] = useState('');
   const [showPass, setShowPass] = useState(false);
@@ -44,7 +41,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
       setError(null);
       setIsLoading(true);
       
-      if (provider) {
+      if (provider === 'google') {
+          // Use Firebase for Google
+          try {
+              await signInWithGoogle();
+              onLoginSuccess?.();
+          } catch (e) {
+              setError('فشل تسجيل الدخول عبر جوجل');
+          }
+      } else if (provider) {
           // Social Login Mock
           const res = await RealAuthService.exchangeOAuthCode(provider, 'mock_code');
           if (res.success && res.user) {

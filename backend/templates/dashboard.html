@@ -1,0 +1,56 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم | Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Tajawal', sans-serif; background-color: #0f172a; color: white; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Card Container -->
+    <div class="bg-slate-800 border border-slate-700 shadow-2xl rounded-3xl p-10 max-w-md w-full text-center relative overflow-hidden animate-fade-in-up">
+        
+        <!-- Glow Effect -->
+        <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+
+        <!-- User Image -->
+        <div class="relative w-24 h-24 mx-auto mb-6">
+            <img src="{{ user.picture }}" alt="Profile" class="w-full h-full rounded-full border-4 border-slate-700 shadow-lg object-cover">
+            <div class="absolute bottom-0 right-0 w-6 h-6 bg-emerald-500 border-4 border-slate-800 rounded-full"></div>
+        </div>
+
+        <!-- Welcome Text -->
+        <h1 class="text-3xl font-black mb-2">أهلاً بك، <span class="text-blue-400">{{ user.name }}</span></h1>
+        <p class="text-slate-400 text-sm mb-8">{{ user.email }}</p>
+
+        <!-- Status Badge -->
+        <div class="inline-flex items-center gap-2 bg-slate-900/50 px-4 py-2 rounded-full border border-slate-700 mb-8">
+            <div class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+            <span class="text-xs font-bold text-slate-300">حالة الحساب: نشط</span>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="space-y-3">
+            <button class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20">
+                لوحة التحكم الرئيسية
+            </button>
+            
+            <a href="/logout" class="block w-full py-3 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-all">
+                تسجيل الخروج
+            </a>
+        </div>
+
+        <div class="mt-8 text-xs text-slate-600 font-mono">
+            Session ID: {{ user.uid[:8] }}...
+        </div>
+
+    </div>
+
+</body>
+</html>

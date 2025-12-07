@@ -196,16 +196,19 @@ export const MilafBot: React.FC = () => {
   return (
     <div className={`fixed z-[9990] font-sans ${isOpen ? 'inset-0 sm:inset-auto sm:bottom-6 sm:right-6' : 'bottom-6 right-6'}`} dir="rtl">
       {(!isOpen) && (
-        <button 
-          onClick={() => setIsOpen(true)}
-          className="group relative flex items-center justify-center w-14 h-14 bg-black rounded-full border border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.4)] hover:scale-110 transition-transform"
-        >
-          <Bot className="w-7 h-7 text-white" />
-          <span className="absolute -top-1 -right-1 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
-          </span>
-        </button>
+        <div className="flex flex-col items-center gap-2 group cursor-pointer" onClick={() => setIsOpen(true)}>
+            <div className="relative flex items-center justify-center w-14 h-14 bg-black rounded-full border border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.4)] group-hover:scale-110 transition-transform">
+              <Bot className="w-7 h-7 text-white" />
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+              </span>
+            </div>
+            <div className="flex flex-col items-center gap-0.5 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-lg border border-white/5">
+                <span className="text-[10px] font-bold text-gray-200 group-hover:text-white transition-colors shadow-black drop-shadow-sm">مراد كلوك</span>
+                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wide group-hover:text-gray-300 transition-colors">Murad Clock</span>
+            </div>
+        </div>
       )}
 
       {isOpen && (

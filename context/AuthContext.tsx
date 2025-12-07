@@ -6,6 +6,10 @@ import { generateAICourseContent, analyzeProfileWithAI } from '../services/gemin
 import { SecurityCore } from '../services/SecurityCore';
 import { OFFICIAL_SEAL_CONFIG } from '../constants/officialAssets';
 
+// --- FIREBASE IMPORTS ---
+import { signInWithPopup } from 'firebase/auth';
+import { auth, googleProvider } from '../src/lib/firebase';
+
 // --- FLUID ENGINES ---
 import { AccessGate } from '../services/Fluid/AccessGate';
 import { CognitiveBrain } from '../services/Fluid/CognitiveBrain';
@@ -34,6 +38,7 @@ import { IronDome } from '../services/IronDome/IronDomeCore';
 interface AuthContextType {
   user: User | null;
   login: (userData: Partial<User>, password?: string) => Promise<{ success: boolean; error?: string }>;
+  signInWithGoogle: () => Promise<void>; // Added Google Sign In
   register: (data: RegistrationData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   resetPassword: (email: string) => Promise<boolean>;
@@ -268,6 +273,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
           setShowLoginModal(true);
       }
+  };
+
+  // --- FIREBASE GOOGLE LOGIN IMPLEMENTATION ---
+  const signInWithGoogle = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      const idToken = await user.getIdToken();
+
+      // Send Token to Backend for Verification & Session Creation
+      const response = await fetch('/api/session_login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken })
+      });
+
+      if (response.ok) {
+          // Redirect to the protected dashboard route served by Flask
+          window.location.href = '/dashboard';
+      } else {
+          console.error("Backend verification failed");
+          alert("فشل التحقق من الدخول في السيرفر");
+      }
+    } catch (error) {
+      console.error("Google Sign In Error:", error);
+      alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل");
+    }
   };
 
   const depositToWallet = async (amount: number) => {
@@ -546,6 +578,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   return (
     <AuthContext.Provider value={{ 
         user, login, register, logout, resetPassword, updateProfile, isAuthenticated: !!user, checkProfileCompleteness, verifyUserAttribute, updateIBAN, submitIdentityVerification,
+        signInWithGoogle, // Exported for AuthModal
         createService, createProduct, createJob, addAcademicProject, searchContent, markProductAsSold, incrementProductViews,
         allServices, allProducts, allJobs, storedUsers,
         enrollCourse, updateCourseProgress, completeCourse, submitAssignment, markAttendance, submitExamResult,
