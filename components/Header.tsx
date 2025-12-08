@@ -1,203 +1,123 @@
 
-import React, { useState, useEffect } from 'react';
-import { Crown, Gavel, UploadCloud, Landmark, Menu, X, GraduationCap, Briefcase, ShoppingBag, DownloadCloud, Command, Wallet, Gift, Building2, Fingerprint, Scale, Zap, LogIn, User, Globe, Clock, FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import { Menu, LogIn, GraduationCap, ShoppingBag, Globe, FileText, Clock, Cloud, Server, Zap } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { PartnerCommandCenter } from './Expansion/PartnerCommandCenter';
-import { DigitalPassport } from './Governance/DigitalPassport';
-import { TribunalCourt } from './Governance/TribunalCourt';
-import { PrimeDashboard } from './Subscription/PrimeDashboard';
-import { UniversalProfileHub } from './Nexus/UniversalProfileHub';
+import { AuthModal } from './AuthModal';
 
 interface HeaderProps {
-  onNewChat?: () => void;
-  onOpenJobs?: () => void;
-  onOpenAcademy?: () => void;
-  onOpenHaraj?: () => void;
-  onOpenMarket?: () => void;
-  onOpenPublish?: () => void;
-  onOpenTraining?: () => void;
-  onOpenOmni?: () => void;
-  onOpenBusiness?: () => void; 
-  onOpenDomains?: () => void; 
-  onOpenCloud?: () => void;
-  onOpenMuradClock?: () => void; 
-  isLanding?: boolean; 
+  onNavigate: (path: string) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ 
-  onNewChat, onOpenJobs, onOpenAcademy, onOpenHaraj, onOpenMarket, 
-  onOpenPublish, onOpenTraining, onOpenOmni, onOpenBusiness, 
-  onOpenDomains, onOpenCloud, onOpenMuradClock, isLanding = false 
-}) => {
-  const { user, brain, setShowLoginModal } = useAuth();
-  
-  // Modals Local State
-  const [isPartnerOpen, setIsPartnerOpen] = useState(false); 
-  const [isPassportOpen, setIsPassportOpen] = useState(false);
-  const [isTribunalOpen, setIsTribunalOpen] = useState(false);
-  const [isPrimeOpen, setIsPrimeOpen] = useState(false);
-  const [isProfileHubOpen, setIsProfileHubOpen] = useState(false);
-  
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
+  const { user, showLoginModal, setShowLoginModal } = useAuth();
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);
 
-  const defaultOrder = ['jobs', 'haraj', 'market', 'training', 'academy'];
-  const [menuOrder, setMenuOrder] = useState(defaultOrder);
-
-  useEffect(() => {
-      setMenuOrder(brain.getAdaptiveMenuOrder(defaultOrder));
-  }, []);
-
-  // SEO-Friendly Navigation Handler
-  const handleNavClick = (e: React.MouseEvent, id: string, action?: () => void) => {
-      e.preventDefault();
-      brain.trackMenuClick(id);
-      if (action) {
-          action();
-      } else {
-          let path = `/${id}`;
-          if (id === 'training') path = '/academy';
-          if (id === 'murad-clock') path = '/murad-clock';
-          if (id === 'meta') path = '/meta';
-          
-          window.history.pushState({}, '', path);
-          window.dispatchEvent(new PopStateEvent('popstate'));
+  // Sync internal state with context state for triggering login modal from elsewhere
+  React.useEffect(() => {
+      if (showLoginModal) {
+          setIsAuthOpen(true);
+          setShowLoginModal(false); // Reset trigger
       }
-      setMobileMenuOpen(false);
-  };
+  }, [showLoginModal]);
 
-  const headerClass = isLanding ? "fixed top-0 w-full z-50 transition-all duration-300" : "sticky top-0 z-50 transition-all duration-300";
-  const bgClass = isLanding ? "bg-[#0f172a]/90 backdrop-blur-md border-b border-white/10" : "bg-[#0f172a]/95 backdrop-blur-xl border-b border-white/10 shadow-lg";
-
-  const renderNavButton = (id: string) => {
-      switch(id) {
-          case 'jobs': return (
-              <a key="jobs" href="/jobs" onClick={(e) => handleNavClick(e, 'jobs', onOpenJobs)} className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all font-bold text-xs lg:text-sm group whitespace-nowrap" title="تصفح أحدث الوظائف">
-                  <Briefcase className="w-4 h-4 text-blue-400 group-hover:scale-110 transition-transform"/> 
-                  <span className="hidden lg:inline">بوابة </span>الوظائف
-              </a>
-          );
-          case 'haraj': return (
-              <a key="haraj" href="/haraj" onClick={(e) => handleNavClick(e, 'haraj', onOpenHaraj)} className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all font-bold text-xs lg:text-sm group whitespace-nowrap" title="حراج السيارات والعقارات">
-                  <Gavel className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform"/> الحراج
-              </a>
-          );
-          case 'market': return (
-              <a key="market" href="/market" onClick={(e) => handleNavClick(e, 'market', onOpenMarket)} className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all font-bold text-xs lg:text-sm group whitespace-nowrap" title="سوق الخدمات المصغرة">
-                  <ShoppingBag className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform"/> السوق
-              </a>
-          );
-          case 'training': return (
-              <a key="training" href="/training" onClick={(e) => handleNavClick(e, 'training', onOpenTraining)} className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all font-bold text-xs lg:text-sm group whitespace-nowrap" title="الدورات التدريبية المعتمدة">
-                  <GraduationCap className="w-4 h-4 text-purple-400 group-hover:scale-110 transition-transform"/> التدريب
-              </a>
-          );
-          default: return null;
-      }
+  const handleNav = (path: string) => {
+      onNavigate(path);
+      setMobileMenu(false);
   };
 
   return (
-    <header className={`${headerClass} ${bgClass}`}>
-      <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+    <>
+    <header className="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur-xl border-b border-white/10 shadow-lg">
+      <div className="max-w-[1400px] mx-auto px-4 h-16 flex items-center justify-between">
         
-        {/* LOGO AREA */}
-        <div className="flex items-center gap-4">
-            <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="lg:hidden text-white p-2">
-                <Menu className="w-6 h-6"/>
-            </button>
-            <div className="flex items-center gap-3 cursor-pointer" onClick={(e) => handleNavClick(e, 'landing', onNewChat)}>
-                <div className="relative group">
-                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-amber-500 rounded-lg blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
-                    <div className="relative w-10 h-10 bg-[#0f172a] rounded-lg flex items-center justify-center border border-white/10">
-                        <span className="font-black text-white text-xl">M</span>
-                    </div>
-                </div>
-                <div className="flex flex-col">
-                    <h1 className="text-white font-black text-lg leading-none tracking-tight">ميلاف <span className="text-amber-500">مراد</span></h1>
-                    <span className="text-[9px] text-gray-400 font-bold tracking-widest uppercase">National Platform</span>
-                </div>
+        {/* LOGO - PROFESSIONAL GLASS DESIGN */}
+        <div 
+            className="flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-white/5 backdrop-blur-2xl border border-white/10 shadow-xl transition-all duration-300 hover:bg-white/10 hover:border-white/20 hover:shadow-blue-500/20 cursor-pointer group shrink-0"
+            onClick={() => handleNav('landing')}
+        >
+            {/* The Integrated M Icon */}
+            <div className="relative flex items-center justify-center w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl shadow-inner border border-white/20 group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300">
+                <span className="font-black text-white text-lg drop-shadow-md">M</span>
+                <div className="absolute inset-0 rounded-xl bg-white/20 blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </div>
+            
+            {/* The Text */}
+            <div className="flex flex-col justify-center">
+                <span className="text-sm md:text-base font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-blue-200 tracking-wide leading-none group-hover:to-white transition-all">
+                    موقع ميلاف مراد
+                </span>
+                <span className="text-[8px] text-blue-300/70 font-mono uppercase tracking-[0.2em] mt-0.5 group-hover:text-blue-300 transition-colors">
+                    Official Portal
+                </span>
             </div>
         </div>
 
-        {/* DESKTOP NAV (Adaptive Order) */}
-        <nav className="hidden lg:flex items-center gap-1">
-            {menuOrder.map(id => renderNavButton(id))}
-            <a href="/meta" onClick={(e) => handleNavClick(e, 'meta')} className="flex items-center gap-2 px-3 lg:px-4 py-2 rounded-xl text-gray-300 hover:text-white hover:bg-white/10 transition-all font-bold text-xs lg:text-sm group whitespace-nowrap" title="أدوات الملفات PDF">
-                <FileText className="w-4 h-4 text-red-400 group-hover:scale-110 transition-transform"/> مراد ميتا
-            </a>
+        {/* DESKTOP NAV */}
+        <nav className="hidden lg:flex items-center gap-1 overflow-x-auto scrollbar-hide px-2">
+            <button onClick={() => handleNav('academy')} className="px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <GraduationCap className="w-4 h-4 text-purple-400"/> أكاديمية ميلاف مراد
+            </button>
+            <button onClick={() => handleNav('market')} className="px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <ShoppingBag className="w-4 h-4 text-emerald-400"/> سوق ميلاف مراد
+            </button>
+            <button onClick={() => handleNav('meta')} className="px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <FileText className="w-4 h-4 text-red-400"/> مراد ميا
+            </button>
+            <button onClick={() => handleNav('clock-system')} className="px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <Clock className="w-4 h-4 text-amber-400"/> مراد كلوك
+            </button>
+            <button onClick={() => handleNav('cloud')} className="px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <Cloud className="w-4 h-4 text-blue-400"/> مراد كلاود
+            </button>
+            <button onClick={() => handleNav('haraj')} className="px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <Globe className="w-4 h-4 text-cyan-400"/> حراج ميلاف
+            </button>
+            <button onClick={() => handleNav('domains')} className="px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <Server className="w-4 h-4 text-pink-400"/> مراد دومين
+            </button>
+            <button onClick={() => handleNav('dopamine')} className="px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <Zap className="w-4 h-4 text-yellow-400"/> مراد دوبامين
+            </button>
         </nav>
 
-        {/* ACTIONS AREA */}
-        <div className="flex items-center gap-3">
-            <button onClick={onOpenOmni} className="hidden md:flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 px-3 py-2 rounded-xl text-xs transition-all w-32 justify-between group">
-                <span className="group-hover:text-white">بحث شامل...</span>
-                <span className="bg-white/10 px-1.5 rounded text-[10px]">⌘K</span>
-            </button>
-
-            <div className="h-6 w-px bg-white/10 hidden md:block"></div>
-
+        {/* ACTIONS */}
+        <div className="flex items-center gap-3 shrink-0">
             {user ? (
-                <div className="flex items-center gap-3">
-                    <button onClick={() => setIsPartnerOpen(true)} className="hidden md:flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-tr from-amber-600 to-yellow-500 text-white shadow-lg hover:scale-105 transition-transform" title="لوحة الشركاء">
-                        <Gift className="w-4 h-4"/>
-                    </button>
-                    
-                    <div className="relative group cursor-pointer" onClick={() => setIsProfileHubOpen(true)}>
-                         <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 pl-1 pr-3 py-1 rounded-full border border-white/10 transition-all">
-                             <div className="relative">
-                                 <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-8 h-8 rounded-full border border-white/20"/>
-                                 {user.isIdentityVerified && <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white p-0.5 rounded-full border-2 border-[#0f172a]"><Fingerprint className="w-2 h-2"/></div>}
-                             </div>
-                             <div className="flex flex-col items-start">
-                                 <span className="text-xs font-bold text-white max-w-[80px] truncate">{user.name.split(' ')[0]}</span>
-                                 <span className="text-[9px] text-emerald-400 font-mono">{user.wallet?.balance || 0} SAR</span>
-                             </div>
-                         </div>
-                    </div>
+                <div className="flex items-center gap-3 bg-white/5 px-3 py-1.5 rounded-full border border-white/10 cursor-pointer hover:bg-white/10 transition-colors" onClick={() => handleNav('profile')}>
+                    <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-7 h-7 rounded-full border border-white/20"/>
+                    <span className="text-xs font-bold text-white max-w-[80px] truncate hidden sm:block">{user.name.split(' ')[0]}</span>
                 </div>
             ) : (
                 <button 
-                    onClick={() => setShowLoginModal(true)}
-                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-bold text-xs transition-all shadow-lg shadow-blue-900/20 transform hover:-translate-y-0.5"
+                    onClick={() => setIsAuthOpen(true)}
+                    className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-5 py-2 rounded-xl font-bold text-xs transition-all shadow-lg shadow-blue-900/20"
                 >
                     <LogIn className="w-4 h-4"/> دخول
                 </button>
             )}
+            <button className="lg:hidden text-white p-2" onClick={() => setMobileMenu(!mobileMenu)}>
+                <Menu className="w-6 h-6"/>
+            </button>
         </div>
       </div>
 
-      {/* MOBILE MENU OVERLAY */}
-      {mobileMenuOpen && (
-          <div className="lg:hidden absolute top-16 left-0 w-full bg-[#0f172a] border-b border-white/10 shadow-2xl animate-fade-in-up">
-              <div className="p-4 space-y-2">
-                  <a href="/jobs" onClick={(e) => handleNavClick(e, 'jobs', onOpenJobs)} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 text-white">
-                      <Briefcase className="w-5 h-5 text-blue-400"/> بوابة الوظائف
-                  </a>
-                  <a href="/academy" onClick={(e) => handleNavClick(e, 'academy', onOpenTraining)} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 text-white">
-                      <GraduationCap className="w-5 h-5 text-purple-400"/> التدريب
-                  </a>
-                  <a href="/market" onClick={(e) => handleNavClick(e, 'market', onOpenMarket)} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 text-white">
-                      <ShoppingBag className="w-5 h-5 text-emerald-400"/> السوق
-                  </a>
-                  <a href="/haraj" onClick={(e) => handleNavClick(e, 'haraj', onOpenHaraj)} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 text-white">
-                      <Gavel className="w-5 h-5 text-amber-400"/> الحراج
-                  </a>
-                  <a href="/murad-clock" onClick={(e) => handleNavClick(e, 'murad-clock', onOpenMuradClock)} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 text-white">
-                      <Clock className="w-5 h-5 text-blue-400"/> مراد كلوك
-                  </a>
-                  <a href="/meta" onClick={(e) => handleNavClick(e, 'meta')} className="flex items-center gap-3 p-3 rounded-xl bg-white/5 text-white">
-                      <FileText className="w-5 h-5 text-red-400"/> مراد ميتا (PDF Tools)
-                  </a>
-              </div>
+      {/* MOBILE MENU */}
+      {mobileMenu && (
+          <div className="lg:hidden bg-[#1e293b] border-t border-white/10 p-4 absolute w-full left-0 top-16 shadow-2xl z-50 flex flex-col gap-2 max-h-[80vh] overflow-y-auto">
+            <button onClick={() => handleNav('academy')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><GraduationCap className="w-4 h-4 text-purple-400"/> أكاديمية ميلاف مراد</button>
+            <button onClick={() => handleNav('market')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><ShoppingBag className="w-4 h-4 text-emerald-400"/> سوق ميلاف مراد</button>
+            <button onClick={() => handleNav('meta')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><FileText className="w-4 h-4 text-red-400"/> مراد ميا</button>
+            <button onClick={() => handleNav('clock-system')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><Clock className="w-4 h-4 text-amber-400"/> مراد كلوك</button>
+            <button onClick={() => handleNav('cloud')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><Cloud className="w-4 h-4 text-blue-400"/> مراد كلاود</button>
+            <button onClick={() => handleNav('haraj')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><Globe className="w-4 h-4 text-cyan-400"/> حراج ميلاف</button>
+            <button onClick={() => handleNav('domains')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><Server className="w-4 h-4 text-pink-400"/> مراد دومين</button>
+            <button onClick={() => handleNav('dopamine')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><Zap className="w-4 h-4 text-yellow-400"/> مراد دوبامين</button>
           </div>
       )}
-      
-      {/* Modals */}
-      {isPartnerOpen && <PartnerCommandCenter onClose={() => setIsPartnerOpen(false)} />}
-      {isPassportOpen && user && <DigitalPassport user={user} onClose={() => setIsPassportOpen(false)} />}
-      {isTribunalOpen && <TribunalCourt onClose={() => setIsTribunalOpen(false)} />}
-      {isPrimeOpen && <PrimeDashboard onClose={() => setIsPrimeOpen(false)} />}
-      <UniversalProfileHub isOpen={isProfileHubOpen} onClose={() => setIsProfileHubOpen(false)} />
-
     </header>
+
+    <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} onLoginSuccess={() => setIsAuthOpen(false)} />
+    </>
   );
 };

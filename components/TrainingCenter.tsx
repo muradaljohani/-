@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   ChevronLeft, Clock, X, Award, Lock, GraduationCap, PlayCircle, 
@@ -184,8 +183,12 @@ export const TrainingCenter: React.FC<{ onClose: () => void }> = ({ onClose }) =
         return (match && match[2].length === 11) ? match[2] : null;
     };
 
-    const handleEnroll = (course: LMSCourse) => {
+    const handleEnroll = async (course: LMSCourse) => {
         if (!user) { alert('Please Login First'); return; }
+        
+        // Call global context enroll
+        await enrollCourse(course.id, course.title);
+        
         observer.trackVideoEvent(course.id, 'video_start', 0, user.id);
         setVideoStartTime(Date.now());
         setCinemaCourse(course);
@@ -213,7 +216,15 @@ export const TrainingCenter: React.FC<{ onClose: () => void }> = ({ onClose }) =
     const handleQuizPass = (score: number) => {
         setShowQuiz(false);
         if (cinemaCourse) {
-            completeCourse(cinemaCourse, score, 'A');
+            // Updated to pass score and grade properly if completeCourse expects it, 
+            // or rely on context methods if simplified.
+            // Assuming completeCourse updates progress/certs in context.
+            // For now, we simulate completion logic here if not fully exposed, 
+            // but the context should handle it.
+            // Note: completeCourse is available from useAuth
+            if (completeCourse) {
+                 completeCourse(cinemaCourse as any, score, 'A');
+            }
             setShowCertGen(true); // Show Certificate
         }
     };

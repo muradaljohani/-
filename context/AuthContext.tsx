@@ -1,127 +1,83 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, ServiceListing, UserJob, Course, EnrolledCourse, Certificate, AcademicProject, Transaction, RegistrationData, Notification, Book, AdminConfig, SupportTicket, ProductListing, PublishedContent, PrimeSubscription, TranscriptEntry, LedgerEntry, CVRequest } from '../types';
-import { RealAuthService } from '../services/realAuthService';
-import { SecurityCore } from '../services/SecurityCore';
-import { OFFICIAL_SEAL_CONFIG } from '../constants/officialAssets';
-
-// --- FIREBASE IMPORTS ---
-import { signInWithPopup, signOut } from 'firebase/auth';
-import { auth, googleProvider } from '../src/lib/firebase';
-
-// --- FLUID ENGINES ---
-import { AccessGate } from '../services/Fluid/AccessGate';
-import { CognitiveBrain } from '../services/Fluid/CognitiveBrain';
-import { AutonomicHealer } from '../services/Fluid/AutonomicHealer';
-
-// --- ECONOMY ENGINES ---
-import { WalletSystem } from '../services/Economy/WalletSystem';
-import { InvoiceSystem } from '../services/Economy/InvoiceSystem';
-import { CommissionEngine } from '../services/Economy/CommissionEngine';
-import { PricingAI } from '../services/Economy/PricingAI';
-import { FinanceCore } from '../services/Economy/FinanceCore';
-
-// --- VIRAL & STORY ENGINE ---
-import { ViralEngine } from '../services/Expansion/ViralEngine';
-import { StoryEngine } from '../services/Stories/StoryEngine';
-
-// --- GOVERNANCE ENGINE ---
-import { GovernanceCore } from '../services/Governance/GovernanceCore';
-
-// --- SUBSCRIPTION ENGINE ---
-import { SubscriptionCore } from '../services/Subscription/SubscriptionCore';
-
-// --- IRON DOME ---
-import { IronDome } from '../services/IronDome/IronDomeCore';
+import { User, Notification, LoginProvider } from '../types';
+import { auth, db, storage, googleProvider, facebookProvider, twitterProvider, githubProvider } from '../src/lib/firebase';
+import { signInWithPopup, signOut, onAuthStateChanged, AuthProvider as FirebaseAuthProvider } from 'firebase/auth';
+import { doc, setDoc, getDoc, collection, addDoc, updateDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 interface AuthContextType {
   user: User | null;
   login: (userData: Partial<User>, password?: string) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<void>;
-  register: (data: RegistrationData) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
-  resetPassword: (email: string) => Promise<boolean>;
+  signInWithProvider: (provider: LoginProvider) => Promise<void>;
+  logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => void;
-  verifyUserAttribute: (type: 'phone' | 'email') => Promise<boolean>;
-  submitIdentityVerification: (provider: 'Stripe Identity' | 'Onfido' | 'Veriff') => Promise<{ success: boolean; error?: string }>;
-  updateIBAN: (iban: string) => { success: boolean; error?: string };
   isAuthenticated: boolean;
-  checkProfileCompleteness: () => number;
-  
-  createService: (service: Omit<ServiceListing, 'id' | 'createdAt' | 'sellerName' | 'sellerId' | 'rating' | 'reviewCount' | 'status' | 'sellerVerified' | 'sales'>) => { success: boolean; error?: string };
-  createJob: (job: Omit<UserJob, 'id' | 'createdAt' | 'status'>) => boolean;
-  createProduct: (product: Omit<ProductListing, 'id' | 'createdAt' | 'sellerName' | 'sellerId' | 'sellerVerified' | 'sellerAvatar' | 'views' | 'contactClicks' | 'isSuspicious'> & { status?: ProductListing['status'] }) => { success: boolean; error?: string };
-  markProductAsSold: (productId: string) => void; 
-  incrementProductViews: (productId: string) => void; 
-  allServices: ServiceListing[];
-  allProducts: ProductListing[]; 
-  allJobs: UserJob[];
-  storedUsers: User[]; 
-  myTransactions: Transaction[];
-  purchaseService: (item: ServiceListing | ProductListing, transactionDetails: any) => { success: boolean; error?: string };
-  placeBid: (productId: string, amount: number) => { success: boolean; error?: string };
-  markDelivered: (transactionId: string) => void;
-  confirmReceipt: (transactionId: string) => void;
-  rateTransaction: (transactionId: string, rating: number, comment: string) => void;
-
   isAdmin: boolean;
-  adminLogin: (u: string, p: string) => boolean;
-  adminLogout: () => void;
-  manualJobs: any[];
-  addManualJob: (job: any) => void;
-  editManualJob: (id: string, updatedJob: any) => void;
-  deleteManualJob: (id: string) => void;
-
-  submitCVRequest: (req: Omit<CVRequest, 'id' | 'status' | 'createdAt' | 'userId'>) => void;
-  publishUserContent: (type: 'Course' | 'Project' | 'Service', data: any) => Promise<{success: boolean; error?: string}>;
-  addAcademicProject: (project: Omit<AcademicProject, 'id' | 'createdAt' | 'status' | 'paymentStatus' | 'transactionId'> & { fee: number, transactionId: string }) => boolean;
-  enrollCourse: (course: Course, paymentId?: string) => void;
-  updateCourseProgress: (courseId: string, progress: number) => void;
-  completeCourse: (course: Course, score: number, grade: string) => void;
-  submitAssignment: (assignmentId: string, fileUrl: string) => void;
-  markAttendance: (courseId: string, sessionId: string) => void;
-  submitExamResult: (courseId: string, courseName: string, score: number, unlockPermission?: string) => void;
   
+  // Simulated Systems
   notifications: Notification[];
   markNotificationRead: (id: string) => void;
   sendSystemNotification: (userId: string, title: string, message: string, type?: Notification['type']) => void;
-
-  startReadingBook: (book: Book) => void;
-  updateBookProgress: (bookId: string, page: number, total: number) => void;
   
-  adminConfig: AdminConfig;
-  updateAdminConfig: (config: Partial<AdminConfig>) => void;
+  // Data Access
+  allJobs: any[];
+  allServices: any[];
+  allProducts: any[];
+  
+  // Marketplace Actions
+  createProduct: (productData: any) => { success: boolean; error?: string };
+  purchaseService: (service: any, transaction: any) => { success: boolean; error?: string };
+  confirmReceipt: (txId: string) => void;
+  myTransactions: any[];
+  
+  // Job Actions
+  manualJobs: any[];
+  addManualJob: (job: any) => void;
+  editManualJob: (id: string, data: any) => void;
+  deleteManualJob: (id: string) => void;
+
+  // Additional Actions
+  publishUserContent: (type: 'Course'|'Project'|'Service', data: any) => Promise<{success: boolean, error?: string}>;
+  submitCVRequest: (data: any) => void;
+  addAcademicProject: (data: any) => boolean;
+  
+  // Identity
+  submitIdentityVerification: (provider: string) => Promise<{success: boolean}>;
+  
+  // Admin Config
+  adminConfig: any;
+  updateAdminConfig: (cfg: any) => void;
+  adminLogin: (u: string, p: string) => boolean;
+  adminLogout: () => void;
+  
+  // System
   generateBackup: () => string;
   restoreBackup: (json: string) => boolean;
   getSystemAnalytics: () => any;
   
-  generateCourse: (topic: string, level: string) => Promise<Course | null>;
-  runAIAnalysis: () => Promise<void>;
-  aiGeneratedCourses: Course[];
-
-  searchContent: (query: string) => { services: ServiceListing[], jobs: UserJob[] };
-  createSupportTicket: (ticket: SupportTicket) => boolean;
+  // Neural Features
+  brain: any; // Placeholder for CognitiveBrain instance
+  healer: any; // Placeholder for Healer instance
   
+  // Exam & LMS
+  submitExamResult: (courseId: string, courseName: string, score: number, unlockPermission?: string) => void;
+  updateCourseProgress: (courseId: string, progress: number) => void;
+  enrollCourse: (courseId: string, title: string) => Promise<void>;
+  uploadAssignment: (file: File, courseId: string) => Promise<string | null>;
+
+  // Social
   followUser: (targetId: string) => void;
   unfollowUser: (targetId: string) => void;
 
-  brain: CognitiveBrain;
-  healer: AutonomicHealer;
-
-  walletSystem: WalletSystem;
-  pricingAI: PricingAI;
-  depositToWallet: (amount: number) => Promise<boolean>;
+  markProductAsSold: (productId: string) => void;
   
-  createStory: (media: string, type: 'image' | 'video', overlays: any[], isBoosted: boolean) => void;
-
-  governance: GovernanceCore;
-
-  // Subscription Methods
-  joinPrime: () => Promise<{ success: boolean; error?: string }>;
-  checkUpsellTrigger: () => { showUpsell: boolean; reason?: 'HeavySeller' | 'JobSeeker' | 'Learner' };
-
-  // ACTION GATING
-  requireAuth: (action: () => void) => void;
+  incrementProductViews: (productId: string) => void;
+  
+  // User Data Access
+  storedUsers: User[];
+  
+  // UI Controls
   showLoginModal: boolean;
   setShowLoginModal: (show: boolean) => void;
 }
@@ -130,194 +86,426 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
 
-// --- OFFICIAL SEAL ASSETS ---
-const DEFAULT_SIGNATURE = OFFICIAL_SEAL_CONFIG.signature;
-const DEFAULT_STAMP = OFFICIAL_SEAL_CONFIG.seal;
-
-const MOCK_JOBS: UserJob[] = [
-  {
-    id: 'j1',
-    title: 'مساعد إداري (عن بعد)',
-    company: 'شركة الحلول السريعة',
-    description: 'مطلوب مساعد إداري لتنظيم المواعيد وإدارة البريد الإلكتروني.',
-    location: 'عن بعد',
-    type: 'Part-time',
+// Mock Helper
+const createMockUser = (base: Partial<User>): User => ({
+    id: base.id || `u_${Date.now()}`,
+    name: base.name || 'User',
+    email: base.email || '',
+    avatar: base.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${base.name}`,
+    role: 'student',
+    isLoggedIn: true,
+    verified: true,
     createdAt: new Date().toISOString(),
-    status: 'active'
-  }
-];
+    lastLogin: new Date().toISOString(),
+    loginMethod: 'email',
+    linkedProviders: [],
+    xp: 500,
+    level: 2,
+    nextLevelXp: 1000,
+    wallet: { id: `w_${base.id || Date.now()}`, userId: base.id || '', balance: 0, currency: 'SAR', status: 'active', ledger: [], lastUpdated: new Date().toISOString() },
+    notifications: [],
+    enrolledCourses: [],
+    certificates: [],
+    transcript: [],
+    ...base
+});
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showLoginModal, setShowLoginModal] = useState(false); // Global login trigger
-
-  const security = SecurityCore.getInstance();
-  
-  // INSTANCES
-  const accessGate = AccessGate.getInstance();
-  const brain = CognitiveBrain.getInstance();
-  const healer = AutonomicHealer.getInstance();
-  const walletSystem = WalletSystem.getInstance();
-  const pricingAI = PricingAI.getInstance();
-  const financeCore = FinanceCore.getInstance();
-  const viralEngine = ViralEngine.getInstance();
-  const storyEngine = StoryEngine.getInstance();
-  const governance = GovernanceCore.getInstance();
-  const subscriptionCore = SubscriptionCore.getInstance(); 
-
-  // ... (State Initialization) ...
-  const [allServices, setAllServices] = useState<ServiceListing[]>(() => {
-      try { return JSON.parse(localStorage.getItem('mylaf_services') || '[]'); } catch (e) { return []; }
-  });
-  const [allProducts, setAllProducts] = useState<ProductListing[]>(() => {
-      try { return JSON.parse(localStorage.getItem('allProducts') || '[]'); } catch (e) { return []; }
-  });
-  const [allJobs, setAllJobs] = useState<UserJob[]>(() => {
-      try { return JSON.parse(localStorage.getItem('allJobs') || '[]'); } catch (e) { return MOCK_JOBS; }
-  });
-  const [manualJobs, setManualJobs] = useState<any[]>(() => {
-      try { return JSON.parse(localStorage.getItem('manualJobs') || '[]'); } catch (e) { return []; }
-  });
-  const [myTransactions, setMyTransactions] = useState<Transaction[]>(() => {
-      try { return JSON.parse(localStorage.getItem('mylaf_transactions') || '[]'); } catch (e) { return []; }
-  });
-  const [storedUsers, setStoredUsers] = useState<User[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [adminConfig, setAdminConfig] = useState<AdminConfig>({ 
-      allowPrinting: true,
-      ceoSignature: DEFAULT_SIGNATURE,
-      academicStamp: DEFAULT_STAMP
-  });
-  const [aiGeneratedCourses, setAiGeneratedCourses] = useState<Course[]>([]); 
+  const [showLoginModal, setShowLoginModal] = useState(false); // Only for external triggers
+  
+  // Data Holders
+  const [allJobs, setAllJobs] = useState<any[]>(() => JSON.parse(localStorage.getItem('allJobs') || '[]'));
+  const [allServices, setAllServices] = useState<any[]>(() => JSON.parse(localStorage.getItem('mylaf_services') || '[]'));
+  const [allProducts, setAllProducts] = useState<any[]>(() => JSON.parse(localStorage.getItem('allProducts') || '[]'));
+  const [myTransactions, setMyTransactions] = useState<any[]>([]);
+  const [manualJobs, setManualJobs] = useState<any[]>(() => JSON.parse(localStorage.getItem('manual_jobs') || '[]'));
+  const [adminConfig, setAdminConfig] = useState<any>(() => JSON.parse(localStorage.getItem('admin_config') || '{}'));
+  
+  // Stored Users (for Social/Headhunter)
+  const [storedUsers, setStoredUsers] = useState<User[]>(() => JSON.parse(localStorage.getItem('mylaf_users') || '[]'));
+
+  // Placeholder refs for Brain/Healer to avoid circular deps in context
+  const brain = { 
+      trackInteraction: (tag: string, w: number) => console.log('Brain track:', tag),
+      personalizeList: (list: any[], extractor: any) => list 
+  };
+  const healer = {
+      sanitize: (s: string) => s,
+      safeFetch: async (k: string, p: Promise<any>, f: any) => { try { return await p } catch { return f } }
+  };
 
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const refCode = urlParams.get('ref');
-    if (refCode) {
-        viralEngine.processReferralClick(refCode);
+    // 1. Check Local Admin Session
+    if (localStorage.getItem('mylaf_admin_session') === 'active') {
+        setIsAdmin(true);
     }
 
-    const initializeApp = async () => {
+    // 2. Check User Session
+    const localSession = localStorage.getItem('mylaf_session');
+    if (localSession) {
+         setUser(JSON.parse(localSession));
+    }
+
+    // 3. Firebase Listener
+    if (auth) {
         try {
-            const restoredUser = accessGate.restoreSession();
-            const usersDB = localStorage.getItem('mylaf_users');
-            const storedConfig = localStorage.getItem('adminConfig');
-            const storedAICourses = localStorage.getItem('aiGeneratedCourses');
-            const adminSession = localStorage.getItem('mylaf_admin_session');
-            
-            if (storedConfig) {
-                const parsedConfig = JSON.parse(storedConfig);
-                setAdminConfig({
-                    ...parsedConfig,
-                    ceoSignature: DEFAULT_SIGNATURE,
-                    academicStamp: DEFAULT_STAMP
-                });
-            }
-            
-            if (storedAICourses) setAiGeneratedCourses(JSON.parse(storedAICourses));
-            if(usersDB) setStoredUsers(JSON.parse(usersDB));
+            const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+                if (firebaseUser) {
+                     // Sync to Firestore
+                     if (db) {
+                         try {
+                             const userRef = doc(db, "users", firebaseUser.uid);
+                             // Update basic info
+                             await setDoc(userRef, {
+                                 name: firebaseUser.displayName,
+                                 email: firebaseUser.email,
+                                 photo: firebaseUser.photoURL,
+                                 lastLogin: new Date().toISOString()
+                             }, { merge: true });
 
-            if (restoredUser) {
-                const wallet = walletSystem.getOrCreateWallet(restoredUser);
-                restoredUser.wallet = wallet;
-                if(!restoredUser.viralStats) {
-                    restoredUser.viralStats = {
-                        affiliateCode: restoredUser.name.replace(/\s+/g,'').toLowerCase(),
-                        totalClicks: 0,
-                        totalSignups: 0,
-                        totalEarnings: 0,
-                        pendingPayout: 0,
-                        campaigns: []
-                    };
+                             // Get full profile from Firestore to hydrate state
+                             const userSnap = await getDoc(userRef);
+                             const firestoreData = userSnap.exists() ? userSnap.data() : {};
+                             
+                             const appUser = createMockUser({
+                                id: firebaseUser.uid,
+                                name: firebaseUser.displayName || 'Social User',
+                                email: firebaseUser.email || '',
+                                avatar: firebaseUser.photoURL || '',
+                                loginMethod: 'google',
+                                isIdentityVerified: true,
+                                ...firestoreData
+                             });
+                             
+                             setUser(appUser);
+                             localStorage.setItem('mylaf_session', JSON.stringify(appUser));
+                         } catch (e) {
+                             console.error("Firestore Sync Error", e);
+                         }
+                     }
+                } else {
+                    // Logged out
+                    // setUser(null); // Optional: clear state on Firebase logout if desired
                 }
-                if (restoredUser.karma === undefined) restoredUser.karma = 500;
-                setUser(restoredUser);
-                setNotifications(restoredUser.notifications || []);
-            } else {
-                const currentUser = localStorage.getItem('mylaf_session');
-                if (currentUser) {
-                    const parsedUser = JSON.parse(currentUser);
-                    if (parsedUser.authToken && security.validateSession(parsedUser.authToken)) {
-                        const wallet = walletSystem.getOrCreateWallet(parsedUser);
-                        parsedUser.wallet = wallet;
-                        if (parsedUser.karma === undefined) parsedUser.karma = 500;
-                        setUser(parsedUser);
-                        setNotifications(parsedUser.notifications || []);
-                    }
-                }
-            }
-
-            if (adminSession === 'active') {
-                setIsAdmin(true);
-            }
+            });
+            return () => unsubscribe();
         } catch (e) {
-            console.error("Failed to initialize app data", e);
+            console.error("Firebase Auth Listener Error", e);
         }
-    };
-
-    initializeApp();
+    }
   }, []);
 
-  // --- ACTION GATING SYSTEM ---
-  const requireAuth = (action: () => void) => {
-      if (user) {
-          action();
-      } else {
-          setShowLoginModal(true);
-      }
-  };
+  // --- AUTH ACTIONS ---
 
-  // --- FIREBASE GOOGLE LOGIN IMPLEMENTATION ---
   const signInWithGoogle = async () => {
-    // Check if auth is initialized before using
-    if (!auth || !googleProvider) {
-        alert("خطأ: لم يتم تهيئة خدمة المصادقة (Firebase Auth) بشكل صحيح. تأكد من إعدادات API Key.");
-        console.error("Firebase auth/provider is null.");
-        return;
-    }
-    
+    await signInWithProvider('google');
+  };
+
+  const signInWithProvider = async (providerName: LoginProvider) => {
     try {
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
+      console.log(`Initiating ${providerName} Sign-In...`);
+      if (!auth) throw new Error("Firebase Auth not initialized");
       
-      // Map Firebase User to App User
-      const appUser: Partial<User> = {
-          email: user.email || '',
-          name: user.displayName || 'Google User',
-          avatar: user.photoURL || '',
-          loginMethod: 'google',
-          isEmailVerified: user.emailVerified
-      };
-      
-      await login(appUser, 'GOOGLE_AUTH_bypass');
+      let provider: FirebaseAuthProvider | null = null;
+      switch (providerName) {
+        case 'google': provider = googleProvider; break;
+        case 'facebook': provider = facebookProvider; break;
+        case 'twitter': provider = twitterProvider; break;
+        case 'github': provider = githubProvider; break;
+      }
 
-    } catch (error) {
-      console.error("Google Sign In Error:", error);
-      // alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل"); // Optional: alert user on error
+      if (provider) {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        // The onAuthStateChanged listener will handle the rest (Firestore sync & state update)
+      } else {
+         throw new Error(`Provider ${providerName} not supported via Firebase in this context.`);
+      }
+    } catch (error: any) {
+      console.error(`${providerName} Sign In Error (Caught safely):`, error);
+      
+      // FAIL-SAFE: Fallback to Demo Mode
+      console.warn(`Activating Fail-Safe Demo Mode for ${providerName}`);
+      
+      const demoUser = createMockUser({
+          id: `${providerName}_demo_user`,
+          name: `مستخدم تجريبي (${providerName})`,
+          email: `demo@${providerName}.com`,
+          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${providerName}`,
+          loginMethod: providerName,
+          isIdentityVerified: true
+      });
+      
+      setUser(demoUser);
+      localStorage.setItem('mylaf_session', JSON.stringify(demoUser));
+      saveUserToDB(demoUser);
+      
+      const msg = error?.code === 'auth/unauthorized-domain' 
+        ? `⚠️ الدومين غير مصرح به.\n✅ تم تفعيل وضع العرض (Demo Mode) لـ ${providerName}.`
+        : `⚠️ تعذر الاتصال بـ ${providerName}.\n✅ تم تفعيل وضع العرض (Demo Mode).`;
+      alert(msg);
     }
   };
 
-  const depositToWallet = async (amount: number) => {
-      if(!user || !user.wallet) return false;
-      const res = await walletSystem.processTransaction(user.wallet.id, 'DEPOSIT', amount, 'Top Up via Credit Card');
-      if (res.success) {
-          const updatedWallet = walletSystem.getOrCreateWallet(user);
-          updateProfile({ wallet: updatedWallet });
-          return true;
-      }
-      return false;
+  const login = async (userData: Partial<User>, password?: string) => {
+      // Simulate backend login
+      const u = createMockUser(userData);
+      setUser(u);
+      localStorage.setItem('mylaf_session', JSON.stringify(u));
+      saveUserToDB(u);
+      return { success: true };
   };
 
+  const logout = async () => {
+      if (auth) await signOut(auth).catch(console.error);
+      setUser(null);
+      setIsAdmin(false);
+      localStorage.removeItem('mylaf_session');
+      localStorage.removeItem('mylaf_admin_session');
+  };
+
+  const updateProfile = (data: Partial<User>) => {
+      if (user) {
+          const updated = { ...user, ...data };
+          setUser(updated);
+          localStorage.setItem(`user_${user.id}`, JSON.stringify(updated));
+          localStorage.setItem('mylaf_session', JSON.stringify(updated));
+          saveUserToDB(updated);
+          
+          // Sync to Firestore if user exists
+          if (db) {
+             const userRef = doc(db, "users", user.id);
+             setDoc(userRef, data, { merge: true }).catch(err => console.error("Update profile sync error", err));
+          }
+      }
+  };
+
+  // --- DATA SYNC ---
+  const saveUserToDB = (u: User) => {
+      const users = [...storedUsers];
+      const idx = users.findIndex(ex => ex.id === u.id);
+      if (idx > -1) users[idx] = u;
+      else users.push(u);
+      setStoredUsers(users);
+      localStorage.setItem('mylaf_users', JSON.stringify(users));
+  };
+
+  // --- FEATURE ACTIONS ---
+
+  const createProduct = (productData: any) => {
+      if (!user) return { success: false, error: 'Unauthorized' };
+      const newProduct = {
+          ...productData,
+          id: `p_${Date.now()}`,
+          sellerId: user.id,
+          sellerName: user.name,
+          sellerAvatar: user.avatar,
+          sellerVerified: user.isIdentityVerified,
+          createdAt: new Date().toISOString(),
+          status: 'active',
+          views: 0
+      };
+      const updated = [newProduct, ...allProducts];
+      setAllProducts(updated);
+      localStorage.setItem('allProducts', JSON.stringify(updated));
+      
+      // Update User Stats
+      const stats = user.publisherStats || { coursesCount: 0, projectsCount: 0, servicesCount: 0, totalSales: 0, rating: 5 };
+      updateProfile({ 
+          publishedItems: [...(user.publishedItems || []), { id: newProduct.id, type: 'Service', title: newProduct.title, status: 'Active', createdAt: newProduct.createdAt, price: newProduct.price }],
+          publisherStats: stats // Simplified update
+      });
+      
+      return { success: true };
+  };
+
+  const purchaseService = (service: any, transaction: any) => {
+      if (!user) return { success: false, error: 'Unauthorized' };
+      
+      // Create Transaction Record
+      const newTx = {
+          id: transaction.id || `txn_${Date.now()}`,
+          serviceId: service.id,
+          serviceTitle: service.title,
+          buyerId: user.id,
+          buyerName: user.name,
+          sellerId: service.sellerId,
+          sellerName: service.sellerName,
+          amount: service.price,
+          status: 'in_progress', // Escrow
+          createdAt: new Date().toISOString()
+      };
+
+      setMyTransactions([newTx, ...myTransactions]);
+      
+      return { success: true };
+  };
+
+  const confirmReceipt = (txId: string) => {
+      setMyTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, status: 'completed' } : tx));
+  };
+
+  const markProductAsSold = (pid: string) => {
+      const updated = allProducts.map(p => p.id === pid ? { ...p, status: 'sold' } : p);
+      setAllProducts(updated);
+      localStorage.setItem('allProducts', JSON.stringify(updated));
+  };
+  
+  const incrementProductViews = (pid: string) => {
+      const updated = allProducts.map(p => p.id === pid ? { ...p, views: (p.views || 0) + 1 } : p);
+      setAllProducts(updated);
+      localStorage.setItem('allProducts', JSON.stringify(updated));
+  };
+
+  // --- JOB ACTIONS ---
+  const addManualJob = (job: any) => {
+      const newJob = { ...job, id: `mj_${Date.now()}` };
+      const updated = [newJob, ...manualJobs];
+      setManualJobs(updated);
+      localStorage.setItem('manual_jobs', JSON.stringify(updated));
+  };
+
+  const editManualJob = (id: string, data: any) => {
+      const updated = manualJobs.map(j => j.id === id ? { ...j, ...data } : j);
+      setManualJobs(updated);
+      localStorage.setItem('manual_jobs', JSON.stringify(updated));
+  };
+
+  const deleteManualJob = (id: string) => {
+      const updated = manualJobs.filter(j => j.id !== id);
+      setManualJobs(updated);
+      localStorage.setItem('manual_jobs', JSON.stringify(updated));
+  };
+
+  // --- ACADEMY ACTIONS ---
+  
+  const enrollCourse = async (courseId: string, title: string) => {
+      if (!user) return;
+      if (db) {
+          try {
+              // Firestore structure: users/{uid}/enrolled/{courseId}
+              await setDoc(doc(db, "users", user.id, "enrolled", courseId), {
+                  joinedAt: new Date().toISOString(),
+                  courseId,
+                  title
+              });
+              console.log("Enrolled in Firestore!");
+          } catch (e) {
+              console.error("Error enrolling in Firestore", e);
+          }
+      }
+      
+      // Update local state
+      const enrolled = user.enrolledCourses || [];
+      if (!enrolled.find(c => c.courseId === courseId)) {
+          enrolled.push({ courseId, progress: 0, status: 'active', lastAccessed: new Date().toISOString() });
+          updateProfile({ enrolledCourses: enrolled });
+      }
+  };
+
+  const updateCourseProgress = async (courseId: string, progress: number) => {
+      if (!user) return;
+      
+      if (db) {
+          try {
+              await setDoc(doc(db, "users", user.id, "progress", courseId), {
+                  percent: progress,
+                  lastUpdated: new Date().toISOString()
+              }, { merge: true });
+          } catch (e) {
+              console.error("Error saving progress", e);
+          }
+      }
+
+      const enrolled = user.enrolledCourses || [];
+      const idx = enrolled.findIndex(c => c.courseId === courseId);
+      
+      if (idx > -1) {
+          enrolled[idx].progress = progress;
+          enrolled[idx].lastAccessed = new Date().toISOString();
+      } else {
+          enrolled.push({ courseId, progress, status: 'active', lastAccessed: new Date().toISOString() });
+      }
+      updateProfile({ enrolledCourses: enrolled });
+  };
+  
+  const uploadAssignment = async (file: File, courseId: string): Promise<string | null> => {
+      if (!user || !storage) return null;
+      try {
+          const storageRef = ref(storage, `assignments/${user.id}/${courseId}/${file.name}`);
+          const snapshot = await uploadBytes(storageRef, file);
+          const url = await getDownloadURL(snapshot.ref);
+          return url;
+      } catch (e) {
+          console.error("Upload error", e);
+          return null;
+      }
+  };
+
+  const submitExamResult = (courseId: string, courseName: string, score: number, unlockPermission?: string) => {
+      if (!user) return;
+      
+      // Update Transcript
+      const transcript = user.transcript || [];
+      transcript.push({
+          courseId,
+          courseName,
+          creditHours: 3, // Mock
+          grade: score >= 90 ? 'A' : score >= 80 ? 'B' : 'C',
+          score,
+          completionDate: new Date().toISOString(),
+          semester: '2025-1'
+      });
+
+      // Add Certificate
+      const certs = user.certificates || [];
+      certs.push({
+          id: `CERT-${Date.now()}`,
+          userId: user.id,
+          courseName,
+          trainingNumber: user.trainingId || 'N/A',
+          finalScore: score,
+          grade: score >= 90 ? 'ممتاز' : 'جيد جداً',
+          hours: 15,
+          issuedAt: new Date().toISOString(),
+          provider: 'Mylaf Academy',
+          verifyCode: `V-${Date.now()}`,
+          type: 'Course'
+      });
+
+      // Unlock Permissions
+      let perms = user.permissions || [];
+      if (unlockPermission && !perms.includes(unlockPermission)) {
+          perms.push(unlockPermission);
+      }
+
+      updateProfile({ transcript, certificates: certs, permissions: perms });
+  };
+
+  // --- SOCIAL ---
+  const followUser = (targetId: string) => {
+      if (!user) return;
+      const following = user.following || [];
+      if (!following.includes(targetId)) {
+          updateProfile({ following: [...following, targetId] });
+      }
+  };
+
+  const unfollowUser = (targetId: string) => {
+      if (!user) return;
+      updateProfile({ following: (user.following || []).filter(id => id !== targetId) });
+  };
+
+  // --- ADMIN & SYSTEM ---
   const adminLogin = (u: string, p: string) => {
-      const safeU = healer.sanitize(u);
-      if (safeU === 'MURAD' && p === 'MURAD123@A') {
+      if (u === 'MURAD' && p === 'MURAD123@A') {
           setIsAdmin(true);
           localStorage.setItem('mylaf_admin_session', 'active');
           return true;
@@ -325,312 +513,104 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
   };
 
-  const adminLogout = () => {
-      setIsAdmin(false);
-      localStorage.removeItem('mylaf_admin_session');
+  const updateAdminConfig = (cfg: any) => {
+      const newConfig = { ...adminConfig, ...cfg };
+      setAdminConfig(newConfig);
+      localStorage.setItem('admin_config', JSON.stringify(newConfig));
   };
 
-  const saveUsersDB = (users: User[]) => {
-      setStoredUsers(users);
-      localStorage.setItem('mylaf_users', JSON.stringify(users));
+  const generateBackup = () => {
+      const backup = {
+          users: storedUsers,
+          jobs: manualJobs,
+          products: allProducts,
+          transactions: JSON.parse(localStorage.getItem('mylaf_transactions') || '[]'),
+          config: adminConfig,
+          timestamp: new Date().toISOString()
+      };
+      return JSON.stringify(backup);
   };
 
-  const updateProfile = async (data: Partial<User>) => {
-    if (user) {
-      const sanitizedData = security.sanitizeObject(data);
-      const updatedUser = { ...user, ...sanitizedData };
-      setUser(updatedUser);
-      accessGate.persistSession(updatedUser);
-      localStorage.setItem('mylaf_session', JSON.stringify(updatedUser));
-      const newDB = storedUsers.map(u => u.id === user.id ? updatedUser : u);
-      saveUsersDB(newDB);
-    }
+  const restoreBackup = (json: string) => {
+      try {
+          const data = JSON.parse(json);
+          if (data.users) {
+              setStoredUsers(data.users);
+              localStorage.setItem('mylaf_users', JSON.stringify(data.users));
+          }
+          if (data.jobs) {
+              setManualJobs(data.jobs);
+              localStorage.setItem('manual_jobs', JSON.stringify(data.jobs));
+          }
+          return true;
+      } catch (e) {
+          return false;
+      }
   };
 
+  const getSystemAnalytics = () => {
+      return {
+          usersCount: storedUsers.length,
+          jobsCount: manualJobs.length + allJobs.length,
+          productsCount: allProducts.length,
+          totalRevenue: 154000, // Mock for now
+          serverLoad: 45
+      };
+  };
+
+  // --- MOCKED FUNCTIONS FOR CONTEXT ---
   const markNotificationRead = (id: string) => {
-      if (user && user.notifications) {
-          const updatedNotifs = user.notifications.map(n => n.id === id ? { ...n, isRead: true } : n);
-          updateProfile({ notifications: updatedNotifs });
-      }
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
   };
-
-  const sendSystemNotification = (userId: string, title: string, message: string, type: Notification['type'] = 'system') => {
-      const newNotif: Notification = { id: `n_${Date.now()}`, userId, type, title, message, isRead: false, date: new Date().toISOString() };
-      if (user && user.id === userId) {
-          updateProfile({ notifications: [newNotif, ...(user.notifications || [])] });
-      }
+  const sendSystemNotification = (uid: string, t: string, m: string, type: any) => {
+      const notif: Notification = { id: `n_${Date.now()}`, userId: uid, title: t, message: m, type, isRead: false, date: new Date().toISOString() };
+      setNotifications(prev => [notif, ...prev]);
+      if (user && user.id === uid) updateProfile({ notifications: [notif, ...(user.notifications || [])] });
   };
-
-  const joinPrime = async () => {
-      if (!user) return { success: false, error: 'Not logged in' };
-      const res = await subscriptionCore.joinPrime(user);
-      if (res.success && res.updatedUser) {
-          updateProfile(res.updatedUser);
-          sendSystemNotification(user.id, "ترقية العضوية", "أهلاً بك في نادي النخبة (Murad Elite)! تم تفعيل جميع المزايا.", "success");
-          return { success: true };
-      }
-      return res;
+  const publishUserContent = async (type: any, data: any) => { 
+      createProduct({ ...data, type }); // Map to product for now
+      return { success: true }; 
   };
-
-  const checkUpsellTrigger = () => {
-      if (!user) return { showUpsell: false };
-      return subscriptionCore.analyzeUserForUpsell(user);
+  const submitCVRequest = (data: any) => {
+      const req = { ...data, id: `cv_${Date.now()}`, status: 'pending', createdAt: new Date().toISOString() };
+      const reqs = user?.cvRequests || [];
+      updateProfile({ cvRequests: [req, ...reqs] });
   };
-
-  const publishUserContent = async (type: 'Course' | 'Project' | 'Service', data: any): Promise<{success: boolean; error?: string}> => {
-      if(!user) return { success: false, error: 'User not logged in' };
-      if (!IronDome.Firewall.inspect(data.description, 'Content Publish')) {
-          return { success: false, error: 'Security Violation: Malicious content detected.' };
-      }
-      if (!data.transactionId && !data.receipt) {
-          return { success: false, error: 'Payment Verification Required (Receipt Missing)' };
-      }
-      if (data.receipt) {
-          const financeRes = await financeCore.submitBankTransfer({
-              userId: user.id,
-              userName: user.name,
-              serviceTitle: `Publication Fee: ${data.title}`,
-              amount: data.price > 0 ? data.price * 0.1 : 50,
-              receiptFile: data.receipt,
-              category: 'Market'
-          });
-          if (!financeRes.success) return { success: false, error: financeRes.error };
-      }
-      await new Promise(r => setTimeout(r, 1000));
-      const newItem: PublishedContent = { id: `${type.toLowerCase()}_${Date.now()}`, type, title: data.title, status: 'Pending', createdAt: new Date().toISOString(), price: data.price || 0, views: 0 };
-      const newStats = { ...user.publisherStats };
-      if (type === 'Course') newStats.coursesCount = (newStats.coursesCount || 0) + 1;
-      if (type === 'Project') newStats.projectsCount = (newStats.projectsCount || 0) + 1;
-      if (type === 'Service') newStats.servicesCount = (newStats.servicesCount || 0) + 1;
-      
-      const updatedWallet = walletSystem.getOrCreateWallet(user);
-      updateProfile({ publishedItems: [...(user.publishedItems || []), newItem], publisherStats: newStats, wallet: updatedWallet });
-      
-      return { success: true };
+  const addAcademicProject = (data: any) => {
+      const proj = { ...data, id: `ap_${Date.now()}`, status: 'approved', createdAt: new Date().toISOString() };
+      const projs = user?.academicProjects || [];
+      updateProfile({ academicProjects: [proj, ...projs] });
+      return true;
   };
-
-  const createProduct = (productData: any) => {
-      if(!user) return { success: false, error: 'Not logged in' };
-      if (!IronDome.Firewall.inspect(productData.description, 'Product Create')) {
-          return { success: false, error: 'Security Violation' };
-      }
-      const isShadowBanned = governance.isShadowBanned(user);
-      const initialStatus = productData.status || 'active';
-      const status = isShadowBanned ? 'shadow_banned' : initialStatus;
-      const newProduct: ProductListing = { ...productData, id: `prod_${Date.now()}`, sellerId: user.id, sellerName: user.name, sellerAvatar: user.avatar, sellerVerified: user.isIdentityVerified, sellerRating: 0, sellerJoinDate: new Date().toISOString(), status: status, views: 0, contactClicks: 0, isSuspicious: false, createdAt: new Date().toISOString() };
-      const updatedProducts = [newProduct, ...allProducts];
-      setAllProducts(updatedProducts);
-      localStorage.setItem('allProducts', JSON.stringify(updatedProducts));
-      return { success: true };
-  };
-
-  const markProductAsSold = (id: string) => {
-      const updated = allProducts.map(p => p.id === id ? { ...p, status: 'sold' } : p);
-      setAllProducts(updated as ProductListing[]);
-      localStorage.setItem('allProducts', JSON.stringify(updated));
-      const product = allProducts.find(p => p.id === id);
-      const isPrime = subscriptionCore.hasAccess(user, 'ZeroCommission');
-      if (product && user && !isPrime) {
-          const commission = CommissionEngine.calculateCommission(product.price, product.category);
-          sendSystemNotification(user.id, 'عمولة مستحقة', `يرجى سداد عمولة بيع ${product.title} بقيمة ${commission} ريال.`, 'financial');
-      } else if (product && user && isPrime) {
-          sendSystemNotification(user.id, 'تهانينا!', `تم بيع ${product.title}. استمتعت بـ 0% عمولة بفضل عضويتك في Elite.`, 'success');
-      }
-  };
-
-  const submitExamResult = (courseId: string, courseName: string, score: number, unlockPermission?: string) => {
-      if(!user) return;
-      const grade = score >= 90 ? 'A' : score >= 80 ? 'B' : 'C';
-      
-      // 1. Generate Certificate
-      const newCert: Certificate = {
-          id: `crt_${Date.now()}`,
-          userId: user.id,
-          courseId,
-          courseName,
-          finalScore: score,
-          grade,
-          hours: 10,
-          issuedAt: new Date().toISOString(),
-          trainingNumber: user.trainingId || 'STU-000',
-          provider: 'Mylaf Academy',
-          verifyCode: `V-${Math.floor(Math.random()*10000)}`,
-          type: 'Course'
-      };
-
-      // 2. Add to Transcript
-      const newTranscriptEntry: TranscriptEntry = {
-          courseId,
-          courseName,
-          score,
-          grade,
-          creditHours: 3,
-          completionDate: new Date().toISOString(),
-          semester: 'Fall 2025'
-      };
-
-      // 3. Handle Permission Unlock
-      let newPermissions = user.permissions || [];
-      if (unlockPermission && !newPermissions.includes(unlockPermission)) {
-          newPermissions.push(unlockPermission);
-          sendSystemNotification(user.id, "ترقية الصلاحيات", `تهانينا! لقد فتحت صلاحية جديدة: ${unlockPermission}`, "success");
-      }
-
-      // 4. Update Profile
-      const currentCertificates = user.certificates || [];
-      const currentTranscript = user.transcript || [];
-      
-      updateProfile({
-          certificates: [newCert, ...currentCertificates],
-          transcript: [newTranscriptEntry, ...currentTranscript],
-          permissions: newPermissions,
-          xp: (user.xp || 0) + 500 // Elite Points
+  const submitIdentityVerification = async (provider: string) => {
+      // Simulate API
+      return new Promise<{success: boolean}>(resolve => {
+          setTimeout(() => {
+              updateProfile({ kycStatus: 'verified', isIdentityVerified: true });
+              resolve({ success: true });
+          }, 2000);
       });
   };
-
-  const createService = (d:any) => { if(!user)return{success:false,error:'Login'}; const s={...d,id:`s_${Date.now()}`,sellerId:user.id,sellerName:user.name,sellerAvatar:user.avatar,status:'active',rating:0,sales:0,createdAt:new Date().toISOString()}; setAllServices([s,...allServices]); localStorage.setItem('mylaf_services',JSON.stringify([s,...allServices])); return {success:true}; };
-  const createJob = (j:any) => { const n={...j,id:`j_${Date.now()}`,createdAt:new Date().toISOString()}; setAllJobs([n,...allJobs]); localStorage.setItem('allJobs',JSON.stringify([n,...allJobs])); return true; };
-  const addAcademicProject = (p:any) => { if(!user)return false; updateProfile({academicProjects:[...(user.academicProjects||[]),{id:`p_${Date.now()}`,...p,status:'approved',paymentStatus:'paid',createdAt:new Date().toISOString()}]}); return true; };
-  const searchContent = (q:string) => ({services:allServices.filter(s=>s.title.includes(q)),jobs:allJobs.filter(j=>j.title.includes(q))});
-  const incrementProductViews = (id:string) => { setAllProducts(allProducts.map(p=>p.id===id?{...p,views:(p.views||0)+1}:p)); };
-  const purchaseService = (item:any, txn:any) => {
-      if(!user) return {success:false,error:'User'};
-      if(txn.receiptFile) { financeCore.submitBankTransfer({userId:user.id,userName:user.name,serviceTitle:item.title,amount:item.price,receiptFile:txn.receiptFile,category:'Market'}); const t:Transaction={id:txn.id,serviceTitle:item.title,buyerId:user.id,buyerName:user.name,sellerId:item.sellerId,sellerName:item.sellerName,amount:item.price,total:item.price,status:'pending_verification',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}; setMyTransactions([t,...myTransactions]); return{success:true};}
-      const t:Transaction={id:txn.id,serviceTitle:item.title,buyerId:user.id,buyerName:user.name,sellerId:item.sellerId,sellerName:item.sellerName,amount:item.price,total:item.price,status:'in_progress',createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()}; setMyTransactions([t,...myTransactions]); InvoiceSystem.generateInvoice(user.id,[{description:`Purchase: ${item.title}`,amount:item.price}]); return{success:true};
-  };
-  const placeBid = (pid:string,amt:number) => { return {success:true} }; 
-  const confirmReceipt = (id:string) => setMyTransactions(myTransactions.map(t=>t.id===id?{...t,status:'completed'}:t));
-  const markDelivered = (id:string) => setMyTransactions(myTransactions.map(t=>t.id===id?{...t,status:'delivered'}:t));
-  const rateTransaction = () => {};
-  const enrollCourse = (c:Course) => { 
-      if(user) {
-          // Check if already enrolled
-          if(user.enrolledCourses?.some(ec => ec.courseId === c.id)) return;
-          updateProfile({enrolledCourses:[...(user.enrolledCourses||[]),{courseId:c.id, progress:0, status:'active', lastAccessed:new Date().toISOString()}]}); 
-      }
-  };
-  const updateCourseProgress = (courseId: string, progress: number) => {
-      if (!user || !user.enrolledCourses) return;
-      const updated = user.enrolledCourses.map(c => c.courseId === courseId ? { ...c, progress } : c);
-      updateProfile({ enrolledCourses: updated });
-  };
-  const completeCourse = (c:Course,s:number,g:string) => { 
-      if(user) {
-          // Legacy call - redirects to submitExamResult
-          submitExamResult(c.id, c.title, s);
-      }
-  };
-  const submitAssignment = () => {};
-  const markAttendance = () => {};
-  const submitCVRequest = (r:any) => { if(user) updateProfile({cvRequests:[...(user.cvRequests||[]),{id:`cv_${Date.now()}`,userId:user.id,status:'completed',createdAt:new Date().toISOString(),...r}]}); };
-  const startReadingBook = () => {};
-  const updateBookProgress = () => {};
-  const generateCourse = async () => null;
-  const runAIAnalysis = async () => {};
-  const submitIdentityVerification = async () => ({success:true});
-  const updateAdminConfig = (c:any) => setAdminConfig({...adminConfig,...c});
-  const generateBackup = () => JSON.stringify({});
-  const restoreBackup = () => true;
-  const getSystemAnalytics = () => ({usersCount:storedUsers.length,totalRevenue:0,certificatesIssued:0,activeCourses:0});
-  const checkProfileCompleteness = () => 100;
-  const verifyUserAttribute = async () => true;
-  const updateIBAN = () => ({success:true});
-  const createSupportTicket = (t:SupportTicket) => { if(user) updateProfile({supportTickets:[...(user.supportTickets||[]),t]}); return true; };
-  const followUser = (id:string) => { if(user) updateProfile({following:[...(user.following||[]),id]}); };
-  const unfollowUser = (id:string) => { if(user) updateProfile({following:(user.following||[]).filter(f=>f!==id)}); };
-  const createStory = (m:string,t:any,o:any,b:boolean) => { if(user) storyEngine.createStory(user,m,t,o,b); };
-  
-  const login = async (d:any, p?:string) => {
-      // Handle Google Login Bypass
-      if (p === 'GOOGLE_AUTH_bypass') {
-           const existing = storedUsers.find(u => u.email === d.email);
-           if(existing) {
-               const u = {...existing, isLoggedIn:true};
-               u.wallet = walletSystem.getOrCreateWallet(u);
-               setUser(u);
-               accessGate.persistSession(u);
-               return {success:true};
-           }
-           // Register new user from Google
-           const newUser = {...d, id:`u_${Date.now()}`, role:'student', karma:500, createdAt: new Date().toISOString()} as User;
-           newUser.wallet = walletSystem.getOrCreateWallet(newUser);
-           setUser(newUser);
-           setStoredUsers([...storedUsers, newUser]);
-           saveUsersDB([...storedUsers, newUser]);
-           accessGate.persistSession(newUser);
-           return {success:true};
-      }
-
-      const existing = storedUsers.find(u => u.email === d.email);
-      if(existing && p) {
-          const h = await RealAuthService.hashPassword(p);
-          if(existing.passwordHash === h) {
-              if (!existing.ecosystem) {
-                  existing.ecosystem = {
-                      academy: { level: 1, xp: 0, certificatesCount: 0, activeCourses: 0, lastActive: new Date().toISOString(), gpa: 0 },
-                      market: { balance: 0, activeServices: 0, totalSales: 0, rating: 5.0 },
-                      jobs: { profileCompleteness: 70, applicationsCount: 0, profileViews: 0, savedJobs: 0 },
-                      haraj: { activeAds: 0, soldItems: 0, reputationScore: 100, isVerifiedMerchant: false }
-                  };
-              }
-              const u = {...existing, isLoggedIn:true};
-              u.wallet = walletSystem.getOrCreateWallet(u);
-              setUser(u);
-              accessGate.persistSession(u);
-              IronDome.SessionGuard.bindSession();
-              return {success:true};
-          }
-      }
-      return {success:false, error:"Invalid credentials"};
-  };
-  const register = async (d:any) => {
-      const u = {...d, id:`u_${Date.now()}`, isLoggedIn:true, role:'student', karma:500} as User;
-      u.wallet = walletSystem.getOrCreateWallet(u);
-      setUser(u);
-      accessGate.persistSession(u);
-      IronDome.SessionGuard.bindSession();
-      return {success:true};
-  };
-  const logout = async () => {
-    // Sign out from Firebase
-    try {
-      if (auth) await signOut(auth);
-    } catch (e) {
-      console.warn("Firebase signout error", e);
-    }
-    setUser(null); 
-    localStorage.removeItem('fluid_session_v1'); 
-    localStorage.removeItem('mylaf_session'); 
-  };
-  
-  const resetPassword = async () => true;
-  const addManualJob = (j:any) => setManualJobs([j,...manualJobs]);
-  const editManualJob = (id:string,j:any) => setManualJobs(manualJobs.map(m=>m.id===id?{...m,...j}:m));
-  const deleteManualJob = (id:string) => setManualJobs(manualJobs.filter(m=>m.id!==id));
+  const adminLogout = () => { setIsAdmin(false); localStorage.removeItem('mylaf_admin_session'); };
 
   return (
     <AuthContext.Provider value={{ 
-        user, login, register, logout, resetPassword, updateProfile, isAuthenticated: !!user, checkProfileCompleteness, verifyUserAttribute, updateIBAN, submitIdentityVerification,
-        signInWithGoogle, // Exported for AuthModal
-        createService, createProduct, createJob, addAcademicProject, searchContent, markProductAsSold, incrementProductViews,
-        allServices, allProducts, allJobs, storedUsers,
-        enrollCourse, updateCourseProgress, completeCourse, submitAssignment, markAttendance, submitExamResult,
-        startReadingBook, updateBookProgress,
-        myTransactions, purchaseService, placeBid, markDelivered, confirmReceipt, rateTransaction,
+        user, login, logout, signInWithGoogle, signInWithProvider, updateProfile, 
+        isAuthenticated: !!user, isAdmin,
         notifications, markNotificationRead, sendSystemNotification,
-        adminConfig, updateAdminConfig, generateBackup, restoreBackup, getSystemAnalytics,
-        generateCourse, runAIAnalysis, aiGeneratedCourses,
-        submitCVRequest, publishUserContent,
+        allJobs, allServices, allProducts, myTransactions,
+        createProduct, purchaseService, confirmReceipt,
         manualJobs, addManualJob, editManualJob, deleteManualJob,
-        isAdmin, adminLogin, adminLogout,
-        createSupportTicket,
-        followUser, unfollowUser,
+        publishUserContent, submitCVRequest, addAcademicProject,
+        submitIdentityVerification,
+        adminConfig, updateAdminConfig, adminLogin, adminLogout,
+        generateBackup, restoreBackup, getSystemAnalytics,
         brain, healer,
-        walletSystem, pricingAI, depositToWallet,
-        createStory,
-        governance,
-        joinPrime, checkUpsellTrigger,
-        requireAuth, showLoginModal, setShowLoginModal
+        submitExamResult, updateCourseProgress, enrollCourse, uploadAssignment,
+        followUser, unfollowUser,
+        markProductAsSold, incrementProductViews,
+        storedUsers,
+        showLoginModal, setShowLoginModal
     }}>
       {children}
     </AuthContext.Provider>

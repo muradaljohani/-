@@ -21,8 +21,7 @@ interface Props {
     onNavigate: (path: string) => void;
 }
 
-// --- REAL CONTENT DATABASE (SEO RICH) ---
-
+// ... [Keep existing BLOG_POSTS, PRODUCTS, NAV_LINKS constants unchanged] ...
 const BLOG_POSTS = [
     {
         id: 'digital-economy-2030',
@@ -152,7 +151,9 @@ export const MuradGroupPortal: React.FC<Props> = ({ onNavigate }) => {
     };
 
     // --- RENDERERS ---
-
+    
+    // ... [Keep Header, HeroSection, ProductsSection, BlogSection, FounderSection unchanged] ...
+    
     const Header = () => (
         <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
             <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -263,9 +264,6 @@ export const MuradGroupPortal: React.FC<Props> = ({ onNavigate }) => {
                         <h2 className="text-3xl font-bold text-slate-900 mb-2">المدونة التقنية</h2>
                         <p className="text-slate-500">أحدث الرؤى والأفكار في عالم التقنية والأعمال.</p>
                     </div>
-                    {/* <div className="flex gap-2">
-                        <input placeholder="ابحث في المقالات..." className="bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 text-sm w-64 outline-none focus:border-blue-500"/>
-                    </div> */}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -355,10 +353,10 @@ export const MuradGroupPortal: React.FC<Props> = ({ onNavigate }) => {
                      <p className="text-slate-400 text-xs mt-1">الرياض - طريق الملك فهد</p>
                  </div>
                  <div className="bg-slate-50 p-8 rounded-2xl text-center border border-slate-100 hover:border-blue-500 transition-colors">
-                     <Users className="w-8 h-8 text-blue-600 mx-auto mb-4"/>
+                     <Phone className="w-8 h-8 text-blue-600 mx-auto mb-4"/>
                      <h3 className="font-bold text-slate-900 mb-2">الدعم الفني</h3>
-                     <p className="text-slate-500 text-sm">support@murad-group.com</p>
-                     <p className="text-slate-400 text-xs mt-1">24/7 لخدمة العملاء</p>
+                     <p className="text-slate-500 text-sm">0590113665</p>
+                     <p className="text-slate-400 text-xs mt-1">خدمة العملاء</p>
                  </div>
              </div>
         </div>
@@ -465,6 +463,7 @@ export const MuradGroupPortal: React.FC<Props> = ({ onNavigate }) => {
                                 <Linkedin className="w-5 h-5 hover:text-white cursor-pointer"/>
                                 <Instagram className="w-5 h-5 hover:text-white cursor-pointer"/>
                             </li>
+                            <li><a href="tel:0590113665" className="hover:text-white transition-colors" dir="ltr">0590113665</a></li>
                         </ul>
                     </div>
                 </div>

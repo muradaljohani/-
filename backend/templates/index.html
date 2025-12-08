@@ -1,0 +1,112 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Murad Portal | Secure Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #050b14;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 24px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } 
+              from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyCvk5AEXCPHhUn0PlK5ipXd-7UYW9jBVjw",
+        authDomain: "murad-portal.firebaseapp.com",
+        projectId: "murad-portal",
+        storageBucket: "murad-portal.firebasestorage.app",
+        messagingSenderId: "12324821516",
+        appId: "1:12324821516:web:6fd6cf9a96055711572c29",
+        measurementId: "G-PT4XEVF6ZQ"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const provider = new GoogleAuthProvider();
+
+      // زر تسجيل الدخول
+      window.login = function() {
+        signInWithPopup(auth, provider)
+          .then((result) => {
+            const user = result.user;
+            alert("تم تسجيل الدخول: " + user.displayName);
+            document.getElementById('user-info').innerText = 
+              "مرحباً " + user.displayName;
+          })
+          .catch((error) => {
+            alert("خطأ: " + error.message);
+          });
+      };
+
+      // زر تسجيل الخروج
+      window.logout = function() {
+        signOut(auth).then(() => {
+          alert("تم تسجيل الخروج");
+          document.getElementById('user-info').innerText = "";
+        });
+      };
+    </script>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <!-- Ambient Orbs -->
+    <div class="fixed top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px] animate-pulse"></div>
+    <div class="fixed bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px] animate-pulse" style="animation-delay: 2s;"></div>
+
+    <div class="glass-card w-full max-w-md p-8 md:p-12 relative z-10 text-center animate-fade-in-up">
+        
+        <!-- Header -->
+        <div class="mb-10">
+            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mx-auto flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20">
+                <span class="text-3xl font-black text-white">M</span>
+            </div>
+            <h1 class="text-3xl font-bold text-white mb-2 tracking-tight">أهلاً بك مجدداً</h1>
+            <p class="text-gray-400 text-sm">سجل دخولك للمتابعة</p>
+        </div>
+
+        <!-- Login Buttons -->
+        <div class="flex flex-col gap-4">
+            <button onclick="login()" 
+            style="padding:10px 20px; background:#4285F4; color:white; border:none; border-radius:5px; width: 100%; cursor: pointer;">
+            تسجيل الدخول بواسطة Google
+            </button>
+
+            <button onclick="logout()" 
+            style="padding:10px 20px; background:#E53935; color:white; border:none; border-radius:5px; width: 100%; cursor: pointer;">
+            تسجيل الخروج
+            </button>
+
+            <p id="user-info" style="color: #10b981; font-weight: bold; margin-top: 10px;"></p>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-8 text-xs text-gray-500">
+            بالتسجيل، أنت توافق على <a href="#" class="text-blue-400 hover:underline">شروط الخدمة</a>
+        </div>
+    </div>
+</body>
+</html>

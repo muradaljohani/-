@@ -1,4 +1,5 @@
 
+
 export enum Role {
   USER = 'user',
   MODEL = 'model'
@@ -463,7 +464,7 @@ export interface ChatState {
   error: string | null;
 }
 
-export type LoginProvider = 'nafath' | 'otp' | 'email' | 'apple' | 'twitter' | 'facebook' | 'google' | 'microsoft' | 'instagram';
+export type LoginProvider = 'nafath' | 'otp' | 'email' | 'apple' | 'twitter' | 'facebook' | 'google' | 'microsoft' | 'instagram' | 'github';
 
 export interface Notification {
   id: string;

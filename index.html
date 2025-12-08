@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar-SA" dir="rtl" class="scroll-smooth">
   <head>
@@ -9,8 +8,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
-    <link rel="dns-prefetch" href="https://images.unsplash.com" />
-    <link rel="dns-prefetch" href="https://api.dicebear.com" />
     
     <!-- SEO: Primary Meta Tags -->
     <title>مجموعة ميلاف مراد | المنصة الوطنية الموحدة للتوظيف والتدريب</title>
@@ -20,15 +17,11 @@
     
     <!-- SEO: Indexing & Robots -->
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-    <meta name="googlebot" content="index, follow" />
     
     <!-- LANGUAGE & GEO -->
-    <meta name="google" content="notranslate" />
     <meta http-equiv="Content-Language" content="ar" />
     <meta name="geo.region" content="SA" />
     <meta name="geo.placename" content="Riyadh" />
-    <meta name="geo.position" content="24.7136;46.6753" />
-    <meta name="ICBM" content="24.7136, 46.6753" />
 
     <!-- MOBILE & PWA -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
@@ -36,7 +29,6 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Murad Group" />
-    <link rel="manifest" href="/manifest.json" />
 
     <!-- FAVICON -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f172a'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='sans-serif' font-weight='900' font-size='20' fill='%23facc15'%3EM%3C/text%3E%3C/svg%3E" />
@@ -51,22 +43,11 @@
         text-align: right; 
         background-color: #0f172a; 
         color: #f3f4f6; 
-        text-rendering: optimizeLegibility;
-        -webkit-font-smoothing: antialiased;
-    }
-    .heavy-render {
-        content-visibility: auto;
-        contain-intrinsic-size: 1px 1000px; 
     }
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
     ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
-    .scrollbar-hide::-webkit-scrollbar { display: none; }
-    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     #root { min-height: 100vh; display: flex; flex-direction: column; }
-    
-    .skip-link { position: absolute; top: -40px; left: 0; background: #000; color: white; padding: 8px; z-index: 9999; transition: top 0.3s; }
-    .skip-link:focus { top: 0; }
     </style>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -83,56 +64,43 @@
           "name": "مجموعة ميلاف مراد",
           "url": "https://murad-group.com",
           "logo": "https://murad-group.com/logo.png",
-          "sameAs": ["https://twitter.com/IpMurad", "https://linkedin.com/in/murad-aljohani"],
           "founder": {
             "@type": "Person",
             "name": "Murad Aljohani",
             "jobTitle": "CEO"
-          },
-          "address": {
-            "@type": "PostalAddress",
-            "streetAddress": "King Fahd Road",
-            "addressLocality": "Riyadh",
-            "addressRegion": "Riyadh",
-            "postalCode": "11564",
-            "addressCountry": "SA"
           }
         }
       ]
     }
     </script>
+    
+    <!-- FIREBASE SDKs (Requested) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js"></script>
 
-    <!-- Import Map -->
-    <script type="importmap">
-    {
-      "imports": {
-        "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/",
-        "react/": "https://aistudiocdn.com/react@^19.2.0/",
-        "react": "https://aistudiocdn.com/react@^19.2.0",
-        "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-        "uuid": "https://aistudiocdn.com/uuid@^13.0.0",
-        "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
-        "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-        "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1",
-        "tesseract.js": "https://aistudiocdn.com/tesseract.js@^5.0.5",
-        "apexcharts": "https://aistudiocdn.com/apexcharts@^4.3.0",
-        "react-apexcharts": "https://aistudiocdn.com/react-apexcharts@^1.7.0",
-        "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.10.1",
-        "vite": "https://aistudiocdn.com/vite@^7.2.6",
-        "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
-        "firebase/": "https://aistudiocdn.com/firebase@^10.7.1/"
-      }
-    }
-    </script>
-    
-    <!-- IMPORTANT: Firebase Config is located in src/lib/firebase.ts -->
-    
     <script type="module" src="/assets/js/overlay_system.js"></script>
-  </head>
+  <script type="importmap">
+{
+  "imports": {
+    "react-markdown": "https://aistudiocdn.com/react-markdown@^10.1.0",
+    "react-router-dom": "https://aistudiocdn.com/react-router-dom@^7.10.1",
+    "html2canvas": "https://aistudiocdn.com/html2canvas@^1.4.1",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "react": "https://aistudiocdn.com/react@^19.2.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.31.0",
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
+    "vite": "https://aistudiocdn.com/vite@^7.2.7",
+    "@vitejs/plugin-react": "https://aistudiocdn.com/@vitejs/plugin-react@^5.1.1",
+    "react-apexcharts": "https://aistudiocdn.com/react-apexcharts@^1.9.0",
+    "firebase/": "https://aistudiocdn.com/firebase@^12.6.0/",
+    "tesseract.js": "https://aistudiocdn.com/tesseract.js@^6.0.1"
+  }
+}
+</script>
+</head>
   <body>
-    <a href="#main-content" class="skip-link">Skip to content</a>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
-    

@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Search, ArrowRight, BookOpen, Award, Users, CheckCircle2, Globe, Sparkles, Send, BrainCircuit, GraduationCap, Building2, ChevronLeft, Handshake, Briefcase, FileCheck, UserPlus, Layers, Map, Landmark, PenTool, Quote, Eye, ShieldCheck, Star, Cpu, Zap, Trophy, Layout, ShoppingBag, FileText, Download, Library, Book, PlayCircle, ScanLine, Clock, BarChart3, Fingerprint, MapPin, MousePointer, Lightbulb, Scale, Lock, Cloud, Database, Server } from 'lucide-react';
-import { Footer } from './Footer';
 import { AuthModal } from './AuthModal';
 import { UserProfileModal } from './UserProfileModal';
 import { ExperienceValidationModal } from './ExperienceValidationModal';
@@ -839,8 +838,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, onSearch, onO
       />
 
       <FoundersMessage />
-
-      <Footer />
 
       {/* Modals */}
       <AuthModal 
