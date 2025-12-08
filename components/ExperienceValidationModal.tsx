@@ -94,7 +94,7 @@ export const ExperienceValidationModal: React.FC<Props> = ({ isOpen, onClose }) 
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-2">رقم الهوية / الإقامة</label>
-                                <input required type="text" value={formData.nationalId} onChange={e=>setFormData({...formData, nationalId: e.target.value})} className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-900 focus:border-amber-500 outline-none" placeholder="10xxxxxxxx" />
+                                <input required type="text" value={formData.nationalId} onChange={e=>setFormData({...formData, nationalId: e.target.value})} className="w-full bg-white border border-gray-300 rounded-xl p-3 text-gray-900 focus:border-amber-500 outline-none" placeholder="10xxxxxxxxx" />
                             </div>
                         </div>
 

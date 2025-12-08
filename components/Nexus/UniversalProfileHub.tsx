@@ -16,6 +16,7 @@ import { InstallPrompt } from '../Mobile/InstallPrompt';
 import { ExperienceValidationModal } from '../ExperienceValidationModal';
 import { CertificatePreviewModal } from '../CertificatePreviewModal';
 import { CertificateGenerator } from '../CertificateGenerator';
+import { EnrollmentCertificateModal } from '../Documents/EnrollmentCertificateModal';
 
 interface Props {
     isOpen: boolean;
@@ -32,6 +33,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const [showExperienceModal, setShowExperienceModal] = useState(false);
     const [showCertPreview, setShowCertPreview] = useState(false);
     const [showGenCert, setShowGenCert] = useState(false);
+    const [showEnrollmentCert, setShowEnrollmentCert] = useState(false);
 
     // Editing State
     const [isSaving, setIsSaving] = useState(false);
@@ -40,6 +42,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         bio: '',
         phone: '',
         currentJobTitle: '',
+        major: '',
         address: '',
         skills: ''
     });
@@ -52,6 +55,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                 bio: user.bio || '',
                 phone: user.phone || '',
                 currentJobTitle: user.currentJobTitle || '',
+                major: user.major || '',
                 address: user.address || '',
                 skills: user.skills ? user.skills.join(', ') : ''
             });
@@ -87,7 +91,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         const isAI = id <= 25;
         const topic = isAI ? "الذكاء الاصطناعي (AI)" : "قواعد البيانات (Data Management)";
         
-        // Detailed placeholder text (simulating 500 words per unit)
         const longTextIntro = `
             مرحباً بكم في هذه الحقيبة التدريبية المتخصصة في ${topic}. في عالمنا الرقمي المتسارع، أصبحت هذه المهارات ليست مجرد خيار بل ضرورة ملحة لكل من يرغب في التميز في سوق العمل. 
             تهدف هذه الدورة إلى تزويدك بالأساسيات النظرية والمهارات العملية التي تمكنك من فهم وبناء أنظمة متقدمة.
@@ -192,6 +195,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
             bio: formData.bio,
             phone: formData.phone,
             currentJobTitle: formData.currentJobTitle,
+            major: formData.major,
             address: formData.address,
             skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean)
         });
@@ -437,9 +441,9 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
                                         <h3 className="text-white font-bold mb-4">الإفادات الإدارية</h3>
                                         <div className="space-y-2">
-                                             <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg opacity-60">
-                                                <span className="text-sm text-gray-400">إفادة انتظام بالدراسة</span>
-                                                <button disabled className="text-xs bg-white/5 px-2 py-1 rounded text-gray-500">قريباً</button>
+                                             <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg hover:bg-white/5 transition-colors">
+                                                <span className="text-sm text-gray-300">إفادة انتظام بالدراسة</span>
+                                                <button onClick={() => setShowEnrollmentCert(true)} className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded text-white font-bold transition-all">طباعة الإفادة</button>
                                              </div>
                                              <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg opacity-60">
                                                 <span className="text-sm text-gray-400">إفادة تخرج</span>
@@ -452,7 +456,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         </div>
                     )}
 
-                    {/* VIEW: WALLET (Basic placeholder for now) */}
+                    {/* VIEW: WALLET */}
                     {activeSection === 'wallet' && (
                         <div className="space-y-6 animate-fade-in-up">
                              <h2 className="text-2xl font-bold text-white border-b border-white/10 pb-4 mb-6">المحفظة المالية</h2>
@@ -494,6 +498,18 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         <label className="block text-xs font-bold text-gray-400 mb-2">المسمى الوظيفي</label>
                                         <input type="text" value={formData.currentJobTitle} onChange={e => setFormData({...formData, currentJobTitle: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" placeholder="مثال: مطور برمجيات" />
                                     </div>
+                                    
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-400 mb-2">التخصص الدراسي (يظهر في البطاقة)</label>
+                                        <input 
+                                            type="text" 
+                                            value={formData.major} 
+                                            onChange={e => setFormData({...formData, major: e.target.value})} 
+                                            className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" 
+                                            placeholder="مثال: علوم الحاسب، إدارة أعمال" 
+                                        />
+                                    </div>
+
                                     <div>
                                         <label className="block text-xs font-bold text-gray-400 mb-2">رقم الهاتف</label>
                                         <div className="relative">
@@ -522,7 +538,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     <div className="min-w-fit mt-1"><AlertCircle className="w-5 h-5 text-yellow-500"/></div>
                                     <div className="text-xs text-yellow-200">
                                         <p className="font-bold mb-1">تنبيه هام</p>
-                                        <p>يرجى التأكد من صحة البيانات المدخلة حيث ستظهر في الشهادات الرسمية والوثائق.</p>
+                                        <p>يرجى التأكد من صحة البيانات المدخلة حيث ستظهر في الشهادات الرسمية والوثائق والبطاقة الجامعية.</p>
                                     </div>
                                 </div>
 
@@ -552,6 +568,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                 onClose={() => setShowGenCert(false)}
             />
         )}
+        <EnrollmentCertificateModal isOpen={showEnrollmentCert} onClose={() => setShowEnrollmentCert(false)} />
         </>
     );
 };

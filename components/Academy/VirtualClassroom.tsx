@@ -104,9 +104,11 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-[1000] bg-[#020617] flex font-sans" dir="rtl">
+        // FIXED Z-INDEX: Increased to z-[11000] to ensure it appears above UniversalProfileHub (z-9000)
+        <div className="fixed inset-0 z-[11000] bg-[#020617] flex font-sans" dir="rtl">
+            
             {/* Sidebar */}
-            <div className="w-80 bg-[#0f172a] border-l border-white/10 flex flex-col hidden md:flex">
+            <div className="w-80 bg-[#0f172a] border-l border-white/10 flex flex-col hidden md:flex shrink-0">
                 <div className="p-6 border-b border-white/10">
                     <button onClick={onClose} className="mb-4 flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-xs font-bold">
                         <ChevronRight className="w-4 h-4"/> خروج من الفصل
@@ -210,18 +212,19 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
             </div>
 
             {/* Main Stage */}
-            <div className="flex-1 flex flex-col relative bg-black overflow-y-auto">
+            <div className="flex-1 flex flex-col relative bg-black overflow-hidden">
                 {/* Mobile Header */}
-                <div className="md:hidden h-14 bg-[#0f172a] flex items-center justify-between px-4 shrink-0">
+                <div className="md:hidden h-14 bg-[#0f172a] flex items-center justify-between px-4 shrink-0 z-20">
                     <h3 className="text-white font-bold text-sm truncate max-w-[200px]">{course.title}</h3>
                     <button onClick={onClose}><X className="w-6 h-6 text-gray-400"/></button>
                 </div>
 
-                {/* Content Player */}
-                <div className="flex-1 p-6 flex justify-center">
+                {/* Content Player - Scrollable Container */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-6 flex justify-center bg-[#020617]">
+                    
                     {/* VIDEO TYPE */}
                     {currentModule.type === 'video' ? (
-                        <div className="w-full max-w-4xl aspect-video bg-[#1e293b] rounded-xl overflow-hidden relative shadow-2xl border border-white/5 self-center">
+                        <div className="w-full max-w-4xl self-center aspect-video bg-[#1e293b] rounded-xl overflow-hidden relative shadow-2xl border border-white/5">
                             {/* Video Placeholder */}
                             <img src={course.thumbnail} className="w-full h-full object-cover opacity-50"/>
                             <div className="absolute inset-0 flex items-center justify-center">
@@ -251,32 +254,36 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
                             </div>
                         </div>
                     ) : currentModule.type === 'text' ? (
-                        /* TEXT ARTICLE TYPE (New) */
-                        <div className="w-full max-w-4xl bg-white rounded-2xl p-8 md:p-12 shadow-2xl overflow-y-auto max-h-full">
+                        /* TEXT ARTICLE TYPE (Fixed layout and styling) */
+                        <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden my-auto min-h-min">
                              {/* Banner */}
                              {(currentModule as any).banner && (
-                                 <div className="w-full h-64 rounded-xl overflow-hidden mb-8 shadow-md">
+                                 <div className="w-full h-64 md:h-80 relative">
                                      <img src={(currentModule as any).banner} className="w-full h-full object-cover" alt="Module Banner"/>
+                                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
+                                         <h1 className="text-3xl md:text-4xl font-black text-white drop-shadow-lg">{currentModule.title}</h1>
+                                     </div>
                                  </div>
                              )}
-                             <h1 className="text-3xl font-black text-gray-900 mb-6 border-b pb-4">{currentModule.title}</h1>
                              
-                             <div 
-                                className="prose prose-lg prose-slate max-w-none text-gray-700 leading-loose text-justify font-serif"
-                                dangerouslySetInnerHTML={{ __html: (currentModule as any).content }}
-                             />
+                             <div className="p-8 md:p-12">
+                                <div 
+                                    className="prose prose-lg prose-slate max-w-none text-gray-800 leading-loose text-justify font-serif"
+                                    dangerouslySetInnerHTML={{ __html: (currentModule as any).content }}
+                                />
 
-                             <div className="mt-12 flex justify-center">
-                                 <button onClick={() => handleModuleComplete()} className="px-10 py-4 bg-emerald-600 text-white font-bold rounded-xl shadow-lg hover:bg-emerald-700 transition-all flex items-center gap-2">
-                                     <CheckCircle2 className="w-5 h-5"/> إتمام القراءة
-                                 </button>
+                                <div className="mt-12 flex justify-center border-t pt-8">
+                                    <button onClick={() => handleModuleComplete()} className="px-10 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 transform hover:scale-105">
+                                        <CheckCircle2 className="w-5 h-5"/> إتمام قراءة الوحدة
+                                    </button>
+                                </div>
                              </div>
                         </div>
                     ) : (
                         <div className="text-center text-gray-400 self-center">
                             <FileText className="w-20 h-20 mx-auto mb-4 opacity-20"/>
-                            <p>محتوى للقراءة / التحميل</p>
-                            <button onClick={() => setProgress(100)} className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white">تحديد كمقروء</button>
+                            <p>محتوى للاختبار / التحميل</p>
+                            <button onClick={() => setProgress(100)} className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white">تحديد كمقمل</button>
                         </div>
                     )}
                 </div>
@@ -284,7 +291,7 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
 
             {/* Overlays */}
             {showExam && (
-                <div className="absolute inset-0 bg-[#0f172a] z-50 flex items-center justify-center">
+                <div className="absolute inset-0 z-[11050] bg-[#0f172a] flex items-center justify-center">
                     <ExamEngine 
                         courseId={course.id} 
                         courseName={course.title} 
