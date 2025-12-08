@@ -1,6 +1,5 @@
 
 import React, { useEffect } from 'react';
-import { useLocation } from 'react-router-dom'; // Assuming router or using window.location
 
 interface SEOHelmetProps {
   title: string;
@@ -17,7 +16,7 @@ interface SEOHelmetProps {
 }
 
 /**
- * THE GOD-TIER SEO HELMET (v3.0 - DOMINATION EDITION)
+ * THE GOD-TIER SEO HELMET (v3.1 - GOOGLE INDEXING FIX)
  * Implements "Schema Constellation" protocol.
  * Handles: Multi-Entity Injection, FAQ Rich Snippets, Breadcrumb Hierarchy, and Review Aggregation.
  */
@@ -54,7 +53,7 @@ export const SEOHelmet: React.FC<SEOHelmetProps> = ({
     };
 
     // Semantic Keyword Injection
-    const defaultKeywords = ["وظائف السعودية", "تدريب منتهي بالتوظيف", "حراج", "سوق خدمات", "دورات برمجة", "أمن سيبراني", "ميلاف"];
+    const defaultKeywords = ["وظائف السعودية", "تدريب منتهي بالتوظيف", "حراج", "سوق خدمات", "دورات برمجة", "أمن سيبراني", "ميلاف", "شركة مراد"];
     const finalKeywords = [...new Set([...keywords, ...defaultKeywords])].join(', ');
 
     setMeta('description', description.substring(0, 320)); 
@@ -62,7 +61,10 @@ export const SEOHelmet: React.FC<SEOHelmetProps> = ({
     setMeta('author', author);
     
     // Social Graph (Open Graph) - The "Shareable" Factor
-    const currentUrl = `https://murad-group.com${path || window.location.pathname}`;
+    const currentPathClean = (path || window.location.pathname).split('?')[0]; // Remove queries for cleaner indexing
+    const domain = window.location.origin; // Dynamically grab domain to avoid mismatches
+    const currentUrl = `${domain}${currentPathClean}`;
+
     setMeta('og:title', finalTitle, true);
     setMeta('og:description', description, true);
     setMeta('og:type', type === 'Article' ? 'article' : 'website', true);
@@ -93,15 +95,16 @@ export const SEOHelmet: React.FC<SEOHelmetProps> = ({
         setMeta('googlebot', 'index, follow');
     }
 
-    // --- 3. CANONICAL TAG ---
+    // --- 3. CANONICAL TAG (Critical for Google) ---
+    // Ensure we strip query parameters to consolidate link equity
     let link = document.querySelector("link[rel='canonical']") as HTMLLinkElement;
     if (!link) {
         link = document.createElement('link');
         link.setAttribute('rel', 'canonical');
         document.head.appendChild(link);
     }
-    const cleanPath = (path || window.location.pathname).split('?')[0];
-    link.setAttribute('href', `https://murad-group.com${cleanPath}`);
+    // Force the production domain if needed, or use current origin for testing stability
+    link.setAttribute('href', currentUrl);
 
     // --- 4. MASTER JSON-LD GENERATOR (The Knowledge Graph) ---
     const oldScript = document.getElementById('murad-dynamic-schema');
@@ -117,10 +120,10 @@ export const SEOHelmet: React.FC<SEOHelmetProps> = ({
         "@type": "Organization",
         "@id": "https://murad-group.com/#organization",
         "name": "مجموعة ميلاف مراد",
-        "url": "https://murad-group.com",
+        "url": domain,
         "logo": {
             "@type": "ImageObject",
-            "url": "https://murad-group.com/logo.png",
+            "url": `${domain}/logo.png`,
             "width": 512,
             "height": 512
         },
@@ -141,26 +144,27 @@ export const SEOHelmet: React.FC<SEOHelmetProps> = ({
     // B. WebSite Schema (Search Box)
     schemaGraph["@graph"].push({
         "@type": "WebSite",
-        "@id": "https://murad-group.com/#website",
-        "url": "https://murad-group.com/",
+        "@id": `${domain}/#website`,
+        "url": domain,
         "name": "ميلاف مراد",
         "publisher": { "@id": "https://murad-group.com/#organization" },
         "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://murad-group.com/?q={search_term_string}",
+            "target": `${domain}/?q={search_term_string}`,
             "query-input": "required name=search_term_string"
         }
     });
 
     // C. Breadcrumbs (Hierarchy Signal)
-    const segments = cleanPath.split('/').filter(Boolean);
+    const segments = currentPathClean.split('/').filter(Boolean);
     const breadcrumbItems = [
-        { "@type": "ListItem", "position": 1, "name": "الرئيسية", "item": "https://murad-group.com/" }
+        { "@type": "ListItem", "position": 1, "name": "الرئيسية", "item": domain }
     ];
     
     const segmentMap: Record<string, string> = {
         'jobs': 'الوظائف', 'academy': 'الأكاديمية', 'market': 'السوق', 
-        'haraj': 'الحراج', 'cloud': 'المدونة التقنية', 'training': 'التدريب'
+        'haraj': 'الحراج', 'cloud': 'المدونة التقنية', 'training': 'التدريب',
+        'group': 'الشركة'
     };
 
     segments.forEach((seg, index) => {
@@ -169,7 +173,7 @@ export const SEOHelmet: React.FC<SEOHelmetProps> = ({
             "@type": "ListItem",
             "position": index + 2,
             "name": name.charAt(0).toUpperCase() + name.slice(1),
-            "item": `https://murad-group.com/${segments.slice(0, index + 1).join('/')}`
+            "item": `${domain}/${segments.slice(0, index + 1).join('/')}`
         });
     });
 
@@ -212,7 +216,7 @@ export const SEOHelmet: React.FC<SEOHelmetProps> = ({
                 "@type": "Course",
                 "name": data.title,
                 "description": data.description || description,
-                "provider": { "@type": "Organization", "name": data.provider || "Mylaf Academy", "sameAs": "https://murad-group.com" },
+                "provider": { "@type": "Organization", "name": data.provider || "Mylaf Academy", "sameAs": domain },
                 "hasCourseInstance": { "@type": "CourseInstance", "courseMode": "online", "courseWorkload": `P${data.hours || 10}H` },
                 "offers": { "@type": "Offer", "category": "Paid", "priceCurrency": "SAR", "price": data.price || 0, "availability": "https://schema.org/InStock" },
                 "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "reviewCount": "1240" }
@@ -222,9 +226,9 @@ export const SEOHelmet: React.FC<SEOHelmetProps> = ({
                 "@type": "TechArticle",
                 "headline": title,
                 "image": [data.imageUrl || image],
-                "datePublished": publishedTime,
+                "datePublished": publishedTime || new Date().toISOString(),
                 "dateModified": new Date().toISOString(),
-                "author": [{ "@type": "Person", "name": author, "url": "https://murad-group.com/group/about" }],
+                "author": [{ "@type": "Person", "name": author, "url": `${domain}/group/about` }],
                 "publisher": { "@id": "https://murad-group.com/#organization" },
                 "description": description,
                 "proficiencyLevel": "Expert"
