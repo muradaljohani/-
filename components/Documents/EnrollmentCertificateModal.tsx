@@ -63,88 +63,95 @@ export const EnrollmentCertificateModal: React.FC<Props> = ({ isOpen, onClose })
             </div>
 
             {/* Certificate Container */}
-            <div className="overflow-auto max-h-screen w-full flex justify-center print:overflow-visible print:max-h-none print:w-full print:block">
+            <div className="overflow-auto max-h-screen w-full flex justify-center print:overflow-visible print:max-h-none print:w-full print:block bg-gray-100 p-8 print:p-0">
                 
                 {/* THE CERTIFICATE CANVAS (A4) */}
                 <div 
                     ref={certRef}
-                    className="bg-white text-black shadow-2xl relative flex flex-col print:shadow-none print:w-full print:h-screen"
+                    className="bg-white text-black shadow-2xl relative flex flex-col print:shadow-none print:w-full print:h-screen mx-auto"
                     style={{
                         width: '210mm',
                         minHeight: '297mm',
-                        padding: '15mm',
+                        padding: '20mm', // Increased padding for safety margins
                         fontFamily: "'Tajawal', 'Times New Roman', serif",
-                        backgroundImage: 'radial-gradient(circle at center, #fff 50%, #f8f9fa 100%)'
+                        backgroundImage: 'radial-gradient(circle at center, #fff 50%, #f8f9fa 100%)',
+                        boxSizing: 'border-box'
                     }}
                 >
+                    {/* Border Frame */}
+                    <div className="absolute top-4 left-4 right-4 bottom-4 border-double border-4 border-[#1e3a8a] pointer-events-none z-0"></div>
+                    <div className="absolute top-6 left-6 right-6 bottom-6 border border-[#d97706] pointer-events-none z-0"></div>
+
                     {/* Watermark */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.03] z-0">
                         <ShieldCheck size={400} />
                     </div>
 
                     {/* Header */}
-                    <div className="flex justify-between items-start border-b-4 border-[#1e3a8a] pb-6 mb-8 relative z-10">
+                    <div className="flex justify-between items-start border-b-2 border-[#1e3a8a] pb-6 mb-8 relative z-10">
                         <div className="text-right">
-                            <h1 className="text-2xl font-black text-[#1e3a8a] mb-1">أكاديمية ميلاف مراد</h1>
-                            <h2 className="text-sm font-bold text-gray-600">للتعليم العالي والتدريب</h2>
-                            <p className="text-xs text-gray-500 mt-2">ترخيص رقم: 582910</p>
+                            <h1 className="text-xl font-black text-[#1e3a8a] mb-1">أكاديمية ميلاف مراد</h1>
+                            <h2 className="text-sm font-bold text-gray-600">للتدريب والتطوير</h2>
+                            <p className="text-[10px] text-gray-500 mt-2">ترخيص رقم: 582910</p>
                         </div>
-                        <div className="text-center">
-                            <img src="/logo.png" alt="Logo" className="w-24 h-24 object-contain opacity-0" /> {/* Placeholder spacing */}
-                            <div className="w-20 h-20 bg-[#1e3a8a] text-white rounded-full flex items-center justify-center text-3xl font-bold mx-auto border-4 border-[#d97706]">M</div>
+                        <div className="text-center absolute left-1/2 transform -translate-x-1/2 -top-2">
+                            <div className="w-24 h-24 bg-[#1e3a8a] text-white rounded-full flex items-center justify-center text-4xl font-bold mx-auto border-4 border-[#d97706] shadow-lg">M</div>
                         </div>
                         <div className="text-left" dir="ltr">
-                            <h1 className="text-xl font-black text-[#1e3a8a] mb-1">Mylaf Murad Academy</h1>
-                            <h2 className="text-xs font-bold text-gray-600 uppercase">For Higher Education & Training</h2>
-                            <p className="text-xs text-gray-500 mt-2">Ref: {user.trainingId}</p>
+                            <h1 className="text-lg font-black text-[#1e3a8a] mb-1">Mylaf Murad Academy</h1>
+                            <h2 className="text-xs font-bold text-gray-600 uppercase">Training & Development</h2>
+                            <p className="text-[10px] text-gray-500 mt-2">Ref: {user.trainingId}</p>
                         </div>
                     </div>
 
                     {/* Title */}
-                    <div className="text-center mb-12 relative z-10">
-                        <h1 className="text-3xl font-black text-black underline decoration-4 decoration-[#d97706] underline-offset-8 inline-block mb-2">
+                    <div className="text-center mb-12 relative z-10 mt-6">
+                        <h1 className="text-2xl font-black text-black underline decoration-2 decoration-[#d97706] underline-offset-8 inline-block mb-2">
                             إفادة انتظام بالدراسة
                         </h1>
-                        <h2 className="text-xl font-serif text-gray-600 mt-2">Study Enrollment Certificate</h2>
+                        <h2 className="text-lg font-serif text-gray-600 mt-2 tracking-wide">Enrollment Certificate</h2>
                     </div>
 
                     {/* Body Content */}
-                    <div className="flex-1 px-8 relative z-10 space-y-10">
+                    <div className="flex-1 px-4 relative z-10 space-y-8">
                         
                         {/* Arabic Text */}
-                        <div className="text-right text-lg leading-loose font-medium text-gray-800" dir="rtl">
-                            <p className="mb-4">إلى من يهمه الأمر،</p>
-                            <p>
-                                تشهد إدارة القبول والتسجيل في <b>أكاديمية ميلاف مراد</b> بأن الطالب/ة:
+                        <div className="text-right text-base leading-loose font-medium text-gray-800" dir="rtl">
+                            <p className="mb-4 font-bold">إلى من يهمه الأمر،</p>
+                            <p className="text-justify mb-4">
+                                تشهد إدارة القبول والتسجيل في <b>أكاديمية ميلاف مراد</b> بأن المتدرب/ة الموضح بياناته أدناه:
                             </p>
-                            <div className="bg-gray-50 border border-gray-200 p-4 my-4 rounded-lg grid grid-cols-2 gap-4">
-                                <p><b>الاسم:</b> {user.name}</p>
-                                <p><b>الرقم الأكاديمي:</b> {user.trainingId}</p>
-                                <p><b>رقم الهوية:</b> {user.nationalId || '-----------'}</p>
-                                <p><b>التخصص:</b> {user.major || 'مسار عام'}</p>
+                            
+                            <div className="bg-gray-50 border border-gray-200 p-4 my-2 rounded-lg grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                                <div className="border-b border-gray-200 pb-1">
+                                    <span className="text-gray-500 ml-2">الاسم:</span>
+                                    <span className="font-bold">{user.name}</span>
+                                </div>
+                                <div className="border-b border-gray-200 pb-1">
+                                    <span className="text-gray-500 ml-2">الرقم الأكاديمي:</span>
+                                    <span className="font-bold font-mono">{user.trainingId}</span>
+                                </div>
+                                <div className="border-b border-gray-200 pb-1">
+                                    <span className="text-gray-500 ml-2">رقم الهوية:</span>
+                                    <span className="font-bold font-mono">{user.nationalId || '-----------'}</span>
+                                </div>
+                                <div className="border-b border-gray-200 pb-1">
+                                    <span className="text-gray-500 ml-2">التخصص/المسار:</span>
+                                    <span className="font-bold">{user.major || 'عام'}</span>
+                                </div>
                             </div>
-                            <p>
-                                منتظم/ة حالياً في الدراسة للأيكاديمية للعام الحالي، وحالته/ها الأكاديمية <b>(نشط)</b>.
+
+                            <p className="text-justify mt-4">
+                                منتظم/ة حالياً في البرامج التدريبية للأكاديمية، وحالته/ها الأكاديمية <b>(نشط)</b>.
                                 وقد أعطيت له هذه الإفادة بناءً على طلبه لتقديمها للجهات المختصة دون أدنى مسؤولية على الأكاديمية تجاه حقوق الغير.
                             </p>
                         </div>
 
-                        <hr className="border-gray-300 border-dashed" />
-
                         {/* English Text */}
-                        <div className="text-left text-lg leading-loose font-serif text-gray-800" dir="ltr">
-                            <p className="mb-4">To Whom It May Concern,</p>
-                            <p>
-                                The Admission and Registration Department at <b>Mylaf Murad Academy</b> certifies that the student:
-                            </p>
-                            <div className="bg-gray-50 border border-gray-200 p-4 my-4 rounded-lg grid grid-cols-2 gap-4">
-                                <p><b>Name:</b> {user.name}</p>
-                                <p><b>Academic ID:</b> {user.trainingId}</p>
-                                <p><b>National ID:</b> {user.nationalId || '-----------'}</p>
-                                <p><b>Major:</b> {user.major || 'General Path'}</p>
-                            </div>
-                            <p>
-                                Is currently an <b>Active</b> enrolled student for the current academic year.
+                        <div className="text-left text-base leading-loose font-serif text-gray-800 mt-8 pt-6 border-t border-dashed border-gray-300" dir="ltr">
+                            <p className="mb-2 font-bold">To Whom It May Concern,</p>
+                            <p className="text-justify mb-4">
+                                This is to certify that the trainee mentioned above is currently an <b>Active</b> student at <b>Mylaf Murad Academy</b>.
                                 This certificate is issued upon the student's request for official purposes.
                             </p>
                         </div>
@@ -152,12 +159,12 @@ export const EnrollmentCertificateModal: React.FC<Props> = ({ isOpen, onClose })
                     </div>
 
                     {/* Footer / Signatures */}
-                    <div className="mt-auto pt-12 relative z-10">
+                    <div className="mt-auto pt-8 relative z-10">
                         <div className="flex justify-between items-end px-4">
                             
                             {/* Executive Director */}
-                            <div className="text-center">
-                                <div className="h-28 mb-2 flex items-end justify-center">
+                            <div className="text-center w-1/3">
+                                <div className="h-20 mb-2 flex items-end justify-center">
                                     <img 
                                         src={assetProcessor.getOfficialSignature()} 
                                         alt="Signature" 
@@ -165,37 +172,34 @@ export const EnrollmentCertificateModal: React.FC<Props> = ({ isOpen, onClose })
                                         style={assetProcessor.getSignatureStyle()} 
                                     />
                                 </div>
-                                <div className="border-t-2 border-black w-48 pt-2 mx-auto">
-                                    <p className="font-bold text-lg">المدير التنفيذي</p>
-                                    <p className="font-serif">Executive Director</p>
-                                    <p className="font-bold text-[#1e3a8a] mt-1">Eng. Murad Aljohani</p>
+                                <div className="border-t border-black w-full pt-2">
+                                    <p className="font-bold text-sm text-[#1e3a8a]">المدير التنفيذي</p>
+                                    <p className="font-bold text-xs">Eng. Murad Aljohani</p>
                                 </div>
                             </div>
 
                             {/* Seal */}
-                            <div className="text-center mb-4">
+                            <div className="text-center w-1/3 flex justify-center">
                                 <img 
                                     src={assetProcessor.getOfficialSeal()} 
                                     alt="Official Seal"
-                                    className="w-40 h-40 object-contain opacity-90 mix-blend-multiply"
+                                    className="w-32 h-32 object-contain opacity-90 mix-blend-multiply"
                                 />
-                                <p className="text-[10px] font-bold text-[#1e3a8a] tracking-widest mt-2">OFFICIAL DOCUMENT</p>
                             </div>
 
                             {/* Verification */}
-                            <div className="text-center" dir="ltr">
-                                <div className="h-28 mb-2 flex items-end justify-center">
-                                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ENROLL:${user.trainingId}`} className="w-24 h-24 border p-1" alt="QR"/>
+                            <div className="text-center w-1/3" dir="ltr">
+                                <div className="h-20 mb-2 flex items-end justify-center">
+                                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ENROLL:${user.trainingId}`} className="w-20 h-20 border p-1" alt="QR"/>
                                 </div>
-                                <div className="border-t-2 border-black w-48 pt-2 mx-auto">
-                                    <p className="font-bold text-sm">Date of Issue</p>
-                                    <p className="font-mono font-bold">{dateStr}</p>
+                                <div className="border-t border-black w-full pt-2">
+                                    <p className="font-bold text-xs text-gray-600">Issue Date: {dateStr}</p>
                                 </div>
                             </div>
 
                         </div>
                         
-                        <div className="text-center text-[10px] text-gray-400 mt-8 border-t pt-2">
+                        <div className="text-center text-[9px] text-gray-400 mt-6 border-t border-gray-200 pt-2">
                              Mylaf Murad Academy | Riyadh, Saudi Arabia | www.murad-group.com
                         </div>
                     </div>

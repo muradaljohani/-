@@ -60,6 +60,12 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
 
     const handleModuleComplete = () => {
         updateCourseProgress(course.id, Math.floor(((currentModuleIdx + 1) / modules.length) * 100));
+        // Auto Advance logic
+        if (currentModuleIdx < modules.length - 1) {
+            setCurrentModuleIdx(prev => prev + 1);
+            setProgress(0); // Reset for next module
+            setIsPlaying(false);
+        }
     };
 
     const handleExamPass = () => {
@@ -256,14 +262,19 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
                     ) : currentModule.type === 'text' ? (
                         /* TEXT ARTICLE TYPE (Fixed layout and styling) */
                         <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden my-auto min-h-min">
-                             {/* Banner */}
-                             {(currentModule as any).banner && (
+                             {/* Banner Logic */}
+                             {((currentModule as any).banner) ? (
                                  <div className="w-full h-64 md:h-80 relative">
                                      <img src={(currentModule as any).banner} className="w-full h-full object-cover" alt="Module Banner"/>
                                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-8">
                                          <h1 className="text-3xl md:text-4xl font-black text-white drop-shadow-lg">{currentModule.title}</h1>
                                      </div>
                                  </div>
+                             ) : (
+                                // Fallback Banner if none provided
+                                <div className="w-full h-48 bg-gradient-to-r from-blue-900 to-slate-900 flex items-center justify-center p-8">
+                                    <h1 className="text-2xl md:text-3xl font-black text-white">{currentModule.title}</h1>
+                                </div>
                              )}
                              
                              <div className="p-8 md:p-12">
@@ -274,7 +285,8 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
 
                                 <div className="mt-12 flex justify-center border-t pt-8">
                                     <button onClick={() => handleModuleComplete()} className="px-10 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg transition-all flex items-center gap-2 transform hover:scale-105">
-                                        <CheckCircle2 className="w-5 h-5"/> إتمام قراءة الوحدة
+                                        <CheckCircle2 className="w-5 h-5"/> 
+                                        {currentModuleIdx < modules.length - 1 ? 'إكمال وانتقال للتالي' : 'إتمام الدورة'}
                                     </button>
                                 </div>
                              </div>
@@ -283,7 +295,7 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
                         <div className="text-center text-gray-400 self-center">
                             <FileText className="w-20 h-20 mx-auto mb-4 opacity-20"/>
                             <p>محتوى للاختبار / التحميل</p>
-                            <button onClick={() => setProgress(100)} className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white">تحديد كمقمل</button>
+                            <button onClick={() => handleModuleComplete()} className="mt-4 px-6 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white">تحديد كمكتمل</button>
                         </div>
                     )}
                 </div>

@@ -90,10 +90,13 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const generateCourseContent = (id: number) => {
         const isAI = id <= 25;
         const topic = isAI ? "الذكاء الاصطناعي (AI)" : "قواعد البيانات (Data Management)";
-        
+        const topicBanner = isAI 
+            ? 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1200' 
+            : 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&q=80&w=1200';
+
         const longTextIntro = `
             مرحباً بكم في هذه الحقيبة التدريبية المتخصصة في ${topic}. في عالمنا الرقمي المتسارع، أصبحت هذه المهارات ليست مجرد خيار بل ضرورة ملحة لكل من يرغب في التميز في سوق العمل. 
-            تهدف هذه الدورة إلى تزويدك بالأساسيات النظرية والمهارات العملية التي تمكنك من فهم وبناء أنظمة متقدمة.
+            تهدف هذه الحقيبة إلى تزويدك بالأساسيات النظرية والمهارات العملية التي تمكنك من فهم وبناء أنظمة متقدمة.
             سنبدأ رحلتنا بفهم المفاهيم الأساسية، ثم ننتقل تدريجياً إلى التطبيقات العملية.
             <br/><br/>
             <strong>لماذا هذا المجال مهم؟</strong>
@@ -132,7 +135,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                 duration: '15 دقيقة', 
                 isCompleted: true,
                 content: longTextIntro,
-                banner: isAI ? 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1000' : 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&q=80&w=1000'
+                banner: topicBanner
             },
             { 
                 id: 'm2', 
@@ -161,10 +164,10 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
         return {
             id: `c_${id}`,
-            title: isAI ? `الحقيبة ${id}: ماجستير الذكاء الاصطناعي التطبيقي` : `الحقيبة ${id}: احتراف قواعد البيانات والبيانات الضخمة`,
-            description: `برنامج تدريبي مكثف وشامل يغطي كافة جوانب ${topic} من النظرية إلى التطبيق العملي.`,
+            title: isAI ? `الحقيبة ${id}: الذكاء الاصطناعي التطبيقي (احترافية)` : `الحقيبة ${id}: احتراف قواعد البيانات`,
+            description: `حقيبة تدريبية مكثفة وشاملة تغطي كافة جوانب ${topic} من النظرية إلى التطبيق العملي.`,
             modules: modules,
-            thumbnail: isAI ? 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80' : 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800&q=80',
+            thumbnail: topicBanner,
             unlocksPermission: 'certified'
         };
     };

@@ -21,7 +21,6 @@ interface Props {
     onNavigate: (path: string) => void;
 }
 
-// ... [Keep existing BLOG_POSTS, PRODUCTS, NAV_LINKS constants unchanged] ...
 const BLOG_POSTS = [
     {
         id: 'digital-economy-2030',
@@ -152,8 +151,6 @@ export const MuradGroupPortal: React.FC<Props> = ({ onNavigate }) => {
 
     // --- RENDERERS ---
     
-    // ... [Keep Header, HeroSection, ProductsSection, BlogSection, FounderSection unchanged] ...
-    
     const Header = () => (
         <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
             <div className="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
@@ -208,8 +205,19 @@ export const MuradGroupPortal: React.FC<Props> = ({ onNavigate }) => {
     );
 
     const HeroSection = () => (
-        <div className="bg-white py-20 md:py-32 px-6">
-            <div className="max-w-4xl mx-auto text-center animate-fade-in-up">
+        <div className="relative bg-white py-20 md:py-32 px-6 overflow-hidden">
+            {/* Ambient Background Elements for Glass Effect */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-blue-100/50 rounded-full blur-[120px] -z-10 opacity-60"></div>
+            <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-indigo-50/50 rounded-full blur-[100px] -z-10 opacity-40"></div>
+            
+            <div className="max-w-4xl mx-auto text-center animate-fade-in-up relative z-10">
+                
+                {/* GLASSY COMPANY BADGE */}
+                <div className="inline-flex items-center justify-center gap-3 px-6 py-2.5 mb-8 rounded-full bg-white/60 border border-slate-200/60 shadow-lg shadow-blue-900/5 backdrop-blur-md hover:scale-105 transition-transform duration-300 cursor-default">
+                    <div className="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></div>
+                    <span className="text-slate-800 font-bold text-sm tracking-wide">شركة مراد الجهني لتقنية المعلومات</span>
+                </div>
+
                 <h1 className="text-4xl md:text-6xl font-black text-slate-900 mb-6 leading-tight tracking-tight">
                     نطور الويب العربي، <br/>
                     <span className="text-[#2563eb]">لنبني المستقبل.</span>
