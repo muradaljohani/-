@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import { X, Fingerprint, Loader2, AlertCircle, Eye, EyeOff, UserPlus, User, Mail, Smartphone, Building2, Lock, FileText, ArrowRight, Github } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -10,7 +9,7 @@ import { RealAuthService } from '../services/realAuthService';
 const Icons = {
   Apple: () => <svg className="w-5 h-5 fill-current" viewBox="0 0 384 512"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5c0 66.2 23.9 122.2 52.4 167.5 20.3 32.2 44.8 68.4 75.5 67.3 29.9-1.1 40.4-23.1 76.2-23.1 35.8 0 45.9 22.3 76.6 22.6 29.9 .3 54.9-38.6 74.5-66.8 15-21.3 28.7-47 34.6-60.4-62.8-25.4-66.2-107-1.2-134.9l.2-.1zM208.8 99.6c19-22.5 31.8-54.1 28.4-85.9-21 1.4-47.1 12.8-62.9 31-15 16.9-29.4 46.3-25.2 76.5 23.2 2 48.4-10.1 59.7-21.6z"/></svg>,
   Twitter: () => <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>,
-  Facebook: () => <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.859-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036c-2.148 0-2.797 1.657-2.797 2.895v1.076h3.614l-.473 3.667h-3.141v7.98h-.949c-1.374 0-2.673 0-4.069 0z"/></svg>,
+  Facebook: () => <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M9.101 23.691v-7.98H6.627v-3.667h2.474v-1.58c0-4.085 1.848-5.978 5.859-5.978.401 0 .955.042 1.468.103a8.68 8.68 0 0 1 1.141.195v3.325a8.623 8.623 0 0 0-.653-.036c-2.148 0-2.797 1.657-2.797 2.895v1.076h3.614l-.473 3.667h-3.141v7.98h-.949c-1.374 0-2.673 0-4.039 0z"/></svg>,
   Google: () => <img src="https://upload.wikimedia.org/wikipedia/commons/0/09/Google__G__Logo.svg" alt="Google" className="w-5 h-5" />
 };
 
@@ -57,16 +56,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
           if (provider && ['google', 'facebook', 'twitter', 'github'].includes(provider)) {
               await signInWithProvider(provider);
               onLoginSuccess?.();
-          } else if (provider) {
-              // Legacy/Mock providers
-              const res = await RealAuthService.exchangeOAuthCode(provider, 'mock_code');
-              if (res.success && res.user) {
-                  await login({ ...res.user, loginMethod: provider });
-                  onLoginSuccess?.();
-              } else {
-                  setError('فشل تسجيل الدخول');
+          } else if (provider === 'nafath') {
+              // Legacy/Mock providers - Nafath
+              const res = await RealAuthService.requestNafathLogin('1010101010'); // Mock ID
+              if (res.status === 'WAITING') {
+                   // Simulate completion
+                   setTimeout(async () => {
+                       await login({ name: 'مواطن (نفاذ)', isIdentityVerified: true });
+                       onLoginSuccess?.();
+                   }, 2000);
               }
+          } else if (provider === 'apple') {
+             // Mock Apple
+             await login({ name: 'Apple User', loginMethod: 'apple' });
+             onLoginSuccess?.();
           } else {
+              // Email Login
               const res = await login({ email: loginEmail }, loginPass);
               if (res.success) {
                   onLoginSuccess?.();
@@ -153,32 +158,34 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
 
                     <div className="grid grid-cols-2 gap-3 mb-6">
                         <button 
+                            disabled={isLoading}
                             onClick={() => handleLogin('google')}
-                            className="flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 py-3 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95"
+                            className="flex items-center justify-center gap-2 bg-white text-gray-700 border border-gray-200 py-3 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95 disabled:opacity-50"
                         >
                             <Icons.Google />
                             <span className="text-xs font-bold">Google</span>
                         </button>
                         
-                        <button onClick={() => handleLogin('facebook')} className="flex items-center justify-center gap-2 bg-[#1877f2] text-white py-3 rounded-xl hover:bg-[#156ad8] transition-all shadow-sm active:scale-95">
+                        <button disabled={isLoading} onClick={() => handleLogin('facebook')} className="flex items-center justify-center gap-2 bg-[#1877f2] text-white py-3 rounded-xl hover:bg-[#156ad8] transition-all shadow-sm active:scale-95 disabled:opacity-50">
                              <Icons.Facebook />
                              <span className="text-xs font-bold">Facebook</span>
                         </button>
                         
-                        <button onClick={() => handleLogin('twitter')} className="flex items-center justify-center gap-2 bg-black text-white py-3 rounded-xl hover:bg-gray-800 transition-all shadow-sm active:scale-95">
+                        <button disabled={isLoading} onClick={() => handleLogin('twitter')} className="flex items-center justify-center gap-2 bg-black text-white py-3 rounded-xl hover:bg-gray-800 transition-all shadow-sm active:scale-95 disabled:opacity-50">
                              <Icons.Twitter />
                              <span className="text-xs font-bold">Twitter</span>
                         </button>
                         
-                        <button onClick={() => handleLogin('github')} className="flex items-center justify-center gap-2 bg-[#24292f] text-white py-3 rounded-xl hover:bg-[#1b1f23] transition-all shadow-sm active:scale-95">
+                        <button disabled={isLoading} onClick={() => handleLogin('github')} className="flex items-center justify-center gap-2 bg-[#24292f] text-white py-3 rounded-xl hover:bg-[#1b1f23] transition-all shadow-sm active:scale-95 disabled:opacity-50">
                              <Github className="w-5 h-5" />
                              <span className="text-xs font-bold">GitHub</span>
                         </button>
                     </div>
 
                     <button 
+                        disabled={isLoading}
                         onClick={() => handleLogin('nafath')}
-                        className="w-full bg-[#006e4e] hover:bg-[#005a40] text-white py-3 rounded-full font-bold mb-6 flex items-center justify-center gap-3 shadow-lg shadow-emerald-900/10 transition-all hover:-translate-y-0.5"
+                        className="w-full bg-[#006e4e] hover:bg-[#005a40] text-white py-3 rounded-full font-bold mb-6 flex items-center justify-center gap-3 shadow-lg shadow-emerald-900/10 transition-all hover:-translate-y-0.5 disabled:opacity-50"
                     >
                         <Fingerprint className="w-5 h-5"/>
                         الدخول عبر النفاذ الوطني
@@ -206,7 +213,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                         
                         {error && <div className="p-3 bg-red-50 text-red-500 text-xs font-bold rounded-xl border border-red-100 flex items-center gap-2"><AlertCircle className="w-4 h-4"/> {error}</div>}
 
-                        <button type="submit" disabled={isLoading} className="w-full bg-[#1e293b] hover:bg-black text-white py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all mt-2">
+                        <button type="submit" disabled={isLoading} className="w-full bg-[#1e293b] hover:bg-black text-white py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all mt-2 disabled:opacity-70 disabled:cursor-not-allowed">
                             {isLoading ? <Loader2 className="w-5 h-5 animate-spin"/> : 'دخول'}
                         </button>
                     </form>
@@ -272,7 +279,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
 
                       {error && <div className="p-3 bg-red-50 text-red-500 text-xs font-bold rounded-xl border border-red-100 flex items-center gap-2"><AlertCircle className="w-4 h-4"/> {error}</div>}
 
-                      <button type="submit" disabled={isLoading} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all mt-4">
+                      <button type="submit" disabled={isLoading} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all mt-4 disabled:opacity-70 disabled:cursor-not-allowed">
                           {isLoading ? <Loader2 className="w-5 h-5 animate-spin"/> : <><UserPlus className="w-5 h-5"/> إنشاء الحساب</>}
                       </button>
                       

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, X, Send, User, ChevronDown, Image as ImageIcon, Camera, Mic } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -11,6 +10,7 @@ export const MilafBot: React.FC = () => {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const [isBotVisible, setIsBotVisible] = useState(true); // State to toggle visibility of the whole component
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [attachment, setAttachment] = useState<Attachment | null>(null);
@@ -193,20 +193,47 @@ export const MilafBot: React.FC = () => {
     setMessages(prev => prev.map(m => m.id === botMsgId ? { ...m, isStreaming: false } : m));
   }
 
+  if (!isBotVisible) return null;
+
   return (
     <div className={`fixed z-[9990] font-sans ${isOpen ? 'inset-0 sm:inset-auto sm:bottom-6 sm:right-6' : 'bottom-6 right-6'}`} dir="rtl">
       {(!isOpen) && (
-        <div className="flex flex-col items-center gap-2 group cursor-pointer" onClick={() => setIsOpen(true)}>
-            <div className="relative flex items-center justify-center w-14 h-14 bg-black rounded-full border border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.4)] group-hover:scale-110 transition-transform">
+        <div className="flex flex-col items-center gap-2 group cursor-pointer relative" onClick={() => setIsOpen(true)}>
+            
+            {/* Close Button (Visible on Hover) - UPDATED STYLE: Transparent Gray */}
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsBotVisible(false);
+              }}
+              className="absolute -top-4 -left-4 z-50 bg-gray-500/10 hover:bg-gray-500/30 text-gray-400 hover:text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm border border-white/5"
+              title="إغلاق البوت"
+            >
+              <X className="w-3 h-3"/>
+            </button>
+
+            {/* Orbiting White Dot */}
+            <div className="absolute inset-0 -m-1 z-0 pointer-events-none">
+               <div className="w-full h-full animate-[spin_3s_linear_infinite] rounded-full">
+                  <div className="w-2 h-2 bg-white rounded-full absolute top-0 left-1/2 -translate-x-1/2 shadow-[0_0_10px_rgba(255,255,255,0.8)]"></div>
+               </div>
+            </div>
+
+            <div className="relative flex items-center justify-center w-14 h-14 bg-black rounded-full border border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.4)] group-hover:scale-110 transition-transform z-10">
               <Bot className="w-7 h-7 text-white" />
               <span className="absolute -top-1 -right-1 flex h-3 w-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
               </span>
             </div>
-            <div className="flex flex-col items-center gap-0.5 bg-black/40 backdrop-blur-sm px-2 py-1 rounded-lg border border-white/5">
-                <span className="text-[10px] font-bold text-gray-200 group-hover:text-white transition-colors shadow-black drop-shadow-sm">مراد كلوك</span>
-                <span className="text-[8px] font-bold text-gray-400 uppercase tracking-wide group-hover:text-gray-300 transition-colors">Murad Clock</span>
+            
+            <div className="flex flex-col items-center gap-0.5 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-white/5 relative z-10 text-center min-w-[80px]">
+                <span className="text-[10px] font-bold text-gray-200 group-hover:text-white transition-colors shadow-black drop-shadow-sm leading-tight">
+                    مراد كلوك <br/> Murad Clock
+                </span>
+                <span className="text-[9px] font-bold text-amber-500 mt-0.5 tracking-wide">
+                    رقم واحد
+                </span>
             </div>
         </div>
       )}
@@ -223,7 +250,7 @@ export const MilafBot: React.FC = () => {
               <div>
                 <h3 className="text-white font-bold text-sm">نظام مراد كلوك (Murad Clock)</h3>
                 <div className="text-[10px] text-gray-400 font-mono flex items-center gap-1">
-                  <ActivityDot /> احدى ادوات مراد الجهني لتقنية المعلومات العالمية
+                  <ActivityDot /> رقم واحد
                 </div>
               </div>
             </div>

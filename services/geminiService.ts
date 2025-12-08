@@ -232,7 +232,8 @@ export const streamChatResponse = async (
   onChunk: (text: string) => void,
   onSources: (sources: SearchSource[]) => void,
   signal?: AbortSignal,
-  user?: User | null
+  user?: User | null,
+  customSystemInstruction?: string
 ) => {
   try {
     const chatHistory = history.map((msg) => {
@@ -248,8 +249,8 @@ export const streamChatResponse = async (
         { functionDeclarations: [getUserStatsTool] }
     ];
 
-    // STREAMLINED SYSTEM PROMPT FOR SPEED & STRICT COMPLIANCE
-    const systemPrompt = `
+    // Default System Prompt (for the Widget Bot)
+    const defaultSystemPrompt = `
     Identity: 'Murad Clock' (مراد كلوك), the largest global system and official agent of 'Mylaf Murad Group'.
     
     Rules:
@@ -315,7 +316,7 @@ export const streamChatResponse = async (
       history: chatHistory,
       config: {
         tools: tools,
-        systemInstruction: systemPrompt,
+        systemInstruction: customSystemInstruction || defaultSystemPrompt,
         // Optimization configs for speed
         temperature: 0.7, 
         maxOutputTokens: 800, 

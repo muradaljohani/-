@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { Download, Loader2, Printer, CheckCircle2, User, FileText, Calendar } from 'lucide-react';
+import { Download, Loader2, Printer, CheckCircle2, User, FileText, Calendar, ShieldCheck } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { AssetProcessor } from '../services/System/AssetProcessor';
 
@@ -57,7 +57,9 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                 {/* STEP 1: Details Input */}
                 {step === 'details' && (
                     <div className="bg-[#1e293b] p-8 rounded-3xl border border-white/10 shadow-2xl max-w-md w-full">
-                        <h2 className="text-2xl font-bold text-white mb-6 text-center">إكمال بيانات الشهادة</h2>
+                        <h2 className="text-2xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2">
+                             <ShieldCheck className="w-6 h-6 text-emerald-500"/> توثيق الشهادة
+                        </h2>
                         <div className="space-y-4">
                             <div>
                                 <label className="block text-gray-400 text-sm mb-1">رقم الهوية / الإقامة</label>
@@ -101,14 +103,14 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                             <button 
                                 onClick={() => {
                                     if(!extraData.nationalId || !extraData.nationality || !extraData.dob) {
-                                        alert("يرجى إكمال جميع الحقول");
+                                        alert("يرجى إكمال جميع الحقول لضمان توثيق الشهادة.");
                                         return;
                                     }
                                     setStep('preview');
                                 }} 
                                 className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg transition-all mt-4"
                             >
-                                إصدار الشهادة
+                                إصدار الشهادة الرسمية
                             </button>
                             <button onClick={onClose} className="w-full text-gray-500 text-sm hover:text-white">إلغاء</button>
                         </div>
@@ -160,21 +162,21 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                                     <div className="flex items-center justify-center gap-[15px] mb-[10px]">
                                         <div className="w-[50px] h-[50px] bg-[#1e3a8a] text-white rounded-full flex items-center justify-center text-[28px] font-bold border-4 border-[#d97706]">M</div>
                                         <div className="text-right">
-                                            <div className="font-black text-[#1e3a8a] text-[16px]">أكاديمية ميلاف مراد</div>
+                                            <div className="font-black text-[#1e3a8a] text-[20px]">أكاديمية ميلاف مراد</div>
                                             <div className="text-[10px] text-[#d97706] tracking-[1px] font-bold uppercase">MYLAF MURAD ACADEMY</div>
                                         </div>
                                     </div>
-                                    <h1 className="text-[42px] text-[#1e3a8a] m-0 font-bold" style={{fontFamily: 'Amiri, serif'}}>شهادة إتمام دورة</h1>
+                                    <h1 className="text-[48px] text-[#1e3a8a] m-0 font-bold" style={{fontFamily: 'Amiri, serif'}}>شهادة إتمام دورة</h1>
                                     <div className="text-[12px] tracking-[5px] text-[#d97706] uppercase font-bold mt-[2px]">CERTIFICATE OF COMPLETION</div>
                                 </div>
 
                                 {/* 2. BODY TEXT */}
-                                <div className="flex flex-col items-center text-center gap-[15px] flex-grow justify-center">
-                                    <p className="text-[20px] text-[#666] m-0 font-medium font-serif">
+                                <div className="flex flex-col items-center text-center gap-[20px] flex-grow justify-center">
+                                    <p className="text-[24px] text-[#666] m-0 font-medium font-serif">
                                         تشهد أكاديمية ميلاف مراد للتدريب والتطوير بأن المتدرب/ة:
                                     </p>
                                     
-                                    <div className="text-[40px] text-[#1f2937] font-bold border-b border-[#ddd] pb-[5px] px-8 min-w-[300px]" style={{fontFamily: 'Amiri, serif'}}>
+                                    <div className="text-[48px] text-[#1f2937] font-bold border-b-2 border-[#ddd] pb-[5px] px-8 min-w-[300px]" style={{fontFamily: 'Amiri, serif'}}>
                                         {studentName}
                                     </div>
 
@@ -183,11 +185,11 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                                         border: '1px solid #1e3a8a',
                                         borderRadius: '8px',
                                         backgroundColor: 'rgba(255,255,255,0.7)',
-                                        padding: '10px 30px',
-                                        margin: '10px 0',
+                                        padding: '12px 35px',
+                                        margin: '15px 0',
                                         display: 'flex',
                                         gap: '40px',
-                                        fontSize: '16px',
+                                        fontSize: '18px',
                                         textAlign: 'right',
                                         boxShadow: '0 2px 10px rgba(0,0,0,0.05)'
                                     }}>
@@ -196,9 +198,9 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                                         <div><span style={{color:'#666', fontSize:'14px'}}>الميلاد:</span> <span style={{fontWeight:'bold', fontFamily:'monospace'}}>{extraData.dob}</span></div>
                                     </div>
                                     
-                                    <div className="text-[18px] text-[#4b5563] leading-[1.8] font-serif max-w-[800px]">
+                                    <div className="text-[20px] text-[#4b5563] leading-[2] font-serif max-w-[900px]">
                                         قد أتم/ت بنجاح متطلبات البرنامج التدريبي بعنوان:
-                                        <div className="text-[#1e3a8a] font-black text-[24px] my-[8px]">{courseName}</div>
+                                        <div className="text-[#1e3a8a] font-black text-[28px] my-[10px]">{courseName}</div>
                                         وذلك خلال الفترة من <b>{new Date(Date.now() - 86400000 * 5).toLocaleDateString('en-GB')}</b> إلى <b>{date}</b>، بواقع (15) ساعة تدريبية.
                                         <br/>
                                         وقد مُنح هذه الشهادة اجتيازاً لكافة المتطلبات المقررة، متمنين له/لها دوام التوفيق والنجاح.
@@ -211,7 +213,7 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                                         
                                         {/* Right: Signature */}
                                         <div className="text-center w-[220px]">
-                                            <div className="h-[60px] mb-[5px] flex items-end justify-center relative">
+                                            <div className="h-[80px] mb-[5px] flex items-end justify-center relative">
                                                 <img 
                                                     src={assetProcessor.getOfficialSignature()} 
                                                     alt="Signature" 
@@ -220,18 +222,18 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                                                 />
                                             </div>
                                             <div className="border-t-2 border-[#1e3a8a] pt-[5px]">
-                                                <div className="font-bold text-[#1e3a8a] text-[14px]">المدير التنفيذي</div>
-                                                <div className="text-[16px] text-[#1f2937] font-bold font-serif">أ. مراد الجهني</div>
+                                                <div className="font-bold text-[#1e3a8a] text-[16px]">المدير التنفيذي</div>
+                                                <div className="text-[18px] text-[#1f2937] font-bold font-serif">م. مراد الجهني</div>
                                             </div>
                                         </div>
 
                                         {/* Center: Stamp */}
-                                        <div className="text-center w-[180px]">
-                                            <div className="h-[100px] flex items-center justify-center">
+                                        <div className="text-center w-[200px]">
+                                            <div className="h-[120px] flex items-center justify-center">
                                                 <img 
                                                     src={assetProcessor.getOfficialSeal()} 
                                                     alt="Stamp"
-                                                    className="w-[120px] opacity-90 mix-blend-multiply"
+                                                    className="w-[140px] opacity-90 mix-blend-multiply transform -rotate-12"
                                                 />
                                             </div>
                                             <div className="text-[10px] text-[#d97706] font-bold mt-1 uppercase tracking-widest">Official Stamp</div>
@@ -239,24 +241,24 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
 
                                         {/* Left: Date & Verify */}
                                         <div className="text-center w-[220px]">
-                                            <div className="h-[60px] mb-[5px] flex items-end justify-center">
-                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://murad-group.com/verify/CERT-${Date.now()}`} className="w-[60px] h-[60px] border border-[#ddd] p-[2px] bg-white block" alt="QR Code" />
+                                            <div className="h-[80px] mb-[5px] flex items-end justify-center">
+                                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://murad-group.com/verify/CERT-${Date.now()}`} className="w-[80px] h-[80px] border border-[#ddd] p-[2px] bg-white block" alt="QR Code" />
                                             </div>
                                             <div className="border-t-2 border-[#1e3a8a] pt-[5px]">
-                                                <div className="font-bold text-[#1e3a8a] text-[12px]">حرر بتاريخ: {date}</div>
+                                                <div className="font-bold text-[#1e3a8a] text-[14px]">حرر بتاريخ: {date}</div>
                                                 <div className="text-[10px] text-[#666]">رمز التحقق (Scan to Verify)</div>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Partners Strip */}
-                                    <div className="border-t border-[#ddd] pt-[10px]">
-                                        <p className="text-[10px] text-[#666] mb-[5px] font-bold text-center">شركاء النجاح الاستراتيجيين:</p>
+                                    <div className="border-t border-[#ddd] pt-[15px]">
+                                        <p className="text-[10px] text-[#666] mb-[5px] font-bold text-center uppercase tracking-widest">Strategic Partners:</p>
                                         <div className="flex justify-center items-center gap-[40px] opacity-70 grayscale">
-                                            <div className="text-[10px] font-bold text-[#1e3a8a] flex items-center gap-1"><span className="text-[14px]">🇸🇦</span> وزارة الموارد البشرية</div>
-                                            <div className="text-[10px] font-bold text-[#1e3a8a] flex items-center gap-1"><span className="text-[14px]">🎯</span> هدف (Hadaf)</div>
-                                            <div className="text-[10px] font-bold text-[#1e3a8a] flex items-center gap-1"><span className="text-[14px]">👁️</span> رؤية 2030</div>
-                                            <div className="text-[10px] font-bold text-[#1e3a8a] flex items-center gap-1"><span className="text-[14px]">🛡️</span> الأمن السيبراني</div>
+                                            <div className="text-[12px] font-bold text-[#1e3a8a] flex items-center gap-1"><span className="text-[16px]">🇸🇦</span> وزارة الموارد البشرية</div>
+                                            <div className="text-[12px] font-bold text-[#1e3a8a] flex items-center gap-1"><span className="text-[16px]">🎯</span> هدف (Hadaf)</div>
+                                            <div className="text-[12px] font-bold text-[#1e3a8a] flex items-center gap-1"><span className="text-[16px]">👁️</span> رؤية 2030</div>
+                                            <div className="text-[12px] font-bold text-[#1e3a8a] flex items-center gap-1"><span className="text-[16px]">🛡️</span> الأمن السيبراني</div>
                                         </div>
                                     </div>
                                 </div>
@@ -268,12 +270,12 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
 
                 {/* 2. CONTROLS AREA */}
                 <div className="w-full lg:w-80 flex flex-col gap-4">
-                    <div className="bg-white rounded-2xl p-6 shadow-xl text-center">
+                    <div className="bg-white rounded-2xl p-6 shadow-xl text-center border border-gray-100">
                         <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <CheckCircle2 className="w-8 h-8 text-emerald-600" />
                         </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">مبروك النجاح!</h3>
-                        <p className="text-gray-500 text-sm mb-6">شهادتك جاهزة للتحميل والطباعة بجودة عالية.</p>
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">الشهادة جاهزة</h3>
+                        <p className="text-gray-500 text-sm mb-6">تم توقيع وختم الشهادة رسمياً. يمكنك الآن تحميلها أو طباعتها.</p>
                         
                         <button 
                             onClick={handleDownload} 
@@ -281,11 +283,11 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                             className="w-full bg-[#1e3a8a] hover:bg-blue-800 text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all mb-3"
                         >
                             {isGenerating ? <Loader2 className="w-5 h-5 animate-spin"/> : <Download className="w-5 h-5"/>}
-                            تحميل الشهادة (PNG)
+                            تحميل PNG عالي الدقة
                         </button>
                         
                         <button onClick={() => window.print()} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all">
-                            <Printer className="w-5 h-5"/> طباعة مباشرة
+                            <Printer className="w-5 h-5"/> طباعة فورية
                         </button>
                     </div>
 

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Menu, LogIn, GraduationCap, ShoppingBag, Globe, FileText, Clock, Cloud, Server, Zap } from 'lucide-react';
+import { Menu, LogIn, GraduationCap, ShoppingBag, Globe, FileText, Clock, Cloud, Server, Zap, Building2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AuthModal } from './AuthModal';
 
@@ -55,6 +55,9 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
 
         {/* DESKTOP NAV */}
         <nav className="hidden lg:flex items-center gap-1 overflow-x-auto scrollbar-hide px-2">
+            <button onClick={() => handleNav('corporate')} className="px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
+                <Building2 className="w-4 h-4 text-blue-400"/> شركة مراد الجهني لتقنية المعلومات العالمية
+            </button>
             <button onClick={() => handleNav('academy')} className="px-3 py-2 text-gray-300 hover:text-white hover:bg-white/5 rounded-lg text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap">
                 <GraduationCap className="w-4 h-4 text-purple-400"/> أكاديمية ميلاف مراد
             </button>
@@ -105,6 +108,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
       {/* MOBILE MENU */}
       {mobileMenu && (
           <div className="lg:hidden bg-[#1e293b] border-t border-white/10 p-4 absolute w-full left-0 top-16 shadow-2xl z-50 flex flex-col gap-2 max-h-[80vh] overflow-y-auto">
+            <button onClick={() => handleNav('corporate')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><Building2 className="w-4 h-4 text-blue-400"/> شركة مراد الجهني لتقنية المعلومات العالمية</button>
             <button onClick={() => handleNav('academy')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><GraduationCap className="w-4 h-4 text-purple-400"/> أكاديمية ميلاف مراد</button>
             <button onClick={() => handleNav('market')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><ShoppingBag className="w-4 h-4 text-emerald-400"/> سوق ميلاف مراد</button>
             <button onClick={() => handleNav('meta')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><FileText className="w-4 h-4 text-red-400"/> مراد ميا</button>

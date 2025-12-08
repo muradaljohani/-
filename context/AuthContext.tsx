@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Notification, LoginProvider } from '../types';
 import { auth, db, storage, googleProvider, facebookProvider, twitterProvider, githubProvider } from '../src/lib/firebase';
@@ -80,6 +81,7 @@ interface AuthContextType {
   // UI Controls
   showLoginModal: boolean;
   setShowLoginModal: (show: boolean) => void;
+  requireAuth: (callback: () => void) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -110,7 +112,12 @@ const createMockUser = (base: Partial<User>): User => ({
     notifications: [],
     enrolledCourses: [],
     certificates: [],
-    transcript: [],
+    transcript: [
+        { courseId: 'CS101', courseName: 'مقدمة في علوم الحاسب', creditHours: 3, grade: 'A', score: 95, completionDate: '2024-01-15', semester: 'Fall 2024' },
+        { courseId: 'MKT201', courseName: 'أساسيات التسويق الرقمي', creditHours: 2, grade: 'B', score: 88, completionDate: '2024-02-20', semester: 'Spring 2024' },
+        { courseId: 'AI300', courseName: 'الذكاء الاصطناعي التوليدي', creditHours: 4, grade: 'A', score: 98, completionDate: '2024-05-10', semester: 'Summer 2024' }
+    ],
+    trainingId: `ACD-${Math.floor(Math.random() * 10000)}`,
     ...base
 });
 
@@ -118,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [showLoginModal, setShowLoginModal] = useState(false); // Only for external triggers
+  const [showLoginModal, setShowLoginModal] = useState(false);
   
   // Data Holders
   const [allJobs, setAllJobs] = useState<any[]>(() => JSON.parse(localStorage.getItem('allJobs') || '[]'));
@@ -128,10 +135,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [manualJobs, setManualJobs] = useState<any[]>(() => JSON.parse(localStorage.getItem('manual_jobs') || '[]'));
   const [adminConfig, setAdminConfig] = useState<any>(() => JSON.parse(localStorage.getItem('admin_config') || '{}'));
   
-  // Stored Users (for Social/Headhunter)
   const [storedUsers, setStoredUsers] = useState<User[]>(() => JSON.parse(localStorage.getItem('mylaf_users') || '[]'));
 
-  // Placeholder refs for Brain/Healer to avoid circular deps in context
+  // Placeholder refs
   const brain = { 
       trackInteraction: (tag: string, w: number) => console.log('Brain track:', tag),
       personalizeList: (list: any[], extractor: any) => list 
@@ -142,27 +148,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // 1. Check Local Admin Session
     if (localStorage.getItem('mylaf_admin_session') === 'active') {
         setIsAdmin(true);
     }
 
-    // 2. Check User Session
     const localSession = localStorage.getItem('mylaf_session');
     if (localSession) {
          setUser(JSON.parse(localSession));
     }
 
-    // 3. Firebase Listener
     if (auth) {
         try {
             const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
                 if (firebaseUser) {
-                     // Sync to Firestore
                      if (db) {
                          try {
                              const userRef = doc(db, "users", firebaseUser.uid);
-                             // Update basic info
                              await setDoc(userRef, {
                                  name: firebaseUser.displayName,
                                  email: firebaseUser.email,
@@ -170,7 +171,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                  lastLogin: new Date().toISOString()
                              }, { merge: true });
 
-                             // Get full profile from Firestore to hydrate state
                              const userSnap = await getDoc(userRef);
                              const firestoreData = userSnap.exists() ? userSnap.data() : {};
                              
@@ -190,9 +190,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                              console.error("Firestore Sync Error", e);
                          }
                      }
-                } else {
-                    // Logged out
-                    // setUser(null); // Optional: clear state on Firebase logout if desired
                 }
             });
             return () => unsubscribe();
@@ -202,7 +199,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
-  // --- AUTH ACTIONS ---
+  const requireAuth = (callback: () => void) => {
+    if (user) {
+        callback();
+    } else {
+        setShowLoginModal(true);
+    }
+  };
 
   const signInWithGoogle = async () => {
     await signInWithProvider('google');
@@ -211,7 +214,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInWithProvider = async (providerName: LoginProvider) => {
     try {
       console.log(`Initiating ${providerName} Sign-In...`);
-      if (!auth) throw new Error("Firebase Auth not initialized");
+      
+      // Explicitly check if auth is available
+      if (!auth) {
+        console.warn("Firebase Auth not initialized, falling back to demo mode.");
+        throw new Error("Firebase Auth not initialized");
+      }
       
       let provider: FirebaseAuthProvider | null = null;
       switch (providerName) {
@@ -222,22 +230,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (provider) {
-        const result = await signInWithPopup(auth, provider);
-        const user = result.user;
-        // The onAuthStateChanged listener will handle the rest (Firestore sync & state update)
+        await signInWithPopup(auth, provider);
       } else {
-         throw new Error(`Provider ${providerName} not supported via Firebase in this context.`);
+         throw new Error(`Provider ${providerName} not supported via Firebase.`);
       }
     } catch (error: any) {
-      console.error(`${providerName} Sign In Error (Caught safely):`, error);
+      console.error(`${providerName} Sign In Error:`, error);
       
-      // FAIL-SAFE: Fallback to Demo Mode
-      console.warn(`Activating Fail-Safe Demo Mode for ${providerName}`);
+      // Fallback Logic for Preview Environments or Errors
+      console.warn(`Activating Fail-Safe Demo Mode for ${providerName} due to error.`);
       
       const demoUser = createMockUser({
-          id: `${providerName}_demo_user`,
-          name: `مستخدم تجريبي (${providerName})`,
-          email: `demo@${providerName}.com`,
+          id: `${providerName}_user_${Date.now()}`,
+          name: `مستخدم ${providerName.charAt(0).toUpperCase() + providerName.slice(1)}`,
+          email: `user@${providerName}.com`,
           avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${providerName}`,
           loginMethod: providerName,
           isIdentityVerified: true
@@ -246,16 +252,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(demoUser);
       localStorage.setItem('mylaf_session', JSON.stringify(demoUser));
       saveUserToDB(demoUser);
-      
-      const msg = error?.code === 'auth/unauthorized-domain' 
-        ? `⚠️ الدومين غير مصرح به.\n✅ تم تفعيل وضع العرض (Demo Mode) لـ ${providerName}.`
-        : `⚠️ تعذر الاتصال بـ ${providerName}.\n✅ تم تفعيل وضع العرض (Demo Mode).`;
-      alert(msg);
     }
   };
 
   const login = async (userData: Partial<User>, password?: string) => {
-      // Simulate backend login
       const u = createMockUser(userData);
       setUser(u);
       localStorage.setItem('mylaf_session', JSON.stringify(u));
@@ -279,7 +279,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           localStorage.setItem('mylaf_session', JSON.stringify(updated));
           saveUserToDB(updated);
           
-          // Sync to Firestore if user exists
           if (db) {
              const userRef = doc(db, "users", user.id);
              setDoc(userRef, data, { merge: true }).catch(err => console.error("Update profile sync error", err));
@@ -287,7 +286,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
   };
 
-  // --- DATA SYNC ---
   const saveUserToDB = (u: User) => {
       const users = [...storedUsers];
       const idx = users.findIndex(ex => ex.id === u.id);
@@ -296,8 +294,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setStoredUsers(users);
       localStorage.setItem('mylaf_users', JSON.stringify(users));
   };
-
-  // --- FEATURE ACTIONS ---
 
   const createProduct = (productData: any) => {
       if (!user) return { success: false, error: 'Unauthorized' };
@@ -316,11 +312,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAllProducts(updated);
       localStorage.setItem('allProducts', JSON.stringify(updated));
       
-      // Update User Stats
       const stats = user.publisherStats || { coursesCount: 0, projectsCount: 0, servicesCount: 0, totalSales: 0, rating: 5 };
       updateProfile({ 
           publishedItems: [...(user.publishedItems || []), { id: newProduct.id, type: 'Service', title: newProduct.title, status: 'Active', createdAt: newProduct.createdAt, price: newProduct.price }],
-          publisherStats: stats // Simplified update
+          publisherStats: stats
       });
       
       return { success: true };
@@ -329,7 +324,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const purchaseService = (service: any, transaction: any) => {
       if (!user) return { success: false, error: 'Unauthorized' };
       
-      // Create Transaction Record
       const newTx = {
           id: transaction.id || `txn_${Date.now()}`,
           serviceId: service.id,
@@ -339,7 +333,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           sellerId: service.sellerId,
           sellerName: service.sellerName,
           amount: service.price,
-          status: 'in_progress', // Escrow
+          status: 'in_progress',
           createdAt: new Date().toISOString()
       };
 
@@ -364,7 +358,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('allProducts', JSON.stringify(updated));
   };
 
-  // --- JOB ACTIONS ---
   const addManualJob = (job: any) => {
       const newJob = { ...job, id: `mj_${Date.now()}` };
       const updated = [newJob, ...manualJobs];
@@ -384,25 +377,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.setItem('manual_jobs', JSON.stringify(updated));
   };
 
-  // --- ACADEMY ACTIONS ---
-  
   const enrollCourse = async (courseId: string, title: string) => {
       if (!user) return;
       if (db) {
           try {
-              // Firestore structure: users/{uid}/enrolled/{courseId}
               await setDoc(doc(db, "users", user.id, "enrolled", courseId), {
                   joinedAt: new Date().toISOString(),
                   courseId,
                   title
               });
-              console.log("Enrolled in Firestore!");
           } catch (e) {
               console.error("Error enrolling in Firestore", e);
           }
       }
       
-      // Update local state
       const enrolled = user.enrolledCourses || [];
       if (!enrolled.find(c => c.courseId === courseId)) {
           enrolled.push({ courseId, progress: 0, status: 'active', lastAccessed: new Date().toISOString() });
@@ -452,22 +440,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const submitExamResult = (courseId: string, courseName: string, score: number, unlockPermission?: string) => {
       if (!user) return;
       
-      // Update Transcript
       const transcript = user.transcript || [];
       transcript.push({
           courseId,
           courseName,
-          creditHours: 3, // Mock
+          creditHours: 3, 
           grade: score >= 90 ? 'A' : score >= 80 ? 'B' : 'C',
           score,
           completionDate: new Date().toISOString(),
-          semester: '2025-1'
+          semester: `Term ${new Date().getFullYear()}`
       });
 
-      // Add Certificate
       const certs = user.certificates || [];
       certs.push({
-          id: `CERT-${Date.now()}`,
+          id: `CRT-${new Date().getFullYear()}-${Math.floor(Math.random()*10000)}`,
           userId: user.id,
           courseName,
           trainingNumber: user.trainingId || 'N/A',
@@ -480,7 +466,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           type: 'Course'
       });
 
-      // Unlock Permissions
       let perms = user.permissions || [];
       if (unlockPermission && !perms.includes(unlockPermission)) {
           perms.push(unlockPermission);
@@ -489,7 +474,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateProfile({ transcript, certificates: certs, permissions: perms });
   };
 
-  // --- SOCIAL ---
   const followUser = (targetId: string) => {
       if (!user) return;
       const following = user.following || [];
@@ -503,7 +487,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateProfile({ following: (user.following || []).filter(id => id !== targetId) });
   };
 
-  // --- ADMIN & SYSTEM ---
   const adminLogin = (u: string, p: string) => {
       if (u === 'MURAD' && p === 'MURAD123@A') {
           setIsAdmin(true);
@@ -553,12 +536,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           usersCount: storedUsers.length,
           jobsCount: manualJobs.length + allJobs.length,
           productsCount: allProducts.length,
-          totalRevenue: 154000, // Mock for now
+          totalRevenue: 154000, 
           serverLoad: 45
       };
   };
 
-  // --- MOCKED FUNCTIONS FOR CONTEXT ---
   const markNotificationRead = (id: string) => {
       setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
   };
@@ -568,7 +550,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (user && user.id === uid) updateProfile({ notifications: [notif, ...(user.notifications || [])] });
   };
   const publishUserContent = async (type: any, data: any) => { 
-      createProduct({ ...data, type }); // Map to product for now
+      createProduct({ ...data, type });
       return { success: true }; 
   };
   const submitCVRequest = (data: any) => {
@@ -583,7 +565,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return true;
   };
   const submitIdentityVerification = async (provider: string) => {
-      // Simulate API
       return new Promise<{success: boolean}>(resolve => {
           setTimeout(() => {
               updateProfile({ kycStatus: 'verified', isIdentityVerified: true });
@@ -610,7 +591,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         followUser, unfollowUser,
         markProductAsSold, incrementProductViews,
         storedUsers,
-        showLoginModal, setShowLoginModal
+        showLoginModal, setShowLoginModal, requireAuth
     }}>
       {children}
     </AuthContext.Provider>

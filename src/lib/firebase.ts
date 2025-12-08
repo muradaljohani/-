@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider, TwitterAuthProvider, GithubAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -19,10 +20,11 @@ let auth;
 let db;
 let storage;
 
-const googleProvider = new GoogleAuthProvider();
-const facebookProvider = new FacebookAuthProvider();
-const twitterProvider = new TwitterAuthProvider();
-const githubProvider = new GithubAuthProvider();
+// Providers
+let googleProvider;
+let facebookProvider;
+let twitterProvider;
+let githubProvider;
 
 try {
   if (getApps().length > 0) {
@@ -30,11 +32,19 @@ try {
   } else {
     app = initializeApp(firebaseConfig);
   }
+  
   auth = getAuth(app);
   db = getFirestore(app);
   storage = getStorage(app);
+
+  // Initialize Providers
+  googleProvider = new GoogleAuthProvider();
+  facebookProvider = new FacebookAuthProvider();
+  twitterProvider = new TwitterAuthProvider();
+  githubProvider = new GithubAuthProvider();
+
 } catch (error) {
-  console.error("Firebase Initialization Error:", error);
+  console.warn("Firebase Initialization Error (Falling back to offline mode):", error);
 }
 
 export { app, auth, db, storage, googleProvider, facebookProvider, twitterProvider, githubProvider };

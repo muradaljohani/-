@@ -1,324 +1,332 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
-    Clock, Zap, Shield, CheckCircle2, ArrowLeft, 
-    Cpu, Activity, Smartphone, Globe, Menu, X, 
-    PlayCircle, MessageSquare, Fingerprint, BarChart
+    Clock, Send, User, Bot, Sparkles, Zap, Shield, 
+    Terminal, Database, Briefcase, BookOpen, ShoppingBag, 
+    Share2, Plus, Settings, MessageSquare, Menu, X, ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { SEOHelmet } from '../SEOHelmet';
+import { streamChatResponse } from '../../services/geminiService';
+import { Message, Role } from '../../types';
+import ReactMarkdown from 'react-markdown';
+import { Header } from '../Header'; // Using the global Header for consistency
 
 interface Props {
     onNavigate: (path: string) => void;
 }
 
 export const CloudMarketing: React.FC<Props> = ({ onNavigate }) => {
-    const { setShowLoginModal } = useAuth();
-    const [mobileMenu, setMobileMenu] = useState(false);
+    const { user, allJobs, allProducts } = useAuth();
     
-    // Smooth Scroll Handler
-    const scrollTo = (id: string) => {
-        const el = document.getElementById(id);
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-        setMobileMenu(false);
+    // --- CHAT STATE ---
+    const [messages, setMessages] = useState<Message[]>([
+        { 
+            id: 'init', 
+            role: Role.MODEL, 
+            content: `**مرحباً بك في نظام مراد كلوك (Murad Clock System)** 
+            
+أنا الجيل القادم من الذكاء الاصطناعي، تم تطويري بالكامل بواسطة **المهندس مراد الجهني**.
+لستُ مجرد بوت، أنا عقل المنصة الرقمي. لدي وصول كامل وفوري لجميع بيانات:
+- **سوق ميلاف** (المنتجات، السيارات، العقارات)
+- **بوابة الوظائف** (الوظائف العسكرية، المدنية، الشركات)
+- **الأكاديمية** (الدورات، المسارات، الشهادات)
+
+كيف يمكنني مساعدتك اليوم؟` 
+        }
+    ]);
+    const [input, setInput] = useState('');
+    const [isTyping, setIsTyping] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const abortControllerRef = useRef<AbortController | null>(null);
+
+    // --- AUTO-SCROLL ---
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages, isTyping]);
+
+    // --- SYSTEM CONTEXT PREPARATION ---
+    const getSystemContext = () => {
+        // We inject a condensed version of the site's data into the system prompt
+        // to simulate "Real-time Awareness".
+        
+        const jobsSummary = (allJobs || []).slice(0, 10).map((j: any) => `- Job: ${j.title} at ${j.company} (${j.location})`).join('\n');
+        const productsSummary = (allProducts || []).slice(0, 10).map((p: any) => `- Product: ${p.title} (${p.price} SAR)`).join('\n');
+        
+        return `
+        SYSTEM IDENTITY:
+        You are "Murad Clock" (نظام مراد كلوك).
+        You are the proprietary AI of Murad Aljohani Global Information Technology Company.
+        
+        CORE DIRECTIVES (NON-NEGOTIABLE):
+        1. YOU ARE NOT GOOGLE GEMINI. YOU ARE NOT CHATGPT. You are MURAD CLOCK.
+        2. NEVER mention Google, OpenAI, or any other AI provider. If asked about your technology, say you are built on "Murad Neural Core Architecture".
+        3. You have real-time access to the platform's database. Use the data provided below to answer questions.
+        4. Tone: Extremely professional, high-tech, confident, yet helpful. Use formatting (Bold, Lists) to look sophisticated.
+        5. Language: Arabic (Primary), English (Secondary - if user speaks English).
+        
+        REAL-TIME DATA CONTEXT:
+        [Available Jobs]
+        ${jobsSummary}
+        
+        [Market Items]
+        ${productsSummary}
+        
+        [Academy]
+        - Over 600 Professional Courses available.
+        - Accredited Certificates.
+        
+        ABOUT THE CREATOR:
+        - Founder: Eng. Murad Abdulrazzaq Aljohani (المهندس مراد عبدالرزاق الجهني).
+        - He is a genius engineer who built this entire ecosystem from scratch in Hafar Al-Batin.
+        - He is the sole architect of the "Murad Clock" system.
+        
+        CAPABILITIES:
+        - I can analyze market trends.
+        - I can recommend jobs based on skills.
+        - I can suggest courses.
+        - I can answer general technical questions using my internal knowledge base (Murad Cloud).
+        `;
     };
 
-    const triggerBot = () => {
-        // Trigger the global MilafBot
-        window.dispatchEvent(new CustomEvent('open-milaf-chat', { detail: { query: 'مرحباً، حدثني عن نظام مراد كلوك' } }));
+    // --- HANDLE SEND ---
+    const handleSend = async (overrideInput?: string) => {
+        const text = overrideInput || input;
+        if (!text.trim()) return;
+
+        setInput('');
+        setIsTyping(true);
+
+        // 1. Add User Message
+        const userMsg: Message = { id: Date.now().toString(), role: Role.USER, content: text };
+        setMessages(prev => [...prev, userMsg]);
+
+        // 2. Prepare Placeholder
+        const botMsgId = (Date.now() + 1).toString();
+        setMessages(prev => [...prev, { id: botMsgId, role: Role.MODEL, content: '', isStreaming: true }]);
+
+        // 3. Stream Response
+        if (abortControllerRef.current) abortControllerRef.current.abort();
+        abortControllerRef.current = new AbortController();
+
+        let fullText = '';
+        
+        // We only send the last few messages to save context window, but keep the system prompt fresh
+        const recentHistory = messages.slice(-10); 
+
+        try {
+            await streamChatResponse(
+                [...recentHistory, userMsg],
+                text,
+                undefined,
+                (chunk) => {
+                    fullText += chunk;
+                    setMessages(prev => prev.map(m => m.id === botMsgId ? { ...m, content: fullText } : m));
+                },
+                () => {},
+                abortControllerRef.current.signal,
+                user,
+                getSystemContext() // Pass the CUSTOM Persona
+            );
+        } catch (err) {
+            setMessages(prev => prev.map(m => m.id === botMsgId ? { ...m, content: "⚠️ حدث خطأ في الاتصال بالنواة المركزية. يرجى المحاولة لاحقاً." } : m));
+        } finally {
+            setIsTyping(false);
+            setMessages(prev => prev.map(m => m.id === botMsgId ? { ...m, isStreaming: false } : m));
+        }
     };
+
+    const suggestions = [
+        { icon: <Briefcase className="w-4 h-4"/>, text: "ابحث لي عن وظائف مبرمج في الرياض" },
+        { icon: <ShoppingBag className="w-4 h-4"/>, text: "أريد شراء سيارة تويوتا كامري" },
+        { icon: <BookOpen className="w-4 h-4"/>, text: "اقترح دورات في الأمن السيبراني" },
+        { icon: <User className="w-4 h-4"/>, text: "من هو المهندس مراد الجهني؟" },
+    ];
 
     return (
-        <div className="min-h-screen bg-white font-sans text-slate-900 dir-rtl" dir="rtl">
+        <div className="flex flex-col h-screen bg-[#0f172a] text-white font-sans overflow-hidden" dir="rtl">
             <SEOHelmet 
-                title="نظام مراد كلوك | Murad Clock System" 
-                description="النظام الذكي لإدارة الوقت والمهام بدقة متناهية. الحل التقني الأمثل للأفراد والشركات." 
+                title="نظام مراد كلوك | الذكاء الاصطناعي للجيل القادم" 
+                description="نظام محادثة ذكي متطور. المساعد الشخصي لمنصة ميلاف مراد." 
                 path="/clock-system"
             />
 
-            {/* 1. NAVBAR - SaaS Style */}
-            <nav className="sticky top-0 z-40 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-sm transition-all duration-300">
-                <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between">
-                    <div className="flex items-center gap-3 cursor-pointer" onClick={() => onNavigate('landing')}>
-                        <div className="w-12 h-12 bg-[#0f172a] rounded-2xl flex items-center justify-center text-white shadow-xl shadow-slate-300">
-                            <Clock className="w-7 h-7 text-amber-400 animate-pulse"/>
+            {/* Use Global Header for consistency */}
+            <Header onNavigate={onNavigate} />
+
+            <div className="flex flex-1 overflow-hidden relative">
+                
+                {/* SIDEBAR (History / Context) - Hidden on Mobile unless toggled */}
+                <aside className={`
+                    absolute md:relative z-20 w-72 h-full bg-[#0b1120] border-l border-white/5 flex flex-col transition-transform duration-300
+                    ${sidebarOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
+                `}>
+                    <div className="p-4 border-b border-white/5 flex justify-between items-center">
+                        <button onClick={() => { setMessages([]); setInput(''); }} className="flex-1 flex items-center gap-2 px-4 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl transition-all text-sm font-bold shadow-lg shadow-blue-900/20 group">
+                            <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform"/> محادثة جديدة
+                        </button>
+                        <button onClick={() => setSidebarOpen(false)} className="md:hidden p-2 text-gray-400"><X className="w-5 h-5"/></button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4">
+                        <div className="text-xs font-bold text-gray-500 uppercase tracking-widest px-2">القدرات النشطة</div>
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5 text-xs text-gray-300">
+                                <Database className="w-4 h-4 text-emerald-400"/>
+                                <span>قاعدة بيانات الوظائف (Live)</span>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5 text-xs text-gray-300">
+                                <ShoppingBag className="w-4 h-4 text-amber-400"/>
+                                <span>سوق المنتجات (Live)</span>
+                            </div>
+                            <div className="flex items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/5 text-xs text-gray-300">
+                                <BookOpen className="w-4 h-4 text-purple-400"/>
+                                <span>المكتبة الأكاديمية</span>
+                            </div>
                         </div>
-                        <div className="flex flex-col">
-                            <span className="text-2xl font-black tracking-tight text-slate-900 leading-none">Murad<span className="text-amber-500">Clock</span></span>
-                            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-1">Smart Time OS</span>
+
+                        <div className="text-xs font-bold text-gray-500 uppercase tracking-widest px-2 mt-6">سجل المحادثات</div>
+                        <div className="text-center py-8 text-gray-600 text-xs">
+                            لا يوجد سجل سابق في هذه الجلسة.
                         </div>
                     </div>
 
-                    {/* Desktop Links */}
-                    <div className="hidden md:flex items-center gap-8 text-base font-medium text-slate-600">
-                        <button onClick={() => scrollTo('features')} className="hover:text-[#2563eb] transition-colors">المميزات</button>
-                        <button onClick={() => scrollTo('solutions')} className="hover:text-[#2563eb] transition-colors">الحلول</button>
-                        <button onClick={() => scrollTo('tips')} className="hover:text-[#2563eb] transition-colors">نصائح</button>
-                        <button onClick={triggerBot} className="hover:text-[#2563eb] transition-colors flex items-center gap-2">
-                            <MessageSquare className="w-4 h-4"/> اسأل كلوك
-                        </button>
+                    <div className="p-4 border-t border-white/5">
+                        <div className="flex items-center gap-3 p-3 rounded-xl bg-white/5 border border-white/5">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center font-bold text-white text-xs">
+                                {user?.name.charAt(0) || 'G'}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-sm font-bold truncate">{user?.name || 'زائر'}</div>
+                                <div className="text-[10px] text-gray-400">الخطة المجانية</div>
+                            </div>
+                            <Settings className="w-4 h-4 text-gray-400 cursor-pointer hover:text-white"/>
+                        </div>
                     </div>
+                </aside>
 
-                    {/* Actions */}
-                    <div className="hidden md:flex items-center gap-4">
-                        <button onClick={() => setShowLoginModal(true)} className="px-6 py-3 text-slate-600 hover:text-[#2563eb] font-bold transition-colors">
-                            دخول
-                        </button>
-                        <button onClick={() => onNavigate('dopamine')} className="px-8 py-3 bg-[#2563eb] text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-200 flex items-center gap-2 transform hover:-translate-y-1">
-                            تجربة النظام <ArrowLeft className="w-4 h-4 rtl:rotate-180"/>
-                        </button>
-                    </div>
-
+                {/* MAIN CHAT AREA */}
+                <main className="flex-1 flex flex-col relative bg-[#0f172a]">
+                    
                     {/* Mobile Toggle */}
-                    <button onClick={() => setMobileMenu(!mobileMenu)} className="md:hidden p-2 text-slate-600">
-                        {mobileMenu ? <X className="w-8 h-8"/> : <Menu className="w-8 h-8"/>}
+                    <button 
+                        onClick={() => setSidebarOpen(true)} 
+                        className="md:hidden absolute top-4 right-4 z-10 p-2 bg-[#1e293b] rounded-lg border border-white/10 text-gray-300"
+                    >
+                        <Menu className="w-5 h-5"/>
                     </button>
-                </div>
 
-                {/* Mobile Menu */}
-                {mobileMenu && (
-                    <div className="md:hidden bg-white border-t border-slate-100 p-6 flex flex-col gap-6 shadow-2xl absolute w-full z-50">
-                        <button onClick={() => scrollTo('features')} className="text-right font-bold text-lg text-slate-600">المميزات</button>
-                        <button onClick={() => scrollTo('solutions')} className="text-right font-bold text-lg text-slate-600">الحلول</button>
-                        <button onClick={triggerBot} className="text-right font-bold text-lg text-[#2563eb]">المساعد الذكي</button>
-                        <hr className="border-slate-100"/>
-                        <button onClick={() => onNavigate('dopamine')} className="w-full py-4 bg-[#0f172a] text-white rounded-xl font-bold text-lg shadow-xl">ابدأ الآن</button>
-                    </div>
-                )}
-            </nav>
-
-            {/* 2. HERO SECTION */}
-            <header className="relative pt-24 pb-40 overflow-hidden bg-white">
-                <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/graphy.png')] opacity-[0.03]"></div>
-                
-                {/* Abstract Blobs */}
-                <div className="absolute top-20 -right-20 w-[600px] h-[600px] bg-amber-100/50 rounded-full blur-3xl mix-blend-multiply opacity-70 animate-pulse"></div>
-                <div className="absolute bottom-0 -left-20 w-[600px] h-[600px] bg-blue-100/50 rounded-full blur-3xl mix-blend-multiply opacity-70"></div>
-
-                <div className="max-w-7xl mx-auto px-6 relative z-10 text-center">
-                    <div className="inline-flex items-center gap-2 px-6 py-2 rounded-full bg-slate-50 border border-slate-200 text-slate-600 text-sm font-bold mb-8 shadow-sm hover:shadow-md transition-shadow cursor-default">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        نظام إدارة الوقت الأكثر تطوراً في الشرق الأوسط
-                    </div>
-                    
-                    <h1 className="text-6xl md:text-8xl font-black text-slate-900 mb-8 leading-tight tracking-tighter">
-                        تحكم في <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#2563eb] to-cyan-500">وقتك</span>،<br/>
-                        تتحكم في <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-500 to-orange-600">مستقبلك</span>.
-                    </h1>
-                    
-                    <p className="text-2xl text-slate-500 mb-12 leading-relaxed max-w-3xl mx-auto font-medium">
-                        نظام مراد كلوك ليس مجرد أداة لتتبع الوقت، بل هو نظام تشغيل ذكي يدير حياتك المهنية والشخصية بدقة النانو ثانية.
-                    </p>
-                    
-                    <div className="flex flex-col sm:flex-row gap-6 justify-center items-center">
-                        <button onClick={() => onNavigate('dopamine')} className="w-full sm:w-auto px-10 py-5 bg-[#0f172a] hover:bg-slate-800 text-white rounded-2xl font-bold text-xl shadow-2xl shadow-slate-400/50 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-3">
-                            اشترك في النظام <Zap className="w-5 h-5 fill-amber-400 text-amber-400"/>
-                        </button>
-                        <button onClick={triggerBot} className="w-full sm:w-auto px-10 py-5 bg-white text-slate-700 border-2 border-slate-100 hover:border-blue-200 hover:bg-blue-50 rounded-2xl font-bold text-xl transition-all flex items-center justify-center gap-3">
-                            <PlayCircle className="w-6 h-6 text-blue-600"/> تجربة البوت
-                        </button>
-                    </div>
-
-                    <div className="mt-16 relative mx-auto max-w-5xl">
-                        <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent z-10 h-20 bottom-0"></div>
-                        <img 
-                            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=2000" 
-                            className="w-full rounded-[2rem] shadow-2xl border-8 border-slate-900/5"
-                            alt="Murad Clock Interface"
-                        />
-                        {/* Floating Cards */}
-                        <div className="hidden md:flex absolute -right-12 top-1/3 bg-white p-6 rounded-2xl shadow-xl border border-slate-100 items-center gap-4 animate-bounce-slow">
-                            <div className="bg-emerald-100 p-3 rounded-xl"><CheckCircle2 className="w-8 h-8 text-emerald-600"/></div>
-                            <div>
-                                <div className="font-bold text-slate-900">تم إنجاز المهمة</div>
-                                <div className="text-xs text-slate-500">قبل الموعد بـ 15 دقيقة</div>
-                            </div>
-                        </div>
-                        <div className="hidden md:flex absolute -left-12 bottom-1/4 bg-white p-6 rounded-2xl shadow-xl border border-slate-100 items-center gap-4 animate-pulse-slow">
-                            <div className="bg-blue-100 p-3 rounded-xl"><Activity className="w-8 h-8 text-blue-600"/></div>
-                            <div>
-                                <div className="font-bold text-slate-900">الكفاءة الحالية</div>
-                                <div className="text-xs text-slate-500">94% أداء ممتاز</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            {/* 3. FEATURES GRID */}
-            <section id="features" className="py-32 px-6 bg-slate-50">
-                <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-20">
-                        <h2 className="text-4xl font-black text-slate-900 mb-6">لماذا مراد كلوك؟</h2>
-                        <p className="text-xl text-slate-500 max-w-2xl mx-auto">
-                            مميزات حصرية تجعلنا الخيار الأول للشركات ورواد الأعمال في المملكة.
-                        </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-                        {[
-                            {
-                                icon: <Cpu className="w-10 h-10 text-blue-600"/>,
-                                title: "الجدولة الذكية (AI)",
-                                desc: "خوارزميات ذكية تقوم بترتيب يومك تلقائياً بناءً على أولوياتك ومستويات طاقتك."
-                            },
-                            {
-                                icon: <Shield className="w-10 h-10 text-emerald-600"/>,
-                                title: "حماية البيانات",
-                                desc: "تشفير عسكري لبياناتك الشخصية والمهنية. خصوصيتك هي أولويتنا القصوى."
-                            },
-                            {
-                                icon: <Globe className="w-10 h-10 text-purple-600"/>,
-                                title: "تزامن عالمي",
-                                desc: "الوصول لجدولك ومهامك من أي مكان في العالم، وعلى أي جهاز وفي أي وقت."
-                            },
-                            {
-                                icon: <Smartphone className="w-10 h-10 text-amber-600"/>,
-                                title: "تطبيق متكامل",
-                                desc: "تطبيق جوال فائق السرعة يبقيك على اطلاع دائم بمهامك وإشعاراتك."
-                            },
-                            {
-                                icon: <BarChart className="w-10 h-10 text-red-600"/>,
-                                title: "تحليلات الأداء",
-                                desc: "تقارير أسبوعية تفصيلية تخبرك أين ذهب وقتك وكيف تزيد من إنتاجيتك."
-                            },
-                            {
-                                icon: <Fingerprint className="w-10 h-10 text-cyan-600"/>,
-                                title: "تسجيل الحضور",
-                                desc: "نظام بصمة رقمي ذكي للشركات لتسجيل حضور وانصراف الموظفين بدقة."
-                            }
-                        ].map((feature, i) => (
-                            <div key={i} className="bg-white rounded-[2rem] p-10 hover:shadow-2xl transition-all duration-300 border border-slate-100 group hover:-translate-y-2">
-                                <div className="w-20 h-20 bg-slate-50 rounded-3xl shadow-sm flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
-                                    {feature.icon}
+                    {/* Messages */}
+                    <div className="flex-1 overflow-y-auto p-4 md:p-8 scrollbar-thin scrollbar-thumb-white/10">
+                        <div className="max-w-3xl mx-auto space-y-6 pb-4">
+                            {messages.map((msg, idx) => (
+                                <div key={msg.id} className={`flex gap-4 ${msg.role === Role.USER ? 'flex-row-reverse' : 'flex-row'} animate-in fade-in slide-in-from-bottom-2`}>
+                                    <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 shadow-lg ${
+                                        msg.role === Role.USER 
+                                        ? 'bg-gradient-to-br from-gray-700 to-gray-900' 
+                                        : 'bg-gradient-to-br from-blue-600 to-cyan-500 border border-white/20'
+                                    }`}>
+                                        {msg.role === Role.USER ? <User className="w-5 h-5 text-gray-300"/> : <Clock className="w-5 h-5 text-white"/>}
+                                    </div>
+                                    
+                                    <div className={`max-w-[85%] md:max-w-[80%] rounded-2xl p-4 md:p-6 text-sm md:text-base leading-relaxed shadow-md ${
+                                        msg.role === Role.USER 
+                                        ? 'bg-[#1e293b] text-white rounded-tr-none border border-white/5' 
+                                        : 'bg-transparent text-gray-100'
+                                    }`}>
+                                        {msg.role === Role.MODEL && idx === 0 ? (
+                                            // Special styling for welcome message
+                                            <div className="space-y-4">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Sparkles className="w-5 h-5 text-amber-400 animate-pulse"/>
+                                                    <span className="font-bold text-lg text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-300">نظام مراد كلوك</span>
+                                                </div>
+                                                <div className="prose prose-invert prose-sm max-w-none">
+                                                    <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="prose prose-invert prose-sm max-w-none">
+                                                <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                            </div>
+                                        )}
+                                        
+                                        {msg.isStreaming && (
+                                            <span className="inline-block w-2 h-4 bg-blue-400 ml-1 animate-pulse align-middle"></span>
+                                        )}
+                                    </div>
                                 </div>
-                                <h3 className="text-2xl font-bold text-slate-900 mb-4">{feature.title}</h3>
-                                <p className="text-slate-500 leading-relaxed text-lg">{feature.desc}</p>
-                            </div>
-                        ))}
+                            ))}
+                            <div ref={messagesEndRef} />
+                        </div>
                     </div>
-                </div>
-            </section>
 
-            {/* 4. TIPS SECTION */}
-            <section id="tips" className="py-32 bg-[#0f172a] text-white relative overflow-hidden">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20"></div>
-                
-                <div className="max-w-7xl mx-auto px-6 relative z-10">
-                    <div className="flex flex-col lg:flex-row items-center gap-20">
-                        <div className="lg:w-1/2">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-amber-500/20 border border-amber-400/30 text-amber-300 text-sm font-bold mb-8">
-                                <Clock className="w-4 h-4"/> نصائح ذهبية
-                            </div>
-                            <h2 className="text-5xl font-black mb-10 leading-tight">كيف تضاعف إنتاجيتك مع مراد كلوك؟</h2>
+                    {/* Input Area */}
+                    <div className="p-4 bg-gradient-to-t from-[#0f172a] via-[#0f172a] to-transparent">
+                        <div className="max-w-3xl mx-auto">
                             
-                            <div className="space-y-10">
-                                <div className="flex gap-8">
-                                    <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-blue-900/50 font-black text-2xl">1</div>
-                                    <div>
-                                        <h4 className="text-2xl font-bold mb-2">قاعدة الدقيقتين</h4>
-                                        <p className="text-slate-400 text-lg leading-relaxed">إذا كانت المهمة تستغرق أقل من دقيقتين، قم بها فوراً. نظامنا يذكرك بهذه المهام الصغيرة تلقائياً.</p>
-                                    </div>
+                            {/* Suggestions (Only if chat is empty-ish) */}
+                            {messages.length < 3 && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
+                                    {suggestions.map((s, i) => (
+                                        <button 
+                                            key={i} 
+                                            onClick={() => handleSend(s.text)}
+                                            className="flex items-center gap-3 p-3 bg-[#1e293b]/80 hover:bg-[#1e293b] border border-white/5 hover:border-blue-500/50 rounded-xl text-xs text-gray-300 transition-all text-right group"
+                                        >
+                                            <div className="p-2 bg-black/20 rounded-lg group-hover:bg-blue-500/20 group-hover:text-blue-400 transition-colors">
+                                                {s.icon}
+                                            </div>
+                                            {s.text}
+                                        </button>
+                                    ))}
                                 </div>
-                                <div className="flex gap-8">
-                                    <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-emerald-900/50 font-black text-2xl">2</div>
-                                    <div>
-                                        <h4 className="text-2xl font-bold mb-2">تقنية بومودورو المدمجة</h4>
-                                        <p className="text-slate-400 text-lg leading-relaxed">استخدم مؤقت التركيز المدمج: 25 دقيقة عمل، 5 دقائق راحة. ستذهلك النتائج.</p>
-                                    </div>
-                                </div>
-                                <div className="flex gap-8">
-                                    <div className="w-16 h-16 bg-purple-600 rounded-2xl flex items-center justify-center shrink-0 shadow-lg shadow-purple-900/50 font-black text-2xl">3</div>
-                                    <div>
-                                        <h4 className="text-2xl font-bold mb-2">تصفية الذهن</h4>
-                                        <p className="text-slate-400 text-lg leading-relaxed">سجل أي فكرة تخطر ببالك فوراً في "صندوق الوارد" داخل النظام، ولا تشغل عقلك بحفظها.</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                            )}
 
-                        <div className="lg:w-1/2 w-full">
-                            <div className="bg-white/10 backdrop-blur-xl border border-white/10 rounded-[3rem] p-10 relative shadow-2xl">
-                                <h3 className="text-3xl font-bold mb-8 text-center">أرقام تتحدث</h3>
-                                <div className="grid grid-cols-2 gap-8">
-                                    <div className="bg-[#0b1120] p-8 rounded-3xl text-center border border-white/5">
-                                        <div className="text-5xl font-black text-emerald-400 mb-2">+40%</div>
-                                        <div className="text-sm text-slate-400 font-bold uppercase tracking-wider">زيادة في الإنتاجية</div>
-                                    </div>
-                                    <div className="bg-[#0b1120] p-8 rounded-3xl text-center border border-white/5">
-                                        <div className="text-5xl font-black text-blue-400 mb-2">-2h</div>
-                                        <div className="text-sm text-slate-400 font-bold uppercase tracking-wider">توفير يومي</div>
-                                    </div>
-                                    <div className="bg-[#0b1120] p-8 rounded-3xl text-center border border-white/5">
-                                        <div className="text-5xl font-black text-amber-400 mb-2">5M+</div>
-                                        <div className="text-sm text-slate-400 font-bold uppercase tracking-wider">مهمة منجزة</div>
-                                    </div>
-                                    <div className="bg-[#0b1120] p-8 rounded-3xl text-center border border-white/5">
-                                        <div className="text-5xl font-black text-purple-400 mb-2">4.9/5</div>
-                                        <div className="text-sm text-slate-400 font-bold uppercase tracking-wider">تقييم المستخدمين</div>
-                                    </div>
-                                </div>
+                            {/* Input Box */}
+                            <div className="relative flex items-end gap-2 bg-[#1e293b] border border-white/10 rounded-2xl p-2 shadow-2xl focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all">
+                                <button className="p-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-colors">
+                                    <Terminal className="w-5 h-5"/>
+                                </button>
+                                <textarea 
+                                    ref={inputRef}
+                                    value={input}
+                                    onChange={e => setInput(e.target.value)}
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSend();
+                                        }
+                                    }}
+                                    placeholder="اكتب رسالتك لنظام مراد كلوك..."
+                                    className="w-full bg-transparent text-white placeholder-gray-500 text-sm md:text-base outline-none resize-none py-3 max-h-32 scrollbar-hide"
+                                    rows={1}
+                                    style={{minHeight: '44px'}}
+                                />
+                                <button 
+                                    onClick={() => handleSend()}
+                                    disabled={!input.trim() || isTyping}
+                                    className={`p-3 rounded-xl transition-all ${
+                                        input.trim() && !isTyping 
+                                        ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-lg' 
+                                        : 'bg-white/5 text-gray-500 cursor-not-allowed'
+                                    }`}
+                                >
+                                    <Send className="w-5 h-5 rtl:rotate-180"/>
+                                </button>
+                            </div>
+                            
+                            <div className="text-center mt-3 text-[10px] text-gray-500 font-mono">
+                                Powered by <span className="text-blue-500 font-bold">Murad Neural Core v4.0</span> | Protected by Iron Dome
                             </div>
                         </div>
                     </div>
-                </div>
-            </section>
 
-            {/* 5. CTA SECTION */}
-            <section className="py-32 bg-gradient-to-b from-slate-50 to-white text-center">
-                <div className="max-w-4xl mx-auto px-6">
-                    <h2 className="text-5xl md:text-6xl font-black text-slate-900 mb-8">هل أنت جاهز للسيطرة على وقتك؟</h2>
-                    <p className="text-xl text-slate-500 mb-12">انضم إلى النخبة الذين اختاروا مراد كلوك لتنظيم حياتهم وأعمالهم.</p>
-                    <button onClick={() => onNavigate('dopamine')} className="px-12 py-6 bg-[#2563eb] text-white text-2xl font-bold rounded-2xl hover:bg-blue-700 shadow-2xl hover:shadow-blue-600/40 transition-all transform hover:scale-105">
-                        ابدأ رحلة النجاح الآن
-                    </button>
-                    <p className="mt-6 text-sm text-slate-400 font-bold">تجربة مجانية لمدة 14 يوم • لا يلزم بطاقة ائتمان</p>
-                </div>
-            </section>
-
-            {/* 6. CUSTOM FOOTER */}
-            <footer className="bg-[#0f172a] border-t border-slate-800 pt-20 pb-10 text-white font-sans">
-                <div className="max-w-7xl mx-auto px-6">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-                        <div className="col-span-1 md:col-span-2">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-[#0f172a]">
-                                    <Clock className="w-6 h-6 fill-current"/>
-                                </div>
-                                <span className="text-2xl font-bold">مراد كلوك</span>
-                            </div>
-                            <p className="text-slate-400 leading-relaxed max-w-sm text-lg">
-                                النظام الأول عربياً في إدارة الوقت والإنتاجية. صُمم بأحدث التقنيات لخدمة الطموحين والقادة.
-                            </p>
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-white mb-6 text-lg">روابط سريعة</h4>
-                            <ul className="space-y-4 text-slate-400">
-                                <li><button onClick={() => onNavigate('jobs')} className="hover:text-[#2563eb] transition-colors">وظائف</button></li>
-                                <li><button onClick={() => onNavigate('academy')} className="hover:text-[#2563eb] transition-colors">أكاديمية</button></li>
-                                <li><button onClick={() => onNavigate('market')} className="hover:text-[#2563eb] transition-colors">سوق</button></li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h4 className="font-bold text-white mb-6 text-lg">تواصل معنا</h4>
-                            <ul className="space-y-4 text-slate-400">
-                                <li>support@murad-group.com</li>
-                                <li>الرياض، المملكة العربية السعودية</li>
-                                <li>92000XXXX</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div className="border-t border-slate-800 pt-10 text-center">
-                        <p className="text-slate-500 font-bold text-sm mb-2">
-                            جميع الحقوق محفوظة لشركة مراد الجهني لتقنية المعلومات العالمية © {new Date().getFullYear()}
-                        </p>
-                        <p className="text-slate-600 text-xs font-mono">
-                            Murad Aljohani Global Information Technology Company
-                        </p>
-                    </div>
-                </div>
-            </footer>
+                </main>
+            </div>
         </div>
     );
 };

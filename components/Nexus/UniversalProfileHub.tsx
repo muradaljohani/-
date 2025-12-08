@@ -1,17 +1,17 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     User, Briefcase, GraduationCap, ShoppingBag, 
     Wallet, Settings, LogOut, CheckCircle2, 
     Clock, Trophy, TrendingUp, Download, ArrowUpRight, BookOpen, Play,
-    CreditCard
+    CreditCard, Save, MapPin, Phone, Mail, Edit3, Loader2, FileText
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AcademicTranscript } from '../Academy/AcademicTranscript';
 import { VirtualClassroom } from '../Academy/VirtualClassroom';
-import { SmartIDCard } from '../Identity/SmartIDCard'; // Imported
-import { CommunityPulse } from '../Social/CommunityPulse'; // Imported
-import { InstallPrompt } from '../Mobile/InstallPrompt'; // Imported
+import { SmartIDCard } from '../Identity/SmartIDCard'; 
+import { CommunityPulse } from '../Social/CommunityPulse';
+import { InstallPrompt } from '../Mobile/InstallPrompt'; 
 
 interface Props {
     isOpen: boolean;
@@ -19,9 +19,33 @@ interface Props {
 }
 
 export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
-    const { user, logout } = useAuth();
-    const [activeSection, setActiveSection] = useState<'overview' | 'academy' | 'wallet' | 'jobs' | 'id_card'>('overview');
+    const { user, logout, updateProfile } = useAuth();
+    const [activeSection, setActiveSection] = useState<'overview' | 'academy' | 'wallet' | 'jobs' | 'id_card' | 'settings'>('overview');
     const [activeCourse, setActiveCourse] = useState<any>(null);
+
+    // Editing State
+    const [isSaving, setIsSaving] = useState(false);
+    const [formData, setFormData] = useState({
+        name: '',
+        bio: '',
+        phone: '',
+        currentJobTitle: '',
+        address: '',
+        skills: ''
+    });
+
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                name: user.name || '',
+                bio: user.bio || '',
+                phone: user.phone || '',
+                currentJobTitle: user.currentJobTitle || '',
+                address: user.address || '',
+                skills: user.skills ? user.skills.join(', ') : ''
+            });
+        }
+    }, [user]);
 
     if (!isOpen || !user) return null;
 
@@ -59,6 +83,26 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         setActiveCourse(extendedCourse);
     };
 
+    const handleSaveProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSaving(true);
+        
+        // Simulate network delay
+        await new Promise(r => setTimeout(r, 800));
+
+        updateProfile({
+            name: formData.name,
+            bio: formData.bio,
+            phone: formData.phone,
+            currentJobTitle: formData.currentJobTitle,
+            address: formData.address,
+            skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean)
+        });
+
+        setIsSaving(false);
+        alert("✅ تم تحديث البيانات الشخصية بنجاح!");
+    };
+
     return (
         <>
         <div className="fixed inset-0 z-[9000] flex items-center justify-center p-0 md:p-6 bg-[#0f172a]/95 backdrop-blur-xl font-sans animate-fade-in-up" dir="rtl">
@@ -90,8 +134,11 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                     {/* Footer */}
                     <div className="pt-6 border-t border-white/10 space-y-2">
-                        <button className="w-full flex items-center gap-3 p-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all text-sm font-bold">
-                            <Settings className="w-5 h-5"/> الإعدادات
+                        <button 
+                            onClick={() => setActiveSection('settings')}
+                            className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all text-sm font-bold ${activeSection === 'settings' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+                        >
+                            <Settings className="w-5 h-5"/> إعدادات الحساب
                         </button>
                         <button onClick={() => { logout(); onClose(); }} className="w-full flex items-center gap-3 p-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all text-sm font-bold">
                             <LogOut className="w-5 h-5"/> تسجيل الخروج
@@ -200,7 +247,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                 </div>
                                 <div className="bg-white/5 px-4 py-2 rounded-xl text-center">
                                     <div className="text-[10px] text-gray-400 uppercase tracking-wider">GPA</div>
-                                    <div className="text-xl font-black text-emerald-400">{user.transcript ? 'CALC' : '4.00'}</div>
+                                    <div className="text-xl font-black text-emerald-400">{user.transcript ? '4.00' : 'N/A'}</div>
                                 </div>
                             </div>
 
@@ -265,6 +312,123 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                 )}
                             </div>
                         </div>
+                    )}
+
+                    {activeSection === 'settings' && (
+                         <div className="space-y-8 animate-fade-in-up max-w-4xl mx-auto">
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white mb-1">تعديل الملف الشخصي</h2>
+                                    <p className="text-gray-400 text-sm">قم بتحديث بياناتك ومعلومات التواصل</p>
+                                </div>
+                                <div className="bg-white/5 p-3 rounded-full">
+                                    <Edit3 className="w-6 h-6 text-blue-500"/>
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleSaveProfile} className="space-y-6">
+                                
+                                {/* Section 1: Basic Info */}
+                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
+                                    <h3 className="text-white font-bold text-sm mb-6 flex items-center gap-2 pb-4 border-b border-white/5">
+                                        <User className="w-4 h-4 text-blue-500"/> المعلومات الأساسية
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">الاسم الكامل</label>
+                                            <input 
+                                                type="text" 
+                                                value={formData.name}
+                                                onChange={e => setFormData({...formData, name: e.target.value})}
+                                                className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">المسمى الوظيفي</label>
+                                            <input 
+                                                type="text" 
+                                                value={formData.currentJobTitle}
+                                                onChange={e => setFormData({...formData, currentJobTitle: e.target.value})}
+                                                className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"
+                                                placeholder="مثال: مطور برمجيات"
+                                            />
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">نبذة عنك (Bio)</label>
+                                            <textarea 
+                                                value={formData.bio}
+                                                onChange={e => setFormData({...formData, bio: e.target.value})}
+                                                className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors h-24 resize-none"
+                                                placeholder="اكتب نبذة مختصرة عن خبراتك..."
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Section 2: Contact Info */}
+                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
+                                    <h3 className="text-white font-bold text-sm mb-6 flex items-center gap-2 pb-4 border-b border-white/5">
+                                        <Phone className="w-4 h-4 text-emerald-500"/> معلومات التواصل
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">رقم الهاتف</label>
+                                            <div className="relative">
+                                                <input 
+                                                    type="text" 
+                                                    value={formData.phone}
+                                                    onChange={e => setFormData({...formData, phone: e.target.value})}
+                                                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-emerald-500 outline-none transition-colors text-right"
+                                                    dir="ltr"
+                                                />
+                                                <Phone className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">العنوان / المدينة</label>
+                                            <div className="relative">
+                                                <input 
+                                                    type="text" 
+                                                    value={formData.address}
+                                                    onChange={e => setFormData({...formData, address: e.target.value})}
+                                                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-emerald-500 outline-none transition-colors"
+                                                />
+                                                <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Section 3: Skills */}
+                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
+                                    <h3 className="text-white font-bold text-sm mb-6 flex items-center gap-2 pb-4 border-b border-white/5">
+                                        <Trophy className="w-4 h-4 text-amber-500"/> المهارات
+                                    </h3>
+                                    <div>
+                                        <label className="block text-xs font-bold text-gray-400 mb-2">المهارات (افصل بينها بفاصلة)</label>
+                                        <input 
+                                            type="text" 
+                                            value={formData.skills}
+                                            onChange={e => setFormData({...formData, skills: e.target.value})}
+                                            className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-amber-500 outline-none transition-colors"
+                                            placeholder="HTML, CSS, Project Management..."
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="flex justify-end pt-4">
+                                    <button 
+                                        type="submit" 
+                                        disabled={isSaving}
+                                        className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all disabled:opacity-50"
+                                    >
+                                        {isSaving ? <Loader2 className="w-5 h-5 animate-spin"/> : <Save className="w-5 h-5"/>}
+                                        حفظ التغييرات
+                                    </button>
+                                </div>
+
+                            </form>
+                         </div>
                     )}
                     
                 </div>
