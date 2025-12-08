@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { User } from '../../types';
-import { QrCode, Download, RefreshCw, ShieldCheck, Wifi } from 'lucide-react';
+import { Download, RefreshCw, Wifi, Cpu } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { AssetProcessor } from '../../services/System/AssetProcessor';
 
@@ -17,107 +17,156 @@ export const SmartIDCard: React.FC<Props> = ({ user }) => {
     const handleDownload = async () => {
         if (!cardRef.current) return;
         
-        // Temporarily remove flip transform for clean capture if needed, 
-        // but html2canvas captures visible state. We capture the current face.
+        // Capture the current visible face with high resolution
         const canvas = await html2canvas(cardRef.current, {
             backgroundColor: null,
-            scale: 2, // High Res
-            useCORS: true
+            scale: 4, // Ultra High Res for Print
+            useCORS: true,
+            logging: false
         });
         
         const link = document.createElement('a');
-        link.download = `Mylaf_ID_${user.trainingId}.png`;
+        link.download = `University_ID_${user.trainingId}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
     };
 
-    const joinYear = new Date(user.joinDate || Date.now()).getFullYear();
-    const expiryYear = joinYear + 2;
+    // Dates Logic
+    const issueDate = new Date(user.joinDate || Date.now());
+    const expiryDate = new Date(issueDate);
+    expiryDate.setFullYear(expiryDate.getFullYear() + 2); // 2 Years Validity
+
+    const formatDate = (d: Date) => d.toLocaleDateString('en-GB', { month: '2-digit', year: '2-digit' }); // MM/YY
 
     return (
         <div className="flex flex-col items-center gap-6 my-6 font-sans">
             
-            {/* CARD CONTAINER (Perspective) */}
-            <div className="group w-[340px] h-[215px] perspective-1000 cursor-pointer" onClick={() => setIsFlipped(!isFlipped)}>
+            {/* CARD CONTAINER (Standard Credit Card Ratio) */}
+            {/* Width: 342px, Height: 216px (approx ISO 7810 ID-1 scaled) */}
+            <div className="group w-[342px] h-[216px] perspective-1000 cursor-pointer" onClick={() => setIsFlipped(!isFlipped)}>
                 
-                {/* INNER CARD (Transform) */}
+                {/* INNER CARD (Transform Wrapper) */}
                 <div ref={cardRef} className={`relative w-full h-full transition-all duration-700 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
                     
-                    {/* --- FRONT FACE --- */}
-                    <div className="absolute w-full h-full backface-hidden bg-gradient-to-br from-[#0f172a] to-[#1e3a8a] rounded-2xl overflow-hidden shadow-2xl border-2 border-amber-500/50">
-                        {/* Glossy Overlay */}
-                        <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/5 to-white/0 pointer-events-none z-20"></div>
-                        <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 pointer-events-none z-0"></div>
+                    {/* --- FRONT FACE (Official ID) --- */}
+                    <div className="absolute w-full h-full backface-hidden bg-gradient-to-br from-[#0f172a] via-[#1e3a8a] to-[#0f172a] rounded-xl overflow-hidden shadow-2xl border border-white/20">
+                        
+                        {/* Security Patterns & Noise */}
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/circuit-board.png')] opacity-10 mix-blend-overlay"></div>
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent pointer-events-none z-20"></div>
 
-                        {/* Content */}
-                        <div className="relative z-10 p-5 h-full flex flex-col justify-between text-white">
+                        {/* Content Grid */}
+                        <div className="relative z-10 p-4 h-full flex flex-col justify-between text-white">
                             
-                            {/* Header */}
+                            {/* Header: Logo & Title */}
                             <div className="flex justify-between items-start">
                                 <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-amber-500 rounded-lg flex items-center justify-center font-black text-[#0f172a]">M</div>
+                                    <div className="w-8 h-8 bg-amber-500 rounded flex items-center justify-center font-black text-[#0f172a] text-lg shadow-lg">M</div>
+                                    <div className="leading-none">
+                                        <h3 className="text-[10px] font-bold text-amber-400 tracking-wider uppercase">Mylaf National Academy</h3>
+                                        <p className="text-[8px] text-gray-300 font-serif">بطاقة طالب جامعي | University ID</p>
+                                    </div>
+                                </div>
+                                {/* Smart Chip Simulation */}
+                                <div className="w-9 h-7 bg-gradient-to-br from-yellow-200 to-yellow-600 rounded-md border border-yellow-700 flex items-center justify-center opacity-90 shadow-sm">
+                                    <Cpu className="w-6 h-6 text-yellow-900 opacity-60" strokeWidth={1} />
+                                </div>
+                            </div>
+
+                            {/* Middle: Photo & Details */}
+                            <div className="flex items-end gap-3 mt-1">
+                                {/* Student Photo */}
+                                <div className="w-20 h-24 bg-white/10 rounded-lg border-2 border-white/30 overflow-hidden shadow-inner relative shrink-0">
+                                    <img src={user.avatar} className="w-full h-full object-cover" crossOrigin="anonymous" alt="Student" />
+                                </div>
+                                
+                                {/* Student Data */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="mb-2">
+                                        <p className="text-[8px] text-gray-400 uppercase tracking-wider">Student Name</p>
+                                        <h2 className="text-sm font-bold text-white truncate leading-tight">{user.name}</h2>
+                                    </div>
+                                    <div className="mb-2">
+                                        <p className="text-[8px] text-gray-400 uppercase tracking-wider">Academic ID</p>
+                                        <p className="text-sm font-mono font-bold text-amber-400 tracking-widest drop-shadow-sm">{user.trainingId}</p>
+                                    </div>
                                     <div>
-                                        <h3 className="text-xs font-bold tracking-widest uppercase">Mylaf Academy</h3>
-                                        <p className="text-[8px] text-amber-400">STUDENT MEMBERSHIP</p>
-                                    </div>
-                                </div>
-                                <Wifi className="w-6 h-6 text-white/50 rotate-90" />
-                            </div>
-
-                            {/* Middle */}
-                            <div className="flex items-center gap-4 mt-2">
-                                <div className="w-20 h-20 rounded-xl border-2 border-amber-500 overflow-hidden bg-black">
-                                    <img src={user.avatar} className="w-full h-full object-cover" crossOrigin="anonymous" />
-                                </div>
-                                <div>
-                                    <h2 className="text-lg font-bold leading-tight">{user.name}</h2>
-                                    <p className="text-[10px] text-gray-300 font-mono mt-1">{user.trainingId}</p>
-                                    <div className="mt-2 inline-flex items-center gap-1 bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/50">
-                                        <ShieldCheck className="w-3 h-3 text-amber-400"/>
-                                        <span className="text-[9px] text-amber-400 font-bold uppercase">{user.studentLevelTitle || 'Member'}</span>
+                                        <p className="text-[8px] text-gray-400 uppercase tracking-wider">Major / Program</p>
+                                        <p className="text-[10px] text-white truncate">{user.major || 'Computer Science & IT'}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Footer */}
-                            <div className="flex justify-between items-end">
-                                <div>
-                                    <p className="text-[8px] text-gray-400 uppercase">Valid Thru</p>
-                                    <p className="text-xs font-mono font-bold">12/{expiryYear}</p>
+                            {/* Footer: Signatures & Dates */}
+                            <div className="flex justify-between items-end mt-1 relative">
+                                {/* Dates (Left) */}
+                                <div className="flex gap-3 text-[9px] font-mono">
+                                    <div>
+                                        <span className="block text-[6px] text-gray-400 uppercase">Issue</span>
+                                        <span>{formatDate(issueDate)}</span>
+                                    </div>
+                                    <div>
+                                        <span className="block text-[6px] text-gray-400 uppercase">Expiry</span>
+                                        <span className="text-amber-400 font-bold">{formatDate(expiryDate)}</span>
+                                    </div>
                                 </div>
-                                <img 
-                                    src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${user.trainingId}`} 
-                                    className="w-12 h-12 bg-white p-1 rounded"
-                                    crossOrigin="anonymous"
-                                />
+
+                                {/* Signatures & Seal (Right) */}
+                                <div className="absolute bottom-[-10px] right-[-10px] w-24 h-24 opacity-80 pointer-events-none mix-blend-screen">
+                                     <img 
+                                        src={assetProcessor.getOfficialSeal()} 
+                                        className="w-full h-full object-contain transform rotate-[-15deg] opacity-60" 
+                                        alt="Seal"
+                                     />
+                                </div>
+                                <div className="relative z-10 text-center mr-8">
+                                    <img 
+                                        src={assetProcessor.getOfficialSignature()} 
+                                        className="h-8 object-contain filter brightness-0 invert" 
+                                        alt="Signature"
+                                    />
+                                    <p className="text-[6px] text-gray-400 uppercase tracking-widest border-t border-gray-600 mt-0.5 pt-0.5">Executive Director</p>
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* --- BACK FACE --- */}
-                    <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-gradient-to-bl from-[#0f172a] to-[#111827] rounded-2xl overflow-hidden shadow-2xl border border-gray-700">
+                    {/* --- BACK FACE (Magnetic Strip & QR) --- */}
+                    <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-[#1e293b] rounded-xl overflow-hidden shadow-2xl border border-gray-600">
+                        
                         {/* Magnetic Strip */}
-                        <div className="w-full h-10 bg-black mt-6 relative">
-                            <div className="absolute inset-0 bg-white/10 opacity-20" style={{backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 10px, #fff 10px, #fff 20px)'}}></div>
+                        <div className="w-full h-10 bg-[#000] mt-4 relative">
+                             <div className="w-full h-full bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,#111_2px,#111_4px)] opacity-50"></div>
                         </div>
 
-                        <div className="p-5 flex flex-col h-[calc(100%-40px)] justify-between">
-                            <div className="flex justify-between items-center">
-                                <div className="bg-white w-40 h-8 flex items-center px-2 font-script text-black text-sm relative overflow-hidden">
-                                    <div className="absolute inset-0 opacity-20 bg-repeat-x text-[8px] leading-[8px] flex items-center">Authorized Authorized</div>
-                                    <img src={assetProcessor.getOfficialSignature()} className="h-12 absolute -top-2 left-2 opacity-80" />
+                        <div className="p-4 flex gap-4 h-[calc(100%-56px)]">
+                            
+                            {/* QR Code Area */}
+                            <div className="w-24 flex flex-col justify-center items-center">
+                                <div className="bg-white p-1 rounded-md">
+                                    <img 
+                                        src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=STU:${user.trainingId}`} 
+                                        className="w-20 h-20"
+                                        crossOrigin="anonymous"
+                                        alt="QR"
+                                    />
                                 </div>
-                                <div className="text-[10px] font-mono text-gray-400">CVC: ***</div>
+                                <p className="text-[8px] text-gray-500 mt-1 font-mono">{user.trainingId}</p>
                             </div>
 
-                            <div className="text-[8px] text-gray-500 leading-tight text-justify mt-2">
-                                This card is the property of Mylaf Murad Academy. It must be returned upon request. Misuse of this ID for fraudulent activities will result in immediate suspension.
-                                <br/><br/>
-                                <span className="text-amber-500">Official Campus ID • Not a Credit Card</span>
-                            </div>
-
-                            <div className="flex justify-center mt-2">
-                                <img src={assetProcessor.getOfficialSeal()} className="w-16 h-16 opacity-50 grayscale" />
+                            {/* Terms */}
+                            <div className="flex-1 flex flex-col justify-between text-[8px] text-gray-400 leading-tight text-justify">
+                                <p>
+                                    هذه البطاقة وثيقة رسمية صادرة عن أكاديمية ميلاف مراد. يجب إبرازها عند الطلب داخل الحرم الجامعي أو عند الاختبارات.
+                                </p>
+                                <p>
+                                    This card is the property of Mylaf Murad Academy. If found, please return to the nearest campus office or contact support.
+                                </p>
+                                
+                                <div className="mt-2 border-t border-gray-600 pt-1 flex justify-between items-center">
+                                    <span className="text-white font-bold">Authorized Signature</span>
+                                    <Wifi className="w-4 h-4 text-gray-600 rotate-90"/>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -135,11 +184,15 @@ export const SmartIDCard: React.FC<Props> = ({ user }) => {
                 </button>
                 <button 
                     onClick={handleDownload} 
-                    className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white rounded-full text-xs font-bold shadow-lg transition-all"
+                    className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white rounded-full text-xs font-bold shadow-lg transition-all"
                 >
-                    <Download className="w-4 h-4"/> تحميل للهاتف
+                    <Download className="w-4 h-4"/> طباعة / حفظ
                 </button>
             </div>
+            
+            <p className="text-[10px] text-gray-500 max-w-xs text-center">
+                ملاحظة: يمكنك طباعة هذه البطاقة واستخدامها كبطاقة تعريفية رسمية في مرافق الأكاديمية والجهات الشريكة.
+            </p>
         </div>
     );
 };

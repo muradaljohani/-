@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, X, Send, User, ChevronDown, Image as ImageIcon, Camera, Mic } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -26,13 +25,17 @@ export const MilafBot: React.FC = () => {
   // Initial Greeting
   useEffect(() => {
     if (isOpen && messages.length === 0) {
+      const greetingText = user 
+        ? `أهلاً بك يا ${user.name}. تواصل مع أكبر نظام عالمي "مراد كلوك". كيف يمكنني خدمتك اليوم؟`
+        : `مرحباً بك زائرنا الكريم. تواصل مع أكبر نظام عالمي "مراد كلوك". هل تبحث عن وظيفة، دورة تدريبية، أو معلومة عامة؟`;
+        
       setMessages([{ 
           id: 'init', 
           role: Role.MODEL, 
-          content: "السلام عليكم. كيف حالك؟ أنا المساعد الذكي لميلاف مراد، كيف يمكنني مساعدتك اليوم في التقنية أو التدريب؟" 
+          content: greetingText 
       }]);
     }
-  }, [isOpen]);
+  }, [isOpen, user]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -192,19 +195,18 @@ export const MilafBot: React.FC = () => {
 
   if (!isBotVisible) return null;
 
-  // Positioning: Left Side (left-6)
   return (
-    <div className={`fixed z-[9990] font-sans ${isOpen ? 'inset-0 sm:inset-auto sm:bottom-6 sm:left-6' : 'bottom-6 left-6'}`} dir="rtl">
+    <div className={`fixed z-[9990] font-sans ${isOpen ? 'inset-0 sm:inset-auto sm:bottom-6 sm:right-6' : 'bottom-6 right-6'}`} dir="rtl">
       {(!isOpen) && (
         <div className="flex flex-col items-center gap-2 group cursor-pointer relative" onClick={() => setIsOpen(true)}>
             
-            {/* Close Button (Visible on Hover) */}
+            {/* Close Button (Visible on Hover) - UPDATED STYLE: Transparent Gray */}
             <button 
               onClick={(e) => {
                 e.stopPropagation();
                 setIsBotVisible(false);
               }}
-              className="absolute -top-4 -right-4 z-50 bg-gray-500/10 hover:bg-gray-500/30 text-gray-400 hover:text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm border border-white/5"
+              className="absolute -top-4 -left-4 z-50 bg-gray-500/10 hover:bg-gray-500/30 text-gray-400 hover:text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-sm border border-white/5"
               title="إغلاق البوت"
             >
               <X className="w-3 h-3"/>
@@ -220,22 +222,24 @@ export const MilafBot: React.FC = () => {
             <div className="relative flex items-center justify-center w-14 h-14 bg-black rounded-full border border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.4)] group-hover:scale-110 transition-transform z-10">
               <Bot className="w-7 h-7 text-white" />
               <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-gray-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
               </span>
             </div>
             
-            {/* Label below */}
-            <div className="bg-black/80 backdrop-blur-sm px-3 py-1 rounded-full border border-white/10 relative z-10 text-center">
-                <span className="text-[10px] font-bold text-white">
-                    تحدث معي
+            <div className="flex flex-col items-center gap-0.5 bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-white/5 relative z-10 text-center min-w-[80px]">
+                <span className="text-[10px] font-bold text-gray-200 group-hover:text-white transition-colors shadow-black drop-shadow-sm leading-tight">
+                    مراد كلوك <br/> Murad Clock
+                </span>
+                <span className="text-[9px] font-bold text-amber-500 mt-0.5 tracking-wide">
+                    رقم واحد
                 </span>
             </div>
         </div>
       )}
 
       {isOpen && (
-        <div className="w-full h-full sm:w-[350px] sm:h-[500px] flex flex-col bg-white border border-black/10 sm:rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
+        <div className="w-full h-full sm:w-[400px] sm:h-[600px] flex flex-col bg-white border border-black/10 sm:rounded-2xl shadow-2xl overflow-hidden animate-fade-in-up">
           
           <div className="p-4 bg-black text-white border-b border-gray-800 flex justify-between items-center shrink-0">
             <div className="flex items-center gap-3">
@@ -244,9 +248,9 @@ export const MilafBot: React.FC = () => {
                 <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-black rounded-full"></div>
               </div>
               <div>
-                <h3 className="text-white font-bold text-sm">المساعد الذكي</h3>
+                <h3 className="text-white font-bold text-sm">نظام مراد كلوك (Murad Clock)</h3>
                 <div className="text-[10px] text-gray-400 font-mono flex items-center gap-1">
-                  متصل الآن
+                  <ActivityDot /> رقم واحد
                 </div>
               </div>
             </div>
@@ -354,6 +358,15 @@ export const MilafBot: React.FC = () => {
               >
                 <ImageIcon className="w-5 h-5"/>
               </button>
+              <button 
+                type="button" 
+                onClick={() => cameraInputRef.current?.click()}
+                className="p-2 text-gray-500 hover:text-black hover:bg-gray-200 rounded-lg transition-colors"
+                title="التقاط صورة"
+                disabled={isRecording}
+              >
+                <Camera className="w-5 h-5"/>
+              </button>
 
               <button 
                 type="button"
@@ -370,7 +383,7 @@ export const MilafBot: React.FC = () => {
               <input 
                 value={input}
                 onChange={e => setInput(e.target.value)}
-                placeholder={isRecording ? "جاري التسجيل..." : "اكتب رسالتك..."}
+                placeholder={isRecording ? "جاري التسجيل..." : "تواصل مع أكبر نظام عالمي مراد كلوك..."}
                 className="flex-1 bg-transparent text-black text-sm outline-none placeholder-gray-500"
                 disabled={isTyping || isRecording}
               />
@@ -385,3 +398,10 @@ export const MilafBot: React.FC = () => {
     </div>
   );
 };
+
+const ActivityDot = () => (
+  <span className="relative flex h-2 w-2 mr-1">
+    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+  </span>
+);
