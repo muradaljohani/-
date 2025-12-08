@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { User } from '../../types';
-import { Download, RefreshCw, Wifi, Cpu } from 'lucide-react';
+import { Download, RefreshCw, Wifi, Cpu, ShieldCheck } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { AssetProcessor } from '../../services/System/AssetProcessor';
 
@@ -25,7 +25,7 @@ export const SmartIDCard: React.FC<Props> = ({ user }) => {
             logging: false
         });
         
-        const link = document.createElement('a');
+        const link = document.createElement("a");
         link.download = `University_ID_${user.trainingId}.png`;
         link.href = canvas.toDataURL('image/png');
         link.click();
@@ -48,7 +48,7 @@ export const SmartIDCard: React.FC<Props> = ({ user }) => {
                 {/* INNER CARD (Transform Wrapper) */}
                 <div ref={cardRef} className={`relative w-full h-full transition-all duration-700 transform-style-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
                     
-                    {/* --- FRONT FACE (Official ID) --- */}
+                    {/* --- FRONT FACE (Official ID - No Photo) --- */}
                     <div className="absolute w-full h-full backface-hidden bg-gradient-to-br from-[#0f172a] via-[#1e3a8a] to-[#0f172a] rounded-xl overflow-hidden shadow-2xl border border-white/20">
                         
                         {/* Security Patterns & Noise */}
@@ -56,82 +56,63 @@ export const SmartIDCard: React.FC<Props> = ({ user }) => {
                         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent pointer-events-none z-20"></div>
 
                         {/* Content Grid */}
-                        <div className="relative z-10 p-4 h-full flex flex-col justify-between text-white">
+                        <div className="relative z-10 p-5 h-full flex flex-col justify-between text-white">
                             
                             {/* Header: Logo & Title */}
                             <div className="flex justify-between items-start">
-                                <div className="flex items-center gap-2">
-                                    <div className="w-8 h-8 bg-amber-500 rounded flex items-center justify-center font-black text-[#0f172a] text-lg shadow-lg">M</div>
-                                    <div className="leading-none">
-                                        <h3 className="text-[10px] font-bold text-amber-400 tracking-wider uppercase">Mylaf National Academy</h3>
-                                        <p className="text-[8px] text-gray-300 font-serif">بطاقة طالب جامعي | University ID</p>
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center font-black text-[#0f172a] text-xl shadow-lg border border-amber-400">M</div>
+                                    <div className="leading-tight">
+                                        <h3 className="text-xs font-black text-white tracking-wider uppercase">Mylaf National Academy</h3>
+                                        <p className="text-[9px] text-amber-400 font-bold">بطاقة طالب جامعي | University ID</p>
                                     </div>
                                 </div>
                                 {/* Smart Chip Simulation */}
-                                <div className="w-9 h-7 bg-gradient-to-br from-yellow-200 to-yellow-600 rounded-md border border-yellow-700 flex items-center justify-center opacity-90 shadow-sm">
+                                <div className="w-10 h-8 bg-gradient-to-br from-yellow-200 to-yellow-600 rounded-md border border-yellow-700 flex items-center justify-center opacity-90 shadow-sm">
                                     <Cpu className="w-6 h-6 text-yellow-900 opacity-60" strokeWidth={1} />
                                 </div>
                             </div>
 
-                            {/* Middle: Photo & Details */}
-                            <div className="flex items-end gap-3 mt-1">
-                                {/* Student Photo */}
-                                <div className="w-20 h-24 bg-white/10 rounded-lg border-2 border-white/30 overflow-hidden shadow-inner relative shrink-0">
-                                    <img src={user.avatar} className="w-full h-full object-cover" crossOrigin="anonymous" alt="Student" />
+                            {/* Middle: Student Details (Centered/Larger since photo is gone) */}
+                            <div className="flex flex-col gap-1 mt-2 pr-1">
+                                <div className="mb-2">
+                                    <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-0.5">Student Name</p>
+                                    <h2 className="text-lg font-black text-white leading-tight tracking-wide">{user.name}</h2>
                                 </div>
                                 
-                                {/* Student Data */}
-                                <div className="flex-1 min-w-0">
-                                    <div className="mb-2">
-                                        <p className="text-[8px] text-gray-400 uppercase tracking-wider">Student Name</p>
-                                        <h2 className="text-sm font-bold text-white truncate leading-tight">{user.name}</h2>
-                                    </div>
-                                    <div className="mb-2">
-                                        <p className="text-[8px] text-gray-400 uppercase tracking-wider">Academic ID</p>
-                                        <p className="text-sm font-mono font-bold text-amber-400 tracking-widest drop-shadow-sm">{user.trainingId}</p>
-                                    </div>
+                                <div className="flex justify-between items-center">
                                     <div>
-                                        <p className="text-[8px] text-gray-400 uppercase tracking-wider">Major / Program</p>
-                                        <p className="text-[10px] text-white truncate">{user.major || 'Computer Science & IT'}</p>
+                                        <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-0.5">Academic ID</p>
+                                        <p className="text-base font-mono font-bold text-amber-400 tracking-widest drop-shadow-sm">{user.trainingId}</p>
+                                    </div>
+                                    <div className="text-left">
+                                         <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-0.5">Major</p>
+                                         <p className="text-xs font-bold text-white">{user.major || 'General Studies'}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Footer: Signatures & Dates */}
-                            <div className="flex justify-between items-end mt-1 relative">
-                                {/* Dates (Left) */}
-                                <div className="flex gap-3 text-[9px] font-mono">
+                            {/* Footer: Dates */}
+                            <div className="flex justify-between items-end border-t border-white/10 pt-2 mt-auto">
+                                <div className="flex gap-6 text-[10px] font-mono">
                                     <div>
-                                        <span className="block text-[6px] text-gray-400 uppercase">Issue</span>
-                                        <span>{formatDate(issueDate)}</span>
+                                        <span className="block text-[7px] text-gray-400 uppercase">Issue Date</span>
+                                        <span className="font-bold">{formatDate(issueDate)}</span>
                                     </div>
                                     <div>
-                                        <span className="block text-[6px] text-gray-400 uppercase">Expiry</span>
+                                        <span className="block text-[7px] text-gray-400 uppercase">Expiry Date</span>
                                         <span className="text-amber-400 font-bold">{formatDate(expiryDate)}</span>
                                     </div>
                                 </div>
-
-                                {/* Signatures & Seal (Right) */}
-                                <div className="absolute bottom-[-10px] right-[-10px] w-24 h-24 opacity-80 pointer-events-none mix-blend-screen">
-                                     <img 
-                                        src={assetProcessor.getOfficialSeal()} 
-                                        className="w-full h-full object-contain transform rotate-[-15deg] opacity-60" 
-                                        alt="Seal"
-                                     />
-                                </div>
-                                <div className="relative z-10 text-center mr-8">
-                                    <img 
-                                        src={assetProcessor.getOfficialSignature()} 
-                                        className="h-8 object-contain filter brightness-0 invert" 
-                                        alt="Signature"
-                                    />
-                                    <p className="text-[6px] text-gray-400 uppercase tracking-widest border-t border-gray-600 mt-0.5 pt-0.5">Executive Director</p>
+                                <div className="flex items-center gap-1 opacity-50">
+                                    <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                                    <span className="text-[8px] text-emerald-400 font-bold uppercase">Verified</span>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* --- BACK FACE (Magnetic Strip & QR) --- */}
+                    {/* --- BACK FACE (Signature, Stamp, Warning) --- */}
                     <div className="absolute w-full h-full backface-hidden rotate-y-180 bg-[#1e293b] rounded-xl overflow-hidden shadow-2xl border border-gray-600">
                         
                         {/* Magnetic Strip */}
@@ -139,35 +120,56 @@ export const SmartIDCard: React.FC<Props> = ({ user }) => {
                              <div className="w-full h-full bg-[repeating-linear-gradient(45deg,transparent,transparent_2px,#111_2px,#111_4px)] opacity-50"></div>
                         </div>
 
-                        <div className="p-4 flex gap-4 h-[calc(100%-56px)]">
+                        <div className="p-4 flex flex-col h-[calc(100%-40px)] justify-between relative">
                             
-                            {/* QR Code Area */}
-                            <div className="w-24 flex flex-col justify-center items-center">
-                                <div className="bg-white p-1 rounded-md">
+                            {/* Signature & Stamp Row */}
+                            <div className="flex justify-between items-center mt-2 px-2">
+                                {/* QR Code */}
+                                <div className="bg-white p-1 rounded-md shadow-md">
                                     <img 
                                         src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=STU:${user.trainingId}`} 
-                                        className="w-20 h-20"
+                                        className="w-16 h-16"
                                         crossOrigin="anonymous"
                                         alt="QR"
                                     />
                                 </div>
-                                <p className="text-[8px] text-gray-500 mt-1 font-mono">{user.trainingId}</p>
-                            </div>
 
-                            {/* Terms */}
-                            <div className="flex-1 flex flex-col justify-between text-[8px] text-gray-400 leading-tight text-justify">
-                                <p>
-                                    هذه البطاقة وثيقة رسمية صادرة عن أكاديمية ميلاف مراد. يجب إبرازها عند الطلب داخل الحرم الجامعي أو عند الاختبارات.
-                                </p>
-                                <p>
-                                    This card is the property of Mylaf Murad Academy. If found, please return to the nearest campus office or contact support.
-                                </p>
-                                
-                                <div className="mt-2 border-t border-gray-600 pt-1 flex justify-between items-center">
-                                    <span className="text-white font-bold">Authorized Signature</span>
-                                    <Wifi className="w-4 h-4 text-gray-600 rotate-90"/>
+                                {/* Official Authorization Block */}
+                                <div className="text-center relative">
+                                    {/* Seal Background */}
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 opacity-30 pointer-events-none">
+                                        <img 
+                                            src={assetProcessor.getOfficialSeal()} 
+                                            className="w-full h-full object-contain" 
+                                            alt="Seal"
+                                        />
+                                    </div>
+                                    
+                                    {/* Signature */}
+                                    <div className="relative z-10 mb-1">
+                                         <img 
+                                            src={assetProcessor.getOfficialSignature()} 
+                                            className="h-10 object-contain filter brightness-0 invert opacity-90 mx-auto" 
+                                            alt="Signature"
+                                        />
+                                    </div>
+                                    <div className="text-[7px] text-gray-400 uppercase tracking-widest border-t border-gray-500 pt-0.5">
+                                        Executive Director
+                                    </div>
+                                    <div className="text-[8px] font-bold text-white mt-0.5">م. مراد الجهني</div>
                                 </div>
                             </div>
+
+                            {/* Warning Text */}
+                            <div className="text-center mt-auto">
+                                <p className="text-[10px] font-bold text-amber-500 mb-1">
+                                    ⚠ هذه بطاقة رسمية يجب المحافظة عليها
+                                </p>
+                                <p className="text-[7px] text-gray-500 leading-tight">
+                                    This card is an official document of Mylaf National Academy. Use by anyone other than the registered student is prohibited. If found, please return to the nearest campus.
+                                </p>
+                            </div>
+
                         </div>
                     </div>
 
@@ -191,7 +193,7 @@ export const SmartIDCard: React.FC<Props> = ({ user }) => {
             </div>
             
             <p className="text-[10px] text-gray-500 max-w-xs text-center">
-                ملاحظة: يمكنك طباعة هذه البطاقة واستخدامها كبطاقة تعريفية رسمية في مرافق الأكاديمية والجهات الشريكة.
+                ملاحظة: يمكنك طباعة هذه البطاقة واستخدامها كبطاقة تعريفية رسمية.
             </p>
         </div>
     );
