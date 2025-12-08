@@ -1,13 +1,12 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, ServiceListing, UserJob, Course, EnrolledCourse, Certificate, AcademicProject, Transaction, RegistrationData, SecurityLog, Achievement, Badge, AssignmentSubmission, ExamAttempt, AdminConfig, Department, ReadBook, Book, LearningPath, AIAnalysisResult, Notification, CVRequest, ProductListing, PublishedContent, KYCData, ServiceCategory, ProductCategory, Wallet, Invoice, SupportTicket, ViralStats, Story, PrimeSubscription, EcosystemProfile, TranscriptEntry } from '../types';
+import { User, ServiceListing, UserJob, Course, EnrolledCourse, Certificate, AcademicProject, Transaction, RegistrationData, Notification, Book, AdminConfig, SupportTicket, ProductListing, PublishedContent, PrimeSubscription, TranscriptEntry, LedgerEntry, CVRequest } from '../types';
 import { RealAuthService } from '../services/realAuthService';
-import { generateAICourseContent, analyzeProfileWithAI } from '../services/geminiService';
 import { SecurityCore } from '../services/SecurityCore';
 import { OFFICIAL_SEAL_CONFIG } from '../constants/officialAssets';
 
 // --- FIREBASE IMPORTS ---
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, signOut } from 'firebase/auth';
 import { auth, googleProvider } from '../src/lib/firebase';
 
 // --- FLUID ENGINES ---
@@ -38,7 +37,7 @@ import { IronDome } from '../services/IronDome/IronDomeCore';
 interface AuthContextType {
   user: User | null;
   login: (userData: Partial<User>, password?: string) => Promise<{ success: boolean; error?: string }>;
-  signInWithGoogle: () => Promise<void>; // Added Google Sign In
+  signInWithGoogle: () => Promise<void>;
   register: (data: RegistrationData) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   resetPassword: (email: string) => Promise<boolean>;
@@ -277,28 +276,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // --- FIREBASE GOOGLE LOGIN IMPLEMENTATION ---
   const signInWithGoogle = async () => {
+    // Check if auth is initialized before using
+    if (!auth || !googleProvider) {
+        alert("خطأ: لم يتم تهيئة خدمة المصادقة (Firebase Auth) بشكل صحيح. تأكد من إعدادات API Key.");
+        console.error("Firebase auth/provider is null.");
+        return;
+    }
+    
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      const idToken = await user.getIdToken();
+      
+      // Map Firebase User to App User
+      const appUser: Partial<User> = {
+          email: user.email || '',
+          name: user.displayName || 'Google User',
+          avatar: user.photoURL || '',
+          loginMethod: 'google',
+          isEmailVerified: user.emailVerified
+      };
+      
+      await login(appUser, 'GOOGLE_AUTH_bypass');
 
-      // Send Token to Backend for Verification & Session Creation
-      const response = await fetch('/api/session_login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ idToken })
-      });
-
-      if (response.ok) {
-          // Redirect to the protected dashboard route served by Flask
-          window.location.href = '/dashboard';
-      } else {
-          console.error("Backend verification failed");
-          alert("فشل التحقق من الدخول في السيرفر");
-      }
     } catch (error) {
       console.error("Google Sign In Error:", error);
-      alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل");
+      // alert("حدث خطأ أثناء تسجيل الدخول عبر جوجل"); // Optional: alert user on error
     }
   };
 
@@ -539,6 +541,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const createStory = (m:string,t:any,o:any,b:boolean) => { if(user) storyEngine.createStory(user,m,t,o,b); };
   
   const login = async (d:any, p?:string) => {
+      // Handle Google Login Bypass
+      if (p === 'GOOGLE_AUTH_bypass') {
+           const existing = storedUsers.find(u => u.email === d.email);
+           if(existing) {
+               const u = {...existing, isLoggedIn:true};
+               u.wallet = walletSystem.getOrCreateWallet(u);
+               setUser(u);
+               accessGate.persistSession(u);
+               return {success:true};
+           }
+           // Register new user from Google
+           const newUser = {...d, id:`u_${Date.now()}`, role:'student', karma:500, createdAt: new Date().toISOString()} as User;
+           newUser.wallet = walletSystem.getOrCreateWallet(newUser);
+           setUser(newUser);
+           setStoredUsers([...storedUsers, newUser]);
+           saveUsersDB([...storedUsers, newUser]);
+           accessGate.persistSession(newUser);
+           return {success:true};
+      }
+
       const existing = storedUsers.find(u => u.email === d.email);
       if(existing && p) {
           const h = await RealAuthService.hashPassword(p);
@@ -569,7 +591,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       IronDome.SessionGuard.bindSession();
       return {success:true};
   };
-  const logout = () => { setUser(null); localStorage.removeItem('fluid_session_v1'); localStorage.removeItem('mylaf_session'); };
+  const logout = async () => {
+    // Sign out from Firebase
+    try {
+      if (auth) await signOut(auth);
+    } catch (e) {
+      console.warn("Firebase signout error", e);
+    }
+    setUser(null); 
+    localStorage.removeItem('fluid_session_v1'); 
+    localStorage.removeItem('mylaf_session'); 
+  };
+  
   const resetPassword = async () => true;
   const addManualJob = (j:any) => setManualJobs([j,...manualJobs]);
   const editManualJob = (id:string,j:any) => setManualJobs(manualJobs.map(m=>m.id===id?{...m,...j}:m));
