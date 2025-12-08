@@ -969,7 +969,8 @@ export interface User {
   stories?: Story[];
   supportTickets?: SupportTicket[];
   ecosystem?: EcosystemProfile;
-  transcript?: TranscriptEntry[]; // ADDED for LMS
+  transcript?: TranscriptEntry[];
+  customFormFields?: Record<string, string>; // ADDED for 30-field dashboard
 
   gender?: 'Male' | 'Female';
   birthDate?: string;

@@ -21,21 +21,57 @@ import { CloudMarketing } from './components/Cloud/CloudMarketing';
 import { MuradCloud } from './components/Cloud/MuradCloud';
 import { MuradDopamine } from './components/Dopamine/MuradDopamine';
 import { MuradDomain } from './components/Domain/MuradDomain';
+import { UserFieldsDashboard } from './components/UserFieldsDashboard';
+import { CoursesList } from './components/CoursesList';
+import { CourseView } from './components/CourseView';
 
 const AppContent = () => {
   const [currentView, setCurrentView] = useState('landing');
-  const [showProfile, setShowProfile] = useState(false);
+  const [courseId, setCourseId] = useState<string | null>(null);
 
   // Simple Router
   const navigate = (view: string) => {
-    window.history.pushState({}, '', view === 'landing' ? '/' : `/${view}`);
-    setCurrentView(view);
+    // Handle parameterized routes manually for simple router
+    if (view.startsWith('courses/')) {
+        const id = view.split('/')[1];
+        setCourseId(id);
+        setCurrentView('course-view');
+        window.history.pushState({}, '', `/courses/${id}`);
+    } else {
+        window.history.pushState({}, '', view === 'landing' ? '/' : `/${view}`);
+        setCurrentView(view);
+    }
     window.scrollTo(0, 0);
   };
 
   useEffect(() => {
-    const path = window.location.pathname.replace('/', '');
-    if (path) setCurrentView(path);
+    const path = window.location.pathname;
+    if (path === '/' || path === '') {
+        setCurrentView('landing');
+    } else if (path.startsWith('/courses/')) {
+        const id = path.split('/')[2];
+        if (id) {
+            setCourseId(id);
+            setCurrentView('course-view');
+        } else {
+            setCurrentView('courses');
+        }
+    } else {
+        setCurrentView(path.replace('/', ''));
+    }
+
+    // Listener for internal navigation events if needed
+    const handlePopState = () => {
+        const p = window.location.pathname;
+        if (p.startsWith('/courses/')) {
+             setCourseId(p.split('/')[2]);
+             setCurrentView('course-view');
+        } else {
+             setCurrentView(p.replace('/', '') || 'landing');
+        }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   const renderView = () => {
@@ -54,17 +90,21 @@ const AppContent = () => {
       case 'cloud': return <MuradCloud onExit={() => navigate('landing')} />;
       case 'dopamine': return <MuradDopamine onExit={() => navigate('landing')} />;
       case 'domains': return <MuradDomain onExit={() => navigate('landing')} />;
+      case 'user-dashboard': return <UserFieldsDashboard onBack={() => navigate('landing')} />;
+      case 'courses': return <CoursesList onBack={() => navigate('landing')} />;
+      case 'course-view': return <CourseView courseId={courseId!} onBack={() => navigate('courses')} />;
       
       default: return <LandingPage onStart={() => navigate('academy')} onSearch={() => {}} onOpenJobs={() => navigate('jobs')} onOpenTraining={() => navigate('academy')} onOpenMarket={() => navigate('market')} />;
     }
   };
 
+  const isImmersive = ['support', 'corporate', 'clock-system', 'meta', 'cloud', 'dopamine', 'domains', 'user-dashboard', 'course-view'].includes(currentView);
+
   return (
     <div className="flex flex-col min-h-screen bg-[#0f172a] text-gray-100 font-sans">
       <SEOHelmet title="مجموعة ميلاف مراد" />
       
-      {/* Conditionally hide Header/Footer for immersive views if needed, otherwise show everywhere except specific portals */}
-      {currentView !== 'support' && currentView !== 'corporate' && currentView !== 'clock-system' && currentView !== 'meta' && currentView !== 'cloud' && currentView !== 'dopamine' && currentView !== 'domains' && (
+      {!isImmersive && (
         <Header onNavigate={navigate} />
       )}
 
@@ -72,7 +112,7 @@ const AppContent = () => {
         {renderView()}
       </main>
 
-      {currentView !== 'support' && currentView !== 'corporate' && currentView !== 'clock-system' && currentView !== 'meta' && currentView !== 'cloud' && currentView !== 'dopamine' && currentView !== 'domains' && (
+      {!isImmersive && (
         <Footer />
       )}
       

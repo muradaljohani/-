@@ -16,6 +16,10 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isAdmin: boolean;
   
+  // Custom Dashboard
+  saveUserFormFields: (fields: Record<string, string>) => Promise<boolean>;
+  markCourseComplete: (courseId: string) => Promise<boolean>; // ADDED
+
   // Simulated Systems
   notifications: Notification[];
   markNotificationRead: (id: string) => void;
@@ -163,16 +167,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 if (firebaseUser) {
                      if (db) {
                          try {
+                             // Fetch existing data including customFormFields
                              const userRef = doc(db, "users", firebaseUser.uid);
-                             await setDoc(userRef, {
-                                 name: firebaseUser.displayName,
-                                 email: firebaseUser.email,
-                                 photo: firebaseUser.photoURL,
-                                 lastLogin: new Date().toISOString()
-                             }, { merge: true });
-
                              const userSnap = await getDoc(userRef);
-                             const firestoreData = userSnap.exists() ? userSnap.data() : {};
+                             
+                             let firestoreData = {};
+                             if (userSnap.exists()) {
+                                 firestoreData = userSnap.data();
+                             } else {
+                                 // Create initial doc if not exists
+                                 await setDoc(userRef, {
+                                     name: firebaseUser.displayName,
+                                     email: firebaseUser.email,
+                                     photo: firebaseUser.photoURL,
+                                     lastLogin: new Date().toISOString()
+                                 }, { merge: true });
+                             }
                              
                              const appUser = createMockUser({
                                 id: firebaseUser.uid,
@@ -181,7 +191,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                 avatar: firebaseUser.photoURL || '',
                                 loginMethod: 'google',
                                 isIdentityVerified: true,
-                                ...firestoreData
+                                ...firestoreData // This will include customFormFields if present
                              });
                              
                              setUser(appUser);
@@ -283,6 +293,65 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
              const userRef = doc(db, "users", user.id);
              setDoc(userRef, data, { merge: true }).catch(err => console.error("Update profile sync error", err));
           }
+      }
+  };
+  
+  const saveUserFormFields = async (fields: Record<string, string>) => {
+      if (!user) return false;
+      try {
+          const updated = { ...user, customFormFields: fields };
+          setUser(updated);
+          localStorage.setItem('mylaf_session', JSON.stringify(updated));
+          
+          if (db) {
+              const flatFields: any = {};
+              Object.entries(fields).forEach(([k, v]) => {
+                  flatFields[k] = v;
+              });
+              const userRef = doc(db, "users", user.id);
+              await setDoc(userRef, flatFields, { merge: true });
+          }
+          return true;
+      } catch (e) {
+          console.error("Error saving form fields", e);
+          return false;
+      }
+  };
+
+  const markCourseComplete = async (courseId: string) => {
+      if (!user) return false;
+      try {
+        if (db) {
+            // Save to specific subcollection as requested
+            await setDoc(doc(db, "users", user.id, "completed_courses", `course_${courseId}`), {
+                passed: true,
+                date: new Date(),
+                courseId: courseId
+            });
+        }
+        // Also update local user state for UI consistency
+        const certs = user.certificates || [];
+        // Only add if not exists
+        if(!certs.find(c => c.courseName === `الدورة رقم ${courseId}`)) {
+            certs.push({
+                id: `CERT-${courseId}-${Date.now()}`,
+                userId: user.id,
+                courseName: `الدورة رقم ${courseId}`,
+                trainingNumber: user.trainingId || 'N/A',
+                finalScore: 100,
+                grade: 'Passed',
+                hours: 5,
+                issuedAt: new Date().toISOString(),
+                provider: 'Mylaf Academy',
+                verifyCode: `V-${Date.now()}`,
+                type: 'Course'
+            });
+            updateProfile({ certificates: certs });
+        }
+        return true;
+      } catch (e) {
+          console.error("Error marking course complete", e);
+          return false;
       }
   };
 
@@ -591,7 +660,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         followUser, unfollowUser,
         markProductAsSold, incrementProductViews,
         storedUsers,
-        showLoginModal, setShowLoginModal, requireAuth
+        showLoginModal, setShowLoginModal, requireAuth,
+        saveUserFormFields,
+        markCourseComplete // Added
     }}>
       {children}
     </AuthContext.Provider>
