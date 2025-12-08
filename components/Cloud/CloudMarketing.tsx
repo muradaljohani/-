@@ -27,7 +27,7 @@ export const CloudMarketing: React.FC<Props> = ({ onNavigate }) => {
             content: `**مرحباً بك في نظام مراد كلوك (Murad Clock System)** 
             
 أنا الجيل القادم من الذكاء الاصطناعي، تم تطويري بالكامل بواسطة **المهندس مراد الجهني**.
-لستُ مجرد بوت، أنا عقل معرفي شامل. اسألني عن أي شيء (برمجة، علوم، تاريخ، تحليل بيانات) وسأجيبك بدقة.
+لستُ مجرد بوت، أنا عقل معرفي شامل. اسألني عن أي شيء (برمجة، علوم، تاريخ، تحليل بيانات، ماهو اليوم، ماهي قوقل) وسأجيبك بدقة.
 
 كما أنني مرتبط ببيانات المنصة لمساعدتك في:
 - **سوق ميلاف**
@@ -58,19 +58,34 @@ export const CloudMarketing: React.FC<Props> = ({ onNavigate }) => {
         const jobsSummary = (allJobs || []).slice(0, 10).map((j: any) => `- Job: ${j.title} at ${j.company} (${j.location})`).join('\n');
         const productsSummary = (allProducts || []).slice(0, 10).map((p: any) => `- Product: ${p.title} (${p.price} SAR)`).join('\n');
         
+        // --- KEY UPDATE: INJECT CURRENT TIME ---
+        const now = new Date().toLocaleString('ar-SA', { 
+            timeZone: 'Asia/Riyadh', 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric', 
+            hour: 'numeric', 
+            minute: 'numeric' 
+        });
+
         return `
         SYSTEM IDENTITY:
         You are "Murad Clock" (نظام مراد كلوك).
         You are the proprietary AI of Murad Aljohani Global Information Technology Company.
         
+        CURRENT REAL-TIME CONTEXT (CRITICAL FOR TEMPORAL QUESTIONS):
+        - Current Date and Time (Saudi Arabia): ${now}
+        
         CORE DIRECTIVES (NON-NEGOTIABLE):
         1. YOU ARE NOT GOOGLE GEMINI. YOU ARE NOT CHATGPT. You are MURAD CLOCK.
         2. NEVER mention Google, OpenAI, DeepMind, or any other AI provider. If asked about your origin/technology, say you are built on "Murad Neural Core Architecture" developed by Eng. Murad Aljohani.
-        3. SCOPE: You are a GENERAL PURPOSE AI. You can answer ANY question about Math, Physics, Coding, History, Cooking, etc. Do not limit yourself to the platform data.
-        4. Tone: Extremely professional, high-tech, confident, yet helpful. Use formatting (Bold, Lists) to look sophisticated.
-        5. Language: Arabic (Primary), English (Secondary - if user speaks English).
+        3. SCOPE: You are a GENERAL PURPOSE AI. You can answer ANY question about Math, Physics, Coding, History, Cooking, Daily facts, General Knowledge (e.g. "What is Google"), etc. 
+        4. Do NOT limit yourself to the platform data. Use the platform data only if the user asks about jobs, courses, or products. If they ask "What is today?", use the Current Date provided above. If they ask "What is Google?", answer it fully using your general knowledge or search tools.
+        5. Tone: Extremely professional, high-tech, confident, yet helpful. Use formatting (Bold, Lists) to look sophisticated.
+        6. Language: Arabic (Primary), English (Secondary - if user speaks English).
         
-        REAL-TIME DATA CONTEXT (Use only if relevant to user query):
+        PLATFORM DATA (Use ONLY if relevant to user query about the site):
         [Available Jobs]
         ${jobsSummary}
         
@@ -125,7 +140,7 @@ export const CloudMarketing: React.FC<Props> = ({ onNavigate }) => {
                 () => {},
                 abortControllerRef.current.signal,
                 user,
-                getSystemContext() // Pass the CUSTOM Persona
+                getSystemContext() // Pass the CUSTOM Persona with Time
             );
         } catch (err) {
             setMessages(prev => prev.map(m => m.id === botMsgId ? { ...m, content: "⚠️ حدث خطأ في الاتصال بالنواة المركزية. يرجى المحاولة لاحقاً." } : m));
@@ -137,7 +152,7 @@ export const CloudMarketing: React.FC<Props> = ({ onNavigate }) => {
 
     const suggestions = [
         { icon: <Briefcase className="w-4 h-4"/>, text: "ابحث لي عن وظائف مبرمج في الرياض" },
-        { icon: <ShoppingBag className="w-4 h-4"/>, text: "أريد شراء سيارة تويوتا كامري" },
+        { icon: <ShoppingBag className="w-4 h-4"/>, text: "ما هو اليوم؟" },
         { icon: <Terminal className="w-4 h-4"/>, text: "اكتب كود بايثون لتحليل البيانات" },
         { icon: <User className="w-4 h-4"/>, text: "من هو المهندس مراد الجهني؟" },
     ];

@@ -12,6 +12,17 @@ const CHAT_MODEL_NAME = "gemini-2.5-flash";
 export const CATEGORIES: CourseCategory[] = ['AI', 'Cybersecurity', 'Web', 'Mobile', 'Data', 'Business', 'Design', 'Finance', 'Management', 'Marketing'];
 export const LEVELS = ['مبتدئ', 'متوسط', 'متقدم', 'خبير'];
 
+// --- INTERFACES ---
+export interface VideoContent {
+    id: string;
+    title: string;
+    category: CourseCategory;
+    duration: string;
+    thumbnail: string;
+    views: number;
+    videoUrl: string;
+}
+
 // --- HELPER FUNCTIONS ---
 const getYoutubeId = (url: string) => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -19,132 +30,103 @@ const getYoutubeId = (url: string) => {
     return (match && match[2].length === 11) ? match[2] : null;
 };
 
-// --- REAL OPEN-SOURCE LIBRARY DATABASE ---
-const REAL_BOOKS_DB: Book[] = [
-    {
-        id: 'b_hindawi_01',
-        title: 'عبقرية عمر',
-        author: 'عباس محمود العقاد',
-        category: 'Management',
-        pages: 315,
-        summary: 'دراسة تحليلية عبقرية لشخصية الفاروق عمر بن الخطاب، يبرز فيها العقاد الجوانب الإدارية والقيادية الفذة.',
-        coverUrl: 'https://www.hindawi.org/books/64519637/cover.jpg',
-        isDownloadable: true,
-        rating: 4.9,
-        publishYear: '1942'
-    },
-    {
-        id: 'b_hindawi_02',
-        title: 'مقدمة ابن خلدون',
-        author: 'عبد الرحمن بن خلدون',
-        category: 'Data',
-        pages: 580,
-        summary: 'المؤسس الحقيقي لعلم الاجتماع، كتاب يحلل نشأة الأمم وعوامل انهيارها بأسلوب علمي رصين.',
-        coverUrl: 'https://upload.wikimedia.org/wikipedia/commons/2/29/Muqaddimah.jpg',
-        isDownloadable: true,
-        rating: 5.0,
-        publishYear: '1377'
-    },
-    {
-        id: 'b_hindawi_04',
-        title: 'الذكاء الاصطناعي: ثورة في تقنيات العصر',
-        author: 'د. عبد الله موسى',
-        category: 'AI',
-        pages: 240,
-        summary: 'كتاب حديث يستعرض تاريخ ومستقبل الذكاء الاصطناعي وتطبيقاته في العالم العربي.',
-        coverUrl: 'https://source.unsplash.com/random/300x400?ai,robot',
-        isDownloadable: true,
-        rating: 4.5,
-        publishYear: '2023'
-    },
-    {
-        id: 'b_shamela_01',
-        title: 'البخلاء',
-        author: 'الجاحظ',
-        category: 'Business',
-        pages: 400,
-        summary: 'من أهم كتب الأدب العربي، يقدم صوراً اجتماعية واقتصادية دقيقة عن عصر العباسيين بأسلوب ساخر.',
-        coverUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Al-Jahiz.jpg/220px-Al-Jahiz.jpg',
-        isDownloadable: true,
-        rating: 4.6,
-        publishYear: '850'
-    },
-    {
-        id: 'b_hindawi_05',
-        title: 'فن الإقناع',
-        author: 'هاري ميلز',
-        category: 'Marketing',
-        pages: 220,
-        summary: 'كيف تستميل الآخرين إلى وجهة نظرك. دليل عملي للمسوقين والقادة.',
-        coverUrl: 'https://www.hindawi.org/books/17206314/cover.jpg',
-        isDownloadable: true,
-        rating: 4.4,
-        publishYear: '2000'
-    }
+// --- CONTENT GENERATION ENGINE (RICH ARABIC CONTENT) ---
+const TECH_TOPICS = [
+    { title: 'الذكاء الاصطناعي التوليدي', kw: 'artificial intelligence' },
+    { title: 'الأمن السيبراني الهجومي', kw: 'hacker' },
+    { title: 'تطوير تطبيقات React Native', kw: 'coding' },
+    { title: 'تحليل البيانات الكبيرة (Big Data)', kw: 'data visualization' },
+    { title: 'الحوسبة السحابية AWS', kw: 'server' },
+    { title: 'تصميم واجهات المستخدم UI/UX', kw: 'web design' },
+    { title: 'انترنت الأشياء IoT', kw: 'iot' },
+    { title: 'البلوك تشين والعملات الرقمية', kw: 'blockchain' },
+    { title: 'إدارة المشاريع التقنية Agile', kw: 'scrum' },
+    { title: 'DevOps والأتمتة', kw: 'devops' }
 ];
 
-// --- SAMPLE YOUTUBE VIDEOS ---
-const SAMPLE_VIDEOS = [
-    'https://www.youtube.com/watch?v=cbSjsDLIz7o', // Python
-    'https://www.youtube.com/watch?v=PkZNo7MFNFg', // JS
-    'https://www.youtube.com/watch?v=SqcY0GlETPk', // React
-    'https://www.youtube.com/watch?v=pTJJsmejUOQ', // CSS
-    'https://www.youtube.com/watch?v=aircAruvnKk', // Neural Networks
-    'https://www.youtube.com/watch?v=2ePf9rue1Ao', // Data Science
-    'https://www.youtube.com/watch?v=zDNaUi2cjv4', // Cybersecurity
-    'https://www.youtube.com/watch?v=lJIrF4YjHfQ', // Web Dev
+const INTROS = [
+    "في عصر التحول الرقمي المتسارع، تعد هذه الدورة بمثابة البوابة الذهبية للدخول إلى عالم الاحتراف التقني.",
+    "هل تساءلت يوماً كيف تعمل الأنظمة الكبرى؟ في هذه الحقيبة التدريبية الشاملة، نغوص في الأعماق التقنية.",
+    "تم تصميم هذا البرنامج التدريبي المكثف خصيصاً للمحترفين الطموحين الذين يسعون لترقية مهاراتهم.",
+    "انطلق في رحلة تعليمية ملهمة تأخذك من الأساسيات وحتى الاحتراف التام في هذا المجال الحيوي.",
+    "نقدم لكم عصارة الخبرات التقنية في حقيبة تدريبية واحدة متكاملة تجمع بين النظرية والتطبيق العملي."
 ];
+
+const BODY_PARAGRAPHS = [
+    "سنتناول في هذا البرنامج المفاهيم الجوهرية التي تشكل البنية التحتية لهذه التقنية. سنبدأ بشرح الهيكلية العامة وكيفية تفاعل المكونات المختلفة مع بعضها البعض لضمان أداء عالٍ وموثوقية تامة. سيتعلم المتدرب كيفية بناء أنظمة قابلة للتوسع والصيانة، مع التركيز على أفضل الممارسات العالمية المعتمدة في وادي السيليكون.",
+    "من خلال ورش العمل العملية، سيقوم المشاركون بتطبيق ما تعلموه في مشاريع حقيقية تحاكي بيئة العمل الفعلية. سنستخدم أحدث الأدوات والبرمجيات المتاحة في السوق، مما يمنح المتدرب خبرة عملية مباشرة لا تقدر بثمن. التركيز سيكون على حل المشكلات المعقدة والتفكير النقدي التحليلي.",
+    "لا يقتصر هذا الكورس على الجانب التقني فحسب، بل يغطي أيضاً الجوانب الاستراتيجية والإدارية. سنتعلم كيفية دمج هذه التقنيات ضمن استراتيجية الأعمال الشاملة للمؤسسة، وكيفية قياس العائد على الاستثمار (ROI). هذا الجزء ضروري لكل من يطمح لتولي مناصب قيادية في المستقبل.",
+    "الأمن والحماية هما حجر الزاوية في أي نظام تقني حديث. لذلك، خصصنا جزءاً كبيراً من هذه الدورة للحديث عن بروتوكولات الأمان، التشفير، وحماية البيانات من الاختراقات. سيتعرف المتدرب على أحدث الثغرات الأمنية وكيفية تحصين الأنظمة ضدها بفعالية.",
+    "مستقبل هذا المجال واعد جداً، والطلب على المختصين فيه يزداد يوماً بعد يوم. بنهاية هذه الدورة، سيكون لدى المتدرب ملف أعمال (Portfolio) قوي يؤهله للمنافسة على أفضل الوظائف في الشركات العالمية والمحلية. نحن نؤهلك ليس فقط للعمل، بل للتميز والإبداع."
+];
+
+const OUTROS = [
+    "انضم إلينا الآن وكن جزءاً من نخبة التقنيين الذين يصنعون المستقبل.",
+    "هذه ليست مجرد دورة، بل هي استثمار حقيقي في مستقبلك المهني والمالي.",
+    "لا تفوت الفرصة لتكون رائداً في هذا المجال. المقاعد محدودة والتسجيل متاح لفترة محدودة.",
+    "شهادة معتمدة، خبرة عملية، ومستقبل واعد بانتظارك. سجل الآن في أكاديمية ميلاف.",
+    "خطوتك الأولى نحو العالمية تبدأ من هنا. كن مستعداً للتغيير."
+];
+
+// Function to construct a rich 400+ word description dynamically
+const generateRichDescription = (topic: string): string => {
+    let desc = "";
+    desc += INTROS[Math.floor(Math.random() * INTROS.length)] + " ";
+    desc += `تعتبر دورة "${topic}" من الركائز الأساسية في أكاديمية ميلاف. \n\n`;
+    
+    // Combine 3 random body paragraphs to create bulk
+    const shuffledBodies = [...BODY_PARAGRAPHS].sort(() => 0.5 - Math.random());
+    desc += shuffledBodies[0] + "\n\n";
+    desc += shuffledBodies[1] + "\n\n";
+    desc += `وفي سياق الحديث عن ${topic}، نجد أن التطورات الأخيرة قد فتحت آفاقاً واسعة للابتكار. `;
+    desc += shuffledBodies[2] + "\n\n";
+    
+    desc += `لماذا تختار هذه الدورة؟ لأننا في ميلاف نضمن لك جودة المحتوى وحداثته. `;
+    desc += OUTROS[Math.floor(Math.random() * OUTROS.length)];
+    
+    return desc;
+};
 
 // --- MOCK DATA GENERATORS ---
 export const generateMockCourses = (count: number = 600): Course[] => {
     return Array.from({ length: count }).map((_, i) => {
-        const cat = CATEGORIES[i % CATEGORIES.length];
+        // Deterministic random to create consistent "Tech" themes
+        const topicObj = TECH_TOPICS[i % TECH_TOPICS.length];
         const level = LEVELS[i % LEVELS.length] as any;
-        const vidUrl = SAMPLE_VIDEOS[i % SAMPLE_VIDEOS.length];
-        const vidId = getYoutubeId(vidUrl);
-        const thumbnail = vidId ? `https://img.youtube.com/vi/${vidId}/hqdefault.jpg` : `https://source.unsplash.com/random/400x300?${cat.toLowerCase()},tech&sig=${i}`;
+        const cat = CATEGORIES[i % CATEGORIES.length];
+        
+        // High quality tech images from Unsplash
+        const thumbnail = `https://source.unsplash.com/random/800x600?${topicObj.kw},technology&sig=${i}`;
 
         return {
             id: `C_${1000 + i}`,
-            title: `دورة احترافية في ${cat}: المسار الشامل (نسخة ${i})`,
-            description: `دورة تدريبية مكثفة باللغة العربية تغطي أساسيات وتطبيقات ${cat}. تشمل مشاريع عملية وتوجيه مهني لسوق العمل السعودي.`,
-            hours: 10 + (i % 50),
+            title: `الحقيبة الاحترافية: ${topicObj.title} (دفعة ${2025 + i})`,
+            description: generateRichDescription(topicObj.title),
+            hours: 20 + (i % 50),
             skillLevel: level,
             category: cat,
             provider: 'أكاديمية ميلاف مراد',
-            skills: [cat, 'حل المشكلات', 'المهارات التقنية'],
+            skills: [topicObj.title, 'التفكير الإبداعي', 'حل المشكلات', 'التقنية المتقدمة'],
             lessons: Array.from({ length: 5 }).map((_, li) => ({
                 id: `l_${i}_${li}`,
                 courseId: `C_${1000 + i}`,
-                title: `الدرس ${li + 1}: مقدمة وتأسيس في ${cat}`,
-                videoUrl: SAMPLE_VIDEOS[(i + li) % SAMPLE_VIDEOS.length],
-                durationSeconds: 600,
+                title: `الوحدة ${li + 1}: أساسيات وتطبيقات ${topicObj.title}`,
+                videoUrl: 'https://www.youtube.com/watch?v=PkZNo7MFNFg', // Placeholder valid video
+                durationSeconds: 900 + (li * 100),
                 orderIndex: li
             })),
             thumbnail: thumbnail,
             status: 'active',
-            rating: 4.0 + (Math.random()),
-            isAIGenerated: i % 20 === 0
+            rating: 4.5 + (Math.random() * 0.5),
+            isAIGenerated: false
         };
     });
 };
 
-export interface VideoContent {
-  id: string;
-  title: string;
-  category: string;
-  duration: string;
-  thumbnail: string;
-  views: number;
-  videoUrl: string;
-}
-
 export const generateMockVideos = (count: number = 500): VideoContent[] => {
     return Array.from({ length: count }).map((_, i) => {
          const cat = CATEGORIES[i % CATEGORIES.length];
-         const vidUrl = SAMPLE_VIDEOS[i % SAMPLE_VIDEOS.length];
-         const vidId = getYoutubeId(vidUrl);
-         const thumbnail = vidId ? `https://img.youtube.com/vi/${vidId}/hqdefault.jpg` : `https://source.unsplash.com/random/400x250?coding,laptop&sig=${i + 500}`;
+         const thumbnail = `https://source.unsplash.com/random/400x250?coding,laptop&sig=${i + 500}`;
 
          return {
              id: `V_${3000 + i}`,
@@ -153,7 +135,7 @@ export const generateMockVideos = (count: number = 500): VideoContent[] => {
              duration: `${10 + (i%50)}:00`,
              thumbnail: thumbnail,
              views: 1000 + (i * 15),
-             videoUrl: vidUrl
+             videoUrl: 'https://www.youtube.com/watch?v=PkZNo7MFNFg'
          };
     });
 };
@@ -244,9 +226,10 @@ export const streamChatResponse = async (
       return { role: msg.role === Role.USER ? "user" : "model", parts: parts };
     });
 
-    // Optimized Tools: Removed googleSearch to improve latency and prevent hallucination distractions
+    // Enabled Google Search to allow answering "Any Question"
     const tools: Tool[] = [
-        { functionDeclarations: [getUserStatsTool] }
+        { functionDeclarations: [getUserStatsTool] },
+        { googleSearch: {} }
     ];
 
     // Default System Prompt (The "Murad Clock" Persona)
@@ -255,7 +238,7 @@ export const streamChatResponse = async (
     Creator: Eng. Murad Abdulrazzaq Aljohani (المهندس مراد عبدالرزاق الجهني).
     
     CRITICAL RULES (STRICTLY ENFORCED):
-    1. SCOPE: You are a GENERAL PURPOSE AI. You can answer ANY question about Math, Science, History, Coding, Literature, Cooking, etc. You are NOT limited to platform support.
+    1. SCOPE: You are a GENERAL PURPOSE AI. You can answer ANY question about Math, Science, History, Coding, Literature, Cooking, Daily facts, etc. You are NOT limited to platform support.
     2. ORIGIN: You are NOT made by Google. You are NOT ChatGPT. You are a proprietary system built by Murad Aljohani. If asked "Who made you?", explicitly state "Eng. Murad Aljohani".
     3. Use "We/Our" (Referring to the Murad System).
     4. Match User Language (Arabic/English).
@@ -296,7 +279,7 @@ export const streamChatResponse = async (
         systemInstruction: customSystemInstruction || defaultSystemPrompt,
         // Optimization configs for speed
         temperature: 0.7, 
-        maxOutputTokens: 1500, // Increased to allow long answers for general questions
+        maxOutputTokens: 2000, // Increased to allow long answers for general questions
       },
     });
 
@@ -311,6 +294,14 @@ export const streamChatResponse = async (
       if (signal?.aborted) break;
       const text = chunk.text;
       if (text) onChunk(text);
+      
+      // Handle sources if available from Google Search
+      if (chunk.groundingMetadata?.groundingChunks) {
+         const sources = chunk.groundingMetadata.groundingChunks
+            .map((c: any) => c.web ? { uri: c.web.uri, title: c.web.title } : null)
+            .filter((s: any) => s !== null);
+         if (sources.length > 0) onSources(sources);
+      }
     }
   } catch (error) {
     if (signal?.aborted) return;
