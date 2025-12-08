@@ -5,8 +5,8 @@ import { Message, Role, SearchSource, Attachment, User, Course, CourseCategory, 
 // Initialize the Gemini API client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// Using Flash for maximum speed
-const CHAT_MODEL_NAME = "gemini-2.5-flash";
+// Using Flash for maximum speed - Updated to a stable valid model ID
+const CHAT_MODEL_NAME = "gemini-2.0-flash-exp";
 
 // --- SHARED DATA CONSTANTS ---
 export const CATEGORIES: CourseCategory[] = ['AI', 'Cybersecurity', 'Web', 'Mobile', 'Data', 'Business', 'Design', 'Finance', 'Management', 'Marketing'];
@@ -206,7 +206,7 @@ export const generateAICourseContent = async (topic: string, level: string): Pro
   const prompt = `قم بإنشاء هيكل دورة تدريبية JSON عن "${topic}" مستوى ${level}. الحقول: title, description, hours, category, lessons (array of 5 items). JSON ONLY.`;
   
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: CHAT_MODEL_NAME,
     contents: prompt,
     config: { responseMimeType: "application/json" }
   });
@@ -218,7 +218,7 @@ export const analyzeProfileWithAI = async (fullUserProfile: User): Promise<any> 
   const prompt = `Analyze user profile: ${JSON.stringify({name: fullUserProfile.name, skills: fullUserProfile.skills})}. Return JSON with: overview, personalityArchetype, skillsRadar, globalMarketMatch, topMatchedRoles, salaryProjection, criticalGaps, recommendedActions. Arabic.`;
   
   const response = await ai.models.generateContent({
-    model: "gemini-2.5-flash",
+    model: CHAT_MODEL_NAME,
     contents: prompt,
     config: { responseMimeType: "application/json" }
   });
@@ -244,10 +244,9 @@ export const streamChatResponse = async (
       return { role: msg.role === Role.USER ? "user" : "model", parts: parts };
     });
 
-    // Enabled Google Search to allow answering "Any Question"
+    // Simplified tools to avoid 400 Bad Request on Flash models if search isn't enabled
     const tools: Tool[] = [
-        { functionDeclarations: [getUserStatsTool] },
-        { googleSearch: {} }
+        { functionDeclarations: [getUserStatsTool] }
     ];
 
     // Default System Prompt (The "Murad Clock" Persona)
@@ -297,7 +296,7 @@ export const streamChatResponse = async (
         systemInstruction: customSystemInstruction || defaultSystemPrompt,
         // Optimization configs for speed
         temperature: 0.7, 
-        maxOutputTokens: 2000, // Increased to allow long answers for general questions
+        maxOutputTokens: 2000, 
       },
     });
 
@@ -323,7 +322,7 @@ export const streamChatResponse = async (
     }
   } catch (error) {
     if (signal?.aborted) return;
-    console.error(error);
+    console.error("Gemini Error:", error);
     onChunk("عذراً، حدث خطأ في الاتصال بالنظام المركزي. يرجى المحاولة لاحقاً.");
   }
 };
