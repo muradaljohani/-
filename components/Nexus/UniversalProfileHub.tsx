@@ -82,22 +82,93 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         </button>
     );
 
-    const handleStartCourse = (courseId: number) => {
-        // Simulate course object for VirtualClassroom
-        const mockCourse = {
-            id: `c_${courseId}`,
-            title: `الحقيبة التدريبية الشاملة رقم ${courseId}`,
-            description: 'دورة شاملة تغطي المهارات الأساسية والمتقدمة.',
-            modules: [
-                { id: 'm1', title: 'مقدمة في المنهج', type: 'video', duration: '10:00', isCompleted: true },
-                { id: 'm2', title: 'المحتوى الأساسي النظري', type: 'video', duration: '45:00', isCompleted: false },
-                { id: 'm3', title: 'تطبيقات عملية ومشاريع', type: 'video', duration: '30:00', isCompleted: false },
-                { id: 'm4', title: 'الاختبار النهائي للحقيبة', type: 'quiz', duration: '15:00', isCompleted: false }
-            ],
-            thumbnail: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80',
-            unlocksPermission: 'none'
+    // --- RICH CONTENT GENERATOR ---
+    const generateCourseContent = (id: number) => {
+        const isAI = id <= 25;
+        const topic = isAI ? "الذكاء الاصطناعي (AI)" : "قواعد البيانات (Data Management)";
+        
+        // Detailed placeholder text (simulating 500 words per unit)
+        const longTextIntro = `
+            مرحباً بكم في هذه الحقيبة التدريبية المتخصصة في ${topic}. في عالمنا الرقمي المتسارع، أصبحت هذه المهارات ليست مجرد خيار بل ضرورة ملحة لكل من يرغب في التميز في سوق العمل. 
+            تهدف هذه الدورة إلى تزويدك بالأساسيات النظرية والمهارات العملية التي تمكنك من فهم وبناء أنظمة متقدمة.
+            سنبدأ رحلتنا بفهم المفاهيم الأساسية، ثم ننتقل تدريجياً إلى التطبيقات العملية.
+            <br/><br/>
+            <strong>لماذا هذا المجال مهم؟</strong>
+            <br/>
+            تشير الدراسات الحديثة إلى أن الطلب على خبراء ${topic} قد ارتفع بنسبة 300% خلال السنوات الخمس الماضية. الشركات العالمية والمحلية تبحث عن كوادر مؤهلة قادرة على التعامل مع التحديات التقنية الحديثة.
+            <br/><br/>
+            في هذه الوحدة، سنتعرف على:
+            <ul class="list-disc pr-6 mt-2">
+                <li>المفاهيم الأساسية والمصطلحات.</li>
+                <li>تاريخ وتطور ${topic}.</li>
+                <li>أهم الأدوات والتقنيات المستخدمة في 2025.</li>
+                <li>كيفية البدء في بناء مسارك المهني.</li>
+            </ul>
+        `;
+
+        const longTextCore = `
+            ننتقل الآن إلى الجوهر التقني. في هذا القسم، سنغوص في التفاصيل الدقيقة لكيفية عمل الأنظمة.
+            ${isAI ? 
+                "الشبكات العصبية (Neural Networks) هي العمود الفقري للذكاء الاصطناعي الحديث. سنشرح كيف تقوم هذه الشبكات بمحاكاة الدماغ البشري لمعالجة البيانات." : 
+                "تصميم قواعد البيانات العلائقية (RDBMS) وغير العلائقية (NoSQL) يتطلب فهماً عميقاً لهيكلة البيانات. سنناقش الفرق بين SQL و MongoDB ومتى نستخدم كل منهما."
+            }
+            <br/><br/>
+            <strong>التطبيق العملي:</strong>
+            <br/>
+            سنتعلم كيفية كتابة الأكواد البرمجية اللازمة، وكيفية التعامل مع الأخطاء الشائعة. تذكر أن الممارسة هي مفتاح الإتقان.
+            سنستعرض أمثلة حقيقية من شركات كبرى وكيف تستخدم هذه التقنيات لتحسين خدماتها.
+            <br/><br/>
+            سنقوم بتحليل الشيفرات البرمجية سطراً بسطر لضمان الفهم الكامل. لا تتردد في تدوين ملاحظاتك وتجربة الأمثلة بنفسك على جهازك.
+        `;
+
+        const modules = [
+            { 
+                id: 'm1', 
+                title: 'المقدمة والإطار النظري', 
+                type: 'text', 
+                duration: '15 دقيقة', 
+                isCompleted: true,
+                content: longTextIntro,
+                banner: isAI ? 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1000' : 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&q=80&w=1000'
+            },
+            { 
+                id: 'm2', 
+                title: 'شرح المفاهيم التقنية العميقة', 
+                type: 'video', 
+                duration: '45:00', 
+                isCompleted: false 
+            },
+            { 
+                id: 'm3', 
+                title: 'دراسة تفصيلية (500 كلمة)', 
+                type: 'text', 
+                duration: '30 دقيقة', 
+                isCompleted: false,
+                content: longTextCore,
+                banner: isAI ? 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=1000' : 'https://images.unsplash.com/photo-1558494949-ef526b0042a0?auto=format&fit=crop&q=80&w=1000'
+            },
+            { 
+                id: 'm4', 
+                title: 'الاختبار النهائي للحقيبة', 
+                type: 'quiz', 
+                duration: '15:00', 
+                isCompleted: false 
+            }
+        ];
+
+        return {
+            id: `c_${id}`,
+            title: isAI ? `الحقيبة ${id}: ماجستير الذكاء الاصطناعي التطبيقي` : `الحقيبة ${id}: احتراف قواعد البيانات والبيانات الضخمة`,
+            description: `برنامج تدريبي مكثف وشامل يغطي كافة جوانب ${topic} من النظرية إلى التطبيق العملي.`,
+            modules: modules,
+            thumbnail: isAI ? 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80' : 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=800&q=80',
+            unlocksPermission: 'certified'
         };
-        setActiveCourse(mockCourse);
+    };
+
+    const handleStartCourse = (courseId: number) => {
+        const richCourse = generateCourseContent(courseId);
+        setActiveCourse(richCourse);
     };
 
     const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -263,19 +334,27 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
                                 {Array.from({ length: 50 }, (_, i) => i + 1).map((i) => (
                                     <div key={i} className="bg-[#1e293b] rounded-2xl border border-white/5 overflow-hidden group hover:shadow-xl hover:border-purple-500/30 transition-all flex flex-col">
-                                        <div className="h-32 bg-gradient-to-br from-purple-900 to-blue-900 relative flex items-center justify-center">
+                                        <div className="h-32 bg-gradient-to-br from-purple-900 to-blue-900 relative flex items-center justify-center overflow-hidden">
                                             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
-                                            <span className="text-5xl font-black text-white/10 absolute right-2 bottom-0">{i}</span>
-                                            <PlayCircle className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform"/>
+                                            <img 
+                                                src={i <= 25 ? 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=500&q=60' : 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=500&q=60'} 
+                                                className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform" 
+                                            />
+                                            <span className="text-5xl font-black text-white/20 absolute right-2 bottom-0 z-10">{i}</span>
+                                            <PlayCircle className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform relative z-10"/>
                                         </div>
                                         <div className="p-5 flex-1 flex flex-col">
-                                            <h3 className="text-white font-bold text-sm mb-2">الحقيبة التدريبية رقم {i}</h3>
-                                            <p className="text-gray-400 text-xs mb-4 flex-1 line-clamp-2">دورة شاملة لتطوير المهارات التقنية والإدارية المطلوبة في سوق العمل السعودي.</p>
+                                            <h3 className="text-white font-bold text-sm mb-2">
+                                                {i <= 25 ? `حقيبة الذكاء الاصطناعي - مستوى ${i}` : `حقيبة قواعد البيانات - مستوى ${i-25}`}
+                                            </h3>
+                                            <p className="text-gray-400 text-xs mb-4 flex-1 line-clamp-2">
+                                                {i <= 25 ? 'دورة متكاملة في الذكاء الاصطناعي وتعلم الآلة.' : 'احتراف إدارة البيانات وتحليلها.'}
+                                            </p>
                                             <button 
                                                 onClick={() => handleStartCourse(i)}
                                                 className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold transition-colors shadow-lg flex items-center justify-center gap-2"
                                             >
-                                                <Play className="w-3 h-3 fill-current"/> دخول الدورة
+                                                <Play className="w-3 h-3 fill-current"/> دخول الحقيبة
                                             </button>
                                         </div>
                                     </div>

@@ -1,7 +1,7 @@
 
 import React, { useState, useRef } from 'react';
 import { User } from '../../types';
-import { Download, RefreshCw, ShieldCheck } from 'lucide-react';
+import { Download, RefreshCw } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { AssetProcessor } from '../../services/System/AssetProcessor';
 
@@ -77,42 +77,52 @@ export const SmartIDCard: React.FC<Props> = ({ user }) => {
                                         <p className="text-[8px] text-amber-400 font-bold">University Student Card</p>
                                     </div>
                                 </div>
-                                <div className="w-8 h-6 bg-yellow-200/20 rounded border border-yellow-200/40 flex items-center justify-center">
-                                    <div className="w-6 h-4 border border-yellow-500/50 rounded-sm"></div>
+                                {/* Chip Simulation */}
+                                <div className="w-9 h-7 bg-yellow-200/20 rounded border border-yellow-200/40 flex items-center justify-center overflow-hidden relative">
+                                    <div className="absolute inset-0 bg-gradient-to-tr from-yellow-600/40 to-transparent"></div>
+                                    <div className="w-full h-[1px] bg-black/20 absolute top-1/2"></div>
+                                    <div className="h-full w-[1px] bg-black/20 absolute left-1/3"></div>
+                                    <div className="h-full w-[1px] bg-black/20 absolute right-1/3"></div>
                                 </div>
                             </div>
 
                             {/* Middle: Photo & Data */}
-                            <div className="flex items-center gap-4 mt-2">
-                                {/* User Photo */}
-                                <div className="w-20 h-24 bg-white rounded-md border-2 border-white/30 shadow-lg overflow-hidden shrink-0">
-                                    <img 
-                                        src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
-                                        alt="Student" 
-                                        className="w-full h-full object-cover"
-                                    />
+                            <div className="flex items-center gap-3 mt-1">
+                                {/* User Photo - Fixed Position */}
+                                <div className="w-[70px] h-[85px] bg-white rounded-md border-[2px] border-white/30 shadow-lg overflow-hidden shrink-0 relative">
+                                     {user.avatar ? (
+                                        <img 
+                                            src={user.avatar} 
+                                            alt="Student" 
+                                            className="w-full h-full object-cover"
+                                        />
+                                     ) : (
+                                        <div className="w-full h-full flex items-center justify-center bg-gray-200 text-gray-400 text-xs">No Photo</div>
+                                     )}
                                 </div>
 
                                 {/* Student Data */}
-                                <div className="flex-1 flex flex-col gap-1">
-                                    <div>
-                                        <p className="text-[7px] text-gray-400 uppercase tracking-widest mb-0.5">Student Name</p>
-                                        <h2 className="text-sm font-bold text-white tracking-wide truncate">{user.name}</h2>
+                                <div className="flex-1 flex flex-col justify-center gap-[2px]">
+                                    <div className="mb-1">
+                                        <p className="text-[6px] text-gray-400 uppercase tracking-widest mb-0.5">Student Name</p>
+                                        <h2 className="text-sm font-bold text-white tracking-wide leading-tight truncate">{user.name}</h2>
+                                    </div>
+                                    <div className="mb-1">
+                                        <p className="text-[6px] text-gray-400 uppercase tracking-widest">Academic ID</p>
+                                        <p className="text-xs font-mono font-bold text-amber-400 tracking-widest shadow-black drop-shadow-md">{user.trainingId}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[7px] text-gray-400 uppercase tracking-widest mb-0.5">Academic ID</p>
-                                        <p className="text-xs font-mono font-bold text-amber-400 tracking-widest">{user.trainingId}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-[7px] text-gray-400 uppercase tracking-widest mb-0.5">Major</p>
-                                        <p className="text-[10px] font-bold text-white truncate">{user.major || 'Computer Science'}</p>
+                                        <p className="text-[6px] text-gray-400 uppercase tracking-widest">Major</p>
+                                        <p className="text-[9px] font-bold text-white truncate border-b border-white/20 pb-0.5 inline-block min-w-[50%]">
+                                            {user.major || 'تخصص عام'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
 
                             {/* Footer: Dates & QR Code */}
-                            <div className="flex justify-between items-end border-t border-white/10 pt-1 mt-1">
-                                <div className="text-[7px] font-mono text-gray-300 flex flex-col">
+                            <div className="flex justify-between items-end border-t border-white/10 pt-1.5 mt-auto">
+                                <div className="text-[7px] font-mono text-gray-300 flex flex-col leading-tight">
                                     <span>ISS: {formatDate(issueDate)}</span>
                                     <span>EXP: <span className="text-white font-bold">{formatDate(expiryDate)}</span></span>
                                 </div>
@@ -135,20 +145,20 @@ export const SmartIDCard: React.FC<Props> = ({ user }) => {
                         {/* Magnetic Strip */}
                         <div className="w-full h-8 bg-[#1a1a1a] mt-4"></div>
 
-                        <div className="p-5 flex flex-col h-[calc(100%-32px)] justify-between relative">
+                        <div className="p-4 flex flex-col h-[calc(100%-32px)] justify-between relative">
                             
                             {/* Academy Name on Back */}
-                            <div className="text-center pt-2">
+                            <div className="text-center pt-1">
                                 <h2 className="text-sm font-black text-[#1e3a8a] uppercase tracking-wide border-b-2 border-[#1e3a8a] inline-block pb-1">
                                     أكاديمية ميلاف مراد العالمية
                                 </h2>
-                                <p className="text-[8px] text-gray-500 font-bold mt-1">Mylaf Murad International Academy</p>
+                                <p className="text-[7px] text-gray-500 font-bold mt-1">Mylaf Murad International Academy</p>
                             </div>
 
-                            <div className="flex flex-1 justify-between items-end px-4 pb-2">
+                            <div className="flex flex-1 justify-between items-end px-2 pb-1">
                                 {/* Executive Signature Block */}
                                 <div className="text-center relative z-10 flex flex-col items-center">
-                                     <div className="h-12 relative flex items-end justify-center mb-1">
+                                     <div className="h-10 relative flex items-end justify-center mb-0.5">
                                         <img 
                                             src={assetProcessor.getOfficialSignature()} 
                                             className="h-full object-contain" 
@@ -156,9 +166,9 @@ export const SmartIDCard: React.FC<Props> = ({ user }) => {
                                             style={{ filter: 'brightness(0)' }} 
                                         />
                                      </div>
-                                     <div className="border-t border-black w-24 pt-1">
-                                         <p className="text-[7px] font-bold uppercase tracking-wider">المدير التنفيذي</p>
-                                         <p className="text-[8px] font-bold">م. مراد الجهني</p>
+                                     <div className="border-t border-black w-24 pt-0.5">
+                                         <p className="text-[6px] font-bold uppercase tracking-wider">المدير التنفيذي</p>
+                                         <p className="text-[7px] font-bold">م. مراد الجهني</p>
                                      </div>
                                 </div>
 
@@ -166,7 +176,7 @@ export const SmartIDCard: React.FC<Props> = ({ user }) => {
                                 <div className="relative z-0">
                                      <img 
                                         src={assetProcessor.getOfficialSeal()} 
-                                        className="w-20 h-20 object-contain mix-blend-multiply opacity-90 transform rotate-[-12deg]" 
+                                        className="w-16 h-16 object-contain mix-blend-multiply opacity-90 transform rotate-[-12deg]" 
                                         alt="Seal"
                                      />
                                 </div>
@@ -174,8 +184,9 @@ export const SmartIDCard: React.FC<Props> = ({ user }) => {
 
                             {/* Terms / Warning */}
                             <div className="text-center border-t border-gray-300 pt-1">
-                                <p className="text-[6px] text-gray-400">
-                                    هذه البطاقة وثيقة رسمية للأغراض الأكاديمية. في حال العثور عليها يرجى تسليمها للإدارة.
+                                <p className="text-[6px] text-gray-500 font-bold leading-tight">
+                                    هذه البطاقة وثيقة رسمية للأغراض الأكاديمية. يجب المحافظة عليها.<br/>
+                                    This card is an official academic document. Please preserve it.
                                 </p>
                             </div>
 

@@ -118,11 +118,10 @@ export const AcademicTranscript: React.FC = () => {
                     <p className="text-[10px] font-bold mt-1 text-[#1e3a8a] uppercase tracking-widest">OFFICIAL SEAL</p>
                 </div>
 
-                {/* Registrar */}
+                {/* Registrar Block - TEXT REMOVED as requested */}
                 <div className="text-center w-64">
                     <div className="h-24 mb-2 flex items-end justify-center">
-                        {/* Placeholder for Registrar Sig */}
-                        <div className="font-script text-2xl text-gray-400">Registrar</div>
+                        {/* Space reserved for future signature if needed */}
                     </div>
                     <div className="border-t-2 border-[#1e3a8a] pt-2">
                         <div className="font-bold text-[#1e3a8a] text-sm">عمادة القبول والتسجيل</div>
