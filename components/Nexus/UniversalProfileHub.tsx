@@ -1,6 +1,4 @@
 
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     User, Briefcase, GraduationCap, ShoppingBag, 
@@ -545,6 +543,29 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             </div>
                             {/* --- END NAV BAR --- */}
                             
+                            {/* NATIONAL ADDRESS MAP (GOOGLE MAPS) */}
+                            <div className="w-full mt-4 bg-[#1e293b] rounded-2xl border border-white/10 overflow-hidden shadow-lg animate-fade-in-up">
+                                <div className="p-4 border-b border-white/10 flex justify-between items-center bg-[#0b1120]">
+                                    <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                                        <MapPin className="w-4 h-4 text-red-500"/> العنوان الوطني
+                                    </h3>
+                                    <span className="text-[10px] text-gray-400 max-w-[200px] truncate">{formData.address || formData.nationality || 'المملكة العربية السعودية'}</span>
+                                </div>
+                                <div className="h-64 w-full relative bg-gray-900">
+                                    <iframe
+                                        width="100%"
+                                        height="100%"
+                                        frameBorder="0"
+                                        scrolling="no"
+                                        marginHeight={0}
+                                        marginWidth={0}
+                                        title="National Address Map"
+                                        style={{ filter: 'grayscale(100%) invert(90%) contrast(85%)' }}
+                                        src={`https://maps.google.com/maps?q=${encodeURIComponent((formData.address && formData.address.length > 2 ? formData.address : (formData.nationality || "Riyadh, Saudi Arabia")))}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                                    ></iframe>
+                                </div>
+                            </div>
+
                             <div className="w-full">
                                 <CommunityPulse />
                             </div>
@@ -603,33 +624,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                                      <div>
                                                          <h4 className="text-white font-bold text-sm mb-2 group-hover:text-blue-400 transition-colors">دليل الاختبارات</h4>
                                                          <p className="text-xs text-gray-400 leading-relaxed">
-                                                             جداول الاختبارات، تعليمات دخول القاعات، الممنوعات أثناء الاختبار، وطريقة توزيع الدرجات.
-                                                         </p>
-                                                     </div>
-                                                 </div>
-                                            </div>
-                                            <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-amber-500/30">
-                                                 <div className="flex gap-4">
-                                                     <div className="p-3 bg-amber-600/20 rounded-lg text-amber-400 h-fit group-hover:scale-110 transition-transform">
-                                                         <UserX className="w-6 h-6"/>
-                                                     </div>
-                                                     <div>
-                                                         <h4 className="text-white font-bold text-sm mb-2 group-hover:text-amber-400 transition-colors">ضوابط تقديم الأعذار</h4>
-                                                         <p className="text-xs text-gray-400 leading-relaxed">
-                                                             شروط قبول الأعذار الطبية والقهرية، المستندات المطلوبة، والمهلة الزمنية للتقديم.
-                                                         </p>
-                                                     </div>
-                                                 </div>
-                                            </div>
-                                            <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-emerald-500/30">
-                                                 <div className="flex gap-4">
-                                                     <div className="p-3 bg-emerald-600/20 rounded-lg text-emerald-400 h-fit group-hover:scale-110 transition-transform">
-                                                         <GitMerge className="w-6 h-6"/>
-                                                     </div>
-                                                     <div>
-                                                         <h4 className="text-white font-bold text-sm mb-2 group-hover:text-emerald-400 transition-colors">الإجراءات الأكاديمية</h4>
-                                                         <p className="text-xs text-gray-400 leading-relaxed">
-                                                             نظام الحرمان، حساب المعدل التراكمي، الانتقال بين المستويات، والحقوق والواجبات.
+                                                             جداول الاختبارات، تعليمات الاختبارات عن بعد، وضوابط الغياب.
                                                          </p>
                                                      </div>
                                                  </div>
@@ -640,299 +635,86 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             </div>
                         </div>
                     )}
-
-                    {/* VIEW: DOCUMENTS */}
-                    {activeSection === 'documents' && (
-                        <div className="space-y-8 animate-fade-in-up pb-20">
-                            <h2 className="text-2xl font-bold text-white border-b border-white/10 pb-4 mb-6">مركز الوثائق والسجل الأكاديمي</h2>
-                            
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-blue-400"/> السجل الأكاديمي</h3>
-                                    <AcademicTranscript />
-                                </div>
-                                
-                                <div className="space-y-6">
-                                    <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 text-center">
-                                        <h3 className="text-white font-bold mb-4 flex items-center justify-center gap-2"><Award className="w-5 h-5 text-emerald-400"/> نموذج الشهادة المعتمد</h3>
-                                        <p className="text-xs text-gray-400 mb-6">شاهد نموذجاً حياً لشكل الشهادات التي تصدرها الأكاديمية.</p>
-                                        <button onClick={() => setShowCertPreview(true)} className="px-6 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white text-sm transition-colors mb-2">
-                                            معاينة النموذج
-                                        </button>
-                                        <div className="mt-2">
-                                            <button onClick={() => setShowGenCert(true)} className="px-6 py-2 bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/30 rounded-xl text-emerald-400 text-sm transition-colors">
-                                                إصدار شهادة تجريبية
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
-                                        <h3 className="text-white font-bold mb-4">شهاداتي المكتسبة</h3>
-                                        {user.certificates && user.certificates.length > 0 ? (
-                                            <div className="space-y-2">
-                                                {user.certificates.map(cert => (
-                                                    <div key={cert.id} className="flex justify-between items-center p-3 bg-black/20 rounded-lg">
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="bg-emerald-500/20 p-2 rounded-lg"><Award className="w-4 h-4 text-emerald-400"/></div>
-                                                            <div>
-                                                                <span className="text-sm text-gray-200 block font-bold">{cert.courseName}</span>
-                                                                <span className="text-[10px] text-gray-500 block">{cert.id}</span>
-                                                            </div>
-                                                        </div>
-                                                        <span className="text-xs text-emerald-500 font-mono">{new Date(cert.issuedAt).toLocaleDateString()}</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        ) : (
-                                            <p className="text-sm text-gray-500 text-center py-4">لا توجد شهادات حتى الآن.</p>
-                                        )}
-                                    </div>
-                                    
-                                    <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
-                                        <h3 className="text-white font-bold mb-4">الإفادات الإدارية</h3>
-                                        <div className="space-y-2">
-                                             <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg hover:bg-white/5 transition-colors">
-                                                <span className="text-sm text-gray-300">إفادة انتظام بالدراسة</span>
-                                                <button onClick={() => setShowEnrollmentCert(true)} className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded text-white font-bold transition-all">طباعة الإفادة</button>
-                                             </div>
-                                             <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg opacity-60">
-                                                <span className="text-sm text-gray-400">إفادة تخرج</span>
-                                                <button disabled className="text-xs bg-white/5 px-2 py-1 rounded text-gray-500">قريباً</button>
-                                             </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* VIEW: WALLET */}
-                    {activeSection === 'wallet' && (
-                        <div className="space-y-6 animate-fade-in-up pb-20">
-                             <h2 className="text-2xl font-bold text-white border-b border-white/10 pb-4 mb-6">المحفظة المالية</h2>
-                             <div className="bg-gradient-to-r from-emerald-600 to-teal-800 p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
-                                 <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet className="w-32 h-32"/></div>
-                                 <div className="relative z-10">
-                                     <p className="text-emerald-200 text-sm font-bold uppercase mb-2">الرصيد الحالي</p>
-                                     <h3 className="text-5xl font-black">{walletBalance.toFixed(2)} <span className="text-xl font-normal">ر.س</span></h3>
-                                 </div>
-                             </div>
-                             <p className="text-gray-400 text-center">المزيد من تفاصيل العمليات قريباً...</p>
-                        </div>
-                    )}
-
+                    
                     {/* VIEW: SETTINGS */}
                     {activeSection === 'settings' && (
-                         <div className="space-y-8 animate-fade-in-up max-w-3xl mx-auto pb-20">
-                            <h2 className="text-2xl font-bold text-white mb-6 border-b border-white/10 pb-4">إعدادات الحساب والملف الشخصي</h2>
+                        <div className="max-w-4xl mx-auto space-y-6 animate-fade-in-up pb-20">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-3 bg-blue-600/20 rounded-xl text-blue-400"><Settings className="w-6 h-6"/></div>
+                                <h2 className="text-2xl font-bold text-white">إعدادات الملف الشخصي</h2>
+                            </div>
 
-                            <form onSubmit={handleSaveProfile} className="space-y-6">
-                                {/* Cover Image Upload */}
-                                <div className="flex flex-col gap-2 mb-4">
-                                    <label className="block text-xs font-bold text-gray-400">صورة الغلاف (Header)</label>
-                                    <div className="relative h-32 w-full rounded-xl overflow-hidden bg-black/30 border border-white/10 group cursor-pointer" onClick={() => coverInputRef.current?.click()}>
-                                        {user.coverImage ? (
-                                            <img src={user.coverImage} className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
-                                        ) : (
-                                            <div className="w-full h-full bg-gradient-to-r from-blue-900/40 to-slate-900/40"></div>
-                                        )}
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <ImageIcon className="w-8 h-8 text-white" />
-                                        </div>
-                                        {user.coverImage && (
-                                            <button 
-                                                type="button" 
-                                                onClick={(e) => { e.stopPropagation(); handleRemoveCover(); }}
-                                                className="absolute top-2 right-2 bg-red-600 hover:bg-red-500 text-white p-1.5 rounded-full z-20 shadow-lg"
-                                                title="حذف الغلاف"
-                                            >
-                                                <Trash2 className="w-3 h-3"/>
-                                            </button>
-                                        )}
-                                        <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleCoverUpload}/>
-                                    </div>
-                                    <p className="text-[10px] text-gray-500">يفضل صورة بالعرض (1500x500)</p>
-                                </div>
-
-                                {/* Avatar Upload */}
-                                <div className="flex flex-col items-center gap-4 mb-8">
-                                    <div className="relative w-32 h-32 group">
-                                        <div className="w-full h-full rounded-full border-4 border-blue-500/30 overflow-hidden cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                                             <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover group-hover:opacity-50 transition-opacity"/>
-                                        </div>
-                                        
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                            <Camera className="w-8 h-8 text-white"/>
-                                        </div>
-                                        
-                                        {user.avatar && (
-                                            <button 
-                                                type="button"
-                                                onClick={handleRemoveAvatar}
-                                                className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-500 text-white p-2 rounded-full shadow-lg border-2 border-[#0f172a] transition-colors z-20"
-                                                title="حذف الصورة"
-                                            >
-                                                <Trash2 className="w-4 h-4"/>
-                                            </button>
-                                        )}
-                                        
-                                        <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload}/>
-                                    </div>
-                                    <p className="text-xs text-gray-400">اضغط على الصورة للتغيير أو أيقونة الحذف للإزالة</p>
-                                </div>
-
-                                <div className="bg-[#1e293b] p-6 rounded-xl border border-white/5 mb-6">
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                                        <User className="w-5 h-5 text-blue-400"/> البيانات الأساسية
+                            <form onSubmit={handleSaveProfile} className="space-y-8">
+                                {/* Personal Info */}
+                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 border-b border-white/5 pb-2">
+                                        <User className="w-4 h-4 text-emerald-400"/> المعلومات الشخصية
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">الاسم الكامل</label>
-                                            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" />
+                                            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none"/>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">اسم المستخدم (Username)</label>
-                                            <div className="relative">
-                                                <input 
-                                                    type="text" 
-                                                    value={formData.username} 
-                                                    onChange={e => setFormData({...formData, username: e.target.value})} 
-                                                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-blue-500 outline-none transition-colors text-left dir-ltr" 
-                                                    placeholder="username" 
-                                                />
-                                                <span className="absolute left-3 top-3.5 text-gray-500 font-bold">@</span>
+                                            <div className="relative" dir="ltr">
+                                                <span className="absolute left-3 top-3 text-gray-500">@</span>
+                                                <input type="text" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 pl-8 text-white focus:border-blue-500 outline-none placeholder-gray-600"/>
                                             </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">رقم الجوال</label>
+                                            <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none"/>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">المسمى الوظيفي</label>
-                                            <input type="text" value={formData.currentJobTitle} onChange={e => setFormData({...formData, currentJobTitle: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" placeholder="مثال: مطور برمجيات" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-400 mb-2">رقم الهاتف</label>
-                                            <div className="relative">
-                                                <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-blue-500 outline-none transition-colors text-right" dir="ltr" />
-                                                <Phone className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-400 mb-2">العنوان</label>
-                                            <div className="relative">
-                                                <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-blue-500 outline-none transition-colors" />
-                                                <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
-                                            </div>
+                                            <input type="text" value={formData.currentJobTitle} onChange={e => setFormData({...formData, currentJobTitle: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none"/>
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block text-xs font-bold text-gray-400 mb-2">نبذة عنك</label>
-                                            <textarea value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors h-24 resize-none" placeholder="اكتب نبذة مختصرة..." />
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">نبذة عني (Bio)</label>
+                                            <textarea value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none h-24 resize-none"/>
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* Vital Information Section */}
-                                <div className="bg-[#1e293b] p-6 rounded-xl border border-white/5 mb-6">
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                                        <ActivityDot/> المعلومات الحيوية والديموغرافية
+                                {/* Location & Identity */}
+                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 border-b border-white/5 pb-2">
+                                        <MapPin className="w-4 h-4 text-red-400"/> الموقع والهوية
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-400 mb-2">رقم الهوية الوطنية / الإقامة</label>
-                                            <input type="text" value={formData.nationalId} onChange={e => setFormData({...formData, nationalId: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors font-mono" placeholder="10xxxxxxxxx"/>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">الدولة / الجنسية</label>
+                                            <input type="text" value={formData.nationality} onChange={e => setFormData({...formData, nationality: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none"/>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-400 mb-2">الجنسية</label>
-                                            <input type="text" value={formData.nationality} onChange={e => setFormData({...formData, nationality: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"/>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">المدينة / العنوان</label>
+                                            <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none"/>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">رقم الهوية</label>
+                                            <input type="text" value={formData.nationalId} onChange={e => setFormData({...formData, nationalId: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none"/>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">تاريخ الميلاد</label>
-                                            <input type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"/>
+                                            <input type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className="w-full bg-black/20 border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none"/>
                                         </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-gray-400 mb-2">فصيلة الدم</label>
-                                            <select value={formData.bloodType} onChange={e => setFormData({...formData, bloodType: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors">
-                                                <option value="">اختر الفصيلة</option>
-                                                <option value="A+">A+</option>
-                                                <option value="A-">A-</option>
-                                                <option value="B+">B+</option>
-                                                <option value="B-">B-</option>
-                                                <option value="AB+">AB+</option>
-                                                <option value="AB-">AB-</option>
-                                                <option value="O+">O+</option>
-                                                <option value="O-">O-</option>
-                                            </select>
-                                        </div>
-                                        <div className="md:col-span-2">
-                                            <label className="block text-xs font-bold text-gray-400 mb-2">التخصص الجامعي (يظهر في البطاقة)</label>
-                                            <input 
-                                                type="text" 
-                                                value={formData.major} 
-                                                onChange={e => setFormData({...formData, major: e.target.value})} 
-                                                className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" 
-                                                placeholder="مثال: علوم الحاسب، إدارة أعمال" 
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex gap-3">
-                                    <div className="min-w-fit mt-1"><AlertTriangle className="w-5 h-5 text-yellow-500"/></div>
-                                    <div className="text-xs text-yellow-200">
-                                        <p className="font-bold mb-1">تنبيه هام</p>
-                                        <p>يرجى التأكد من صحة البيانات المدخلة حيث ستظهر في الشهادات الرسمية والوثائق والبطاقة الجامعية.</p>
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end pt-6 border-t border-white/10">
-                                    <button type="submit" disabled={isSaving} className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all disabled:opacity-50">
+                                <div className="flex justify-end gap-4">
+                                    <button type="button" onClick={() => setActiveSection('overview')} className="px-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold transition-all">إلغاء</button>
+                                    <button type="submit" disabled={isSaving} className="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg">
                                         {isSaving ? <Loader2 className="w-5 h-5 animate-spin"/> : <Save className="w-5 h-5"/>}
-                                        حفظ التعديلات
+                                        حفظ التغييرات
                                     </button>
                                 </div>
                             </form>
-                         </div>
+                        </div>
                     )}
-                    
                 </div>
             </div>
         </div>
-
-        {/* EXAM GUIDE MODAL */}
-        {showExamGuide && (
-            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up" onClick={() => setShowExamGuide(false)}>
-              <div className="bg-[#1e293b] w-full max-w-3xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0f172a]">
-                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                         <FileSignature className="w-6 h-6 text-blue-400"/> دليل الاختبارات والواجبات
-                     </h2>
-                     <button onClick={() => setShowExamGuide(false)} className="p-2 hover:bg-white/10 rounded-full text-white"><X className="w-5 h-5"/></button>
-                </div>
-                <div className="p-8 overflow-y-auto text-right text-gray-300 space-y-6 leading-relaxed">
-                     <h1 className="text-2xl font-bold text-white mb-4 border-b border-white/10 pb-4">سياسة ودليل الواجبات والاختبارات - أكاديمية ميلاف مراد</h1>
-                     <p>سياسة الاختبارات والواجبات تضمن النزاهة الأكاديمية.</p>
-                </div>
-              </div>
-            </div>
-        )}
-
-        {/* OVERLAYS */}
-        {activeCourse && <VirtualClassroom course={activeCourse} onClose={() => setActiveCourse(null)} />}
-        <ExperienceValidationModal isOpen={showExperienceModal} onClose={() => setShowExperienceModal(false)} />
-        <CertificatePreviewModal isOpen={showCertPreview} onClose={() => setShowCertPreview(false)} />
-        {showGenCert && (
-            <CertificateGenerator 
-                courseName="إدارة المشاريع الاحترافية"
-                studentName={user.name || 'Student Name'}
-                date={new Date().toLocaleDateString()}
-                onClose={() => setShowGenCert(false)}
-            />
-        )}
-        <EnrollmentCertificateModal isOpen={showEnrollmentCert} onClose={() => setShowEnrollmentCert(false)} />
         </>
     );
 };
-
-const ActivityDot = () => (
-  <span className="relative flex h-2 w-2 mr-1">
-    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
-  </span>
-);
