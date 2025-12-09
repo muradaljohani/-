@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     User, Briefcase, GraduationCap, ShoppingBag, 
@@ -279,16 +278,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer pointer-events-none">
                                 <Edit3 className="w-6 h-6 text-white"/>
                             </div>
-                            
-                            {user.avatar && (
-                                <button 
-                                    onClick={handleRemoveAvatar}
-                                    className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-500 text-white p-1.5 rounded-full shadow-lg border-2 border-[#0b1120] transition-colors z-20"
-                                    title="حذف الصورة"
-                                >
-                                    <Trash2 className="w-3 h-3"/>
-                                </button>
-                            )}
 
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload}/>
                             {user.isIdentityVerified && <div className="absolute bottom-0 right-0 bg-emerald-500 border-4 border-[#0b1120] rounded-full p-1 pointer-events-none"><CheckCircle2 className="w-4 h-4 text-white"/></div>}
