@@ -128,7 +128,6 @@ const AppContent = () => {
       <SEOHelmet title="مجموعة ميلاف مراد" />
       
       {!isImmersive && (
-        // Pass theme prop to Header (needs update in Header component definition if typescript complains, handled implicitly by JS nature or updated prop type)
         <Header onNavigate={navigate} theme={theme} toggleTheme={toggleTheme} />
       )}
 

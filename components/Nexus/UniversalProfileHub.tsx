@@ -1,7 +1,5 @@
 
 
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     User, Briefcase, GraduationCap, ShoppingBag, 
