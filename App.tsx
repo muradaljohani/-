@@ -122,7 +122,8 @@ const AppContent = () => {
     }
   };
 
-  const isImmersive = ['support', 'corporate', 'clock-system', 'meta', 'cloud', 'dopamine', 'domains', 'user-dashboard', 'course-view'].includes(currentView);
+  // Certain immersive views might want to hide the global header
+  const isImmersive = ['clock-system', 'dopamine'].includes(currentView);
 
   return (
     // STRICT COLOR LOGIC: 
