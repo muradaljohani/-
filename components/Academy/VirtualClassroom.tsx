@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { X, PlayCircle, FileText, CheckCircle2, Award, BookOpen, ChevronRight, Video, Star, ThumbsUp } from 'lucide-react';
+import { X, PlayCircle, FileText, CheckCircle2, Award, BookOpen, ChevronRight, Video, Star, ThumbsUp, List } from 'lucide-react';
 import { CourseExtended, Review } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 import { ExamEngine } from './ExamEngine';
@@ -18,6 +18,7 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
     const [showExam, setShowExam] = useState(false);
     const [showCert, setShowCert] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false); // Mobile drawer state
     
     // --- REVIEW SYSTEM STATES ---
     const [activeTab, setActiveTab] = useState<'modules' | 'reviews'>('modules');
@@ -53,6 +54,11 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
             setCurrentModuleIdx(prev => prev + 1);
             setProgress(0); 
             setIsPlaying(false);
+        } else {
+            // Last module completed, prompt exam
+            if(window.confirm("تهانينا! لقد أتممت جميع الفصول الـ 30. هل أنت جاهز للاختبار النهائي؟")) {
+                setShowExam(true);
+            }
         }
     };
 
@@ -110,18 +116,18 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
             <div className="space-y-12">
                 <div className="bg-blue-50 border-r-4 border-blue-600 p-6 rounded-l-lg">
                     <h3 className="font-bold text-xl text-blue-900 mb-2">ملخص الوحدة</h3>
-                    <p className="text-blue-800 leading-relaxed">
+                    <p className="text-blue-800 leading-relaxed text-sm md:text-base">
                         تعتبر هذه الوحدة هي الحجر الأساس في فهم <strong>{seedTitle}</strong>. سنستعرض هنا المفاهيم العميقة التي ستمكنك من بناء أنظمة متطورة قابلة للتوسع. يغطي هذا النص ما يعادل 50 ساعات من البحث المكثف.
                     </p>
                 </div>
 
                 {sections.map((sec, i) => (
                     <section key={i}>
-                        <h2 className="text-2xl font-black text-gray-900 mb-4 flex items-center gap-3">
-                            <span className="bg-gray-900 text-white w-10 h-10 rounded-full flex items-center justify-center text-lg">{i+1}</span>
+                        <h2 className="text-xl md:text-2xl font-black text-gray-900 mb-4 flex items-center gap-3">
+                            <span className="bg-gray-900 text-white w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-base md:text-lg">{i+1}</span>
                             {sec}
                         </h2>
-                        <div className="prose prose-lg text-gray-700 leading-loose text-justify font-serif">
+                        <div className="prose prose-base md:prose-lg text-gray-700 leading-loose text-justify font-serif">
                             <p>
                                 في سياق {seedTitle}، نجد أن {sec} يلعب دوراً محورياً. إن الفهم العميق لهذه الجزئية يتطلب منا النظر في عدة عوامل مترابطة. 
                                 أولاً، البنية التحتية التقنية التي تدعم هذا المفهوم تعتمد بشكل كبير على الخوارزميات المتقدمة.
@@ -131,7 +137,7 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
                                 تشير الدراسات الحديثة في مجال <strong>{seedTitle}</strong> إلى أن تطبيق معايير الجودة العالمية في مرحلة {sec} يؤدي إلى تحسين الأداء بنسبة تصل إلى 40%. 
                                 ومن الأمثلة العملية على ذلك ما قامت به كبرى الشركات التقنية عند تبني هذه المنهجية.
                             </p>
-                            <ul className="list-disc pr-6 my-4 bg-gray-50 p-6 rounded-xl border border-gray-200">
+                            <ul className="list-disc pr-6 my-4 bg-gray-50 p-6 rounded-xl border border-gray-200 text-sm md:text-base">
                                 <li>تحليل المتطلبات الوظيفية وغير الوظيفية بدقة عالية.</li>
                                 <li>تصميم هيكلية قابلة للتوسع (Scalable Architecture).</li>
                                 <li>ضمان أمن المعلومات وحماية البيانات في جميع المراحل.</li>
@@ -153,9 +159,44 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
         );
     };
 
+    const ModulesList = () => (
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            {modules.map((mod, idx) => (
+                <button 
+                    key={mod.id}
+                    onClick={() => { 
+                        setCurrentModuleIdx(idx); 
+                        setProgress(0); 
+                        setIsPlaying(false);
+                        setMobileMenuOpen(false); // Close on selection
+                    }}
+                    className={`w-full flex items-center gap-3 p-3 rounded-lg text-right transition-all ${
+                        idx === currentModuleIdx 
+                        ? 'bg-blue-600/10 border border-blue-600/30 text-white' 
+                        : 'text-gray-400 hover:bg-white/5'
+                    }`}
+                >
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] border ${
+                        idx < currentModuleIdx ? 'bg-emerald-500 border-emerald-500 text-black' : 
+                        idx === currentModuleIdx ? 'border-blue-500 text-blue-500' : 'border-gray-600 text-gray-600'
+                    }`}>
+                        {idx < currentModuleIdx ? <CheckCircle2 className="w-3 h-3"/> : idx + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium truncate">{mod.title}</div>
+                        <div className="flex items-center gap-2 text-[10px] opacity-60 mt-0.5">
+                            {mod.duration}
+                        </div>
+                    </div>
+                </button>
+            ))}
+        </div>
+    );
+
     return (
         <div className="fixed inset-0 z-[11000] bg-[#020617] flex font-sans" dir="rtl">
-            {/* Sidebar */}
+            
+            {/* Desktop Sidebar */}
             <div className="w-80 bg-[#0f172a] border-l border-white/10 flex flex-col hidden md:flex shrink-0">
                 <div className="p-6 border-b border-white/10">
                     <button onClick={onClose} className="mb-4 flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-xs font-bold">
@@ -165,40 +206,36 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
                     <div className="mt-4 w-full bg-gray-800 h-2 rounded-full overflow-hidden">
                         <div className="bg-blue-600 h-full transition-all duration-500" style={{ width: `${((currentModuleIdx) / modules.length) * 100}%` }}></div>
                     </div>
+                    <p className="text-xs text-gray-400 mt-2">فصل {currentModuleIdx + 1} من {modules.length}</p>
                 </div>
-
-                <div className="flex-1 overflow-y-auto p-2 space-y-1">
-                    {modules.map((mod, idx) => (
-                        <button 
-                            key={mod.id}
-                            onClick={() => { setCurrentModuleIdx(idx); setProgress(0); setIsPlaying(false); }}
-                            className={`w-full flex items-center gap-3 p-3 rounded-lg text-right transition-all ${
-                                idx === currentModuleIdx 
-                                ? 'bg-blue-600/10 border border-blue-600/30 text-white' 
-                                : 'text-gray-400 hover:bg-white/5'
-                            }`}
-                        >
-                            <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-[10px] border ${
-                                idx < currentModuleIdx ? 'bg-emerald-500 border-emerald-500 text-black' : 
-                                idx === currentModuleIdx ? 'border-blue-500 text-blue-500' : 'border-gray-600 text-gray-600'
-                            }`}>
-                                {idx < currentModuleIdx ? <CheckCircle2 className="w-3 h-3"/> : idx + 1}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="text-sm font-medium truncate">{mod.title}</div>
-                                <div className="flex items-center gap-2 text-[10px] opacity-60 mt-0.5">
-                                    {mod.duration}
-                                </div>
-                            </div>
-                        </button>
-                    ))}
-                </div>
+                <ModulesList />
             </div>
+
+            {/* Mobile Drawer (Slide Over) */}
+            {mobileMenuOpen && (
+                <div className="fixed inset-0 z-50 flex md:hidden">
+                     <div className="fixed inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)}></div>
+                     <div className="relative w-4/5 max-w-sm bg-[#0f172a] h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
+                         <div className="p-4 border-b border-white/10 flex justify-between items-center">
+                             <h3 className="text-white font-bold">فهرس المحتوى ({modules.length})</h3>
+                             <button onClick={() => setMobileMenuOpen(false)}><X className="w-5 h-5 text-gray-400"/></button>
+                         </div>
+                         <ModulesList />
+                     </div>
+                </div>
+            )}
 
             {/* Main Content */}
             <div className="flex-1 flex flex-col relative bg-black overflow-hidden">
-                <div className="md:hidden h-14 bg-[#0f172a] flex items-center justify-between px-4 shrink-0 z-20">
-                    <h3 className="text-white font-bold text-sm truncate max-w-[200px]">{course.title}</h3>
+                
+                {/* Mobile Header */}
+                <div className="md:hidden h-14 bg-[#0f172a] flex items-center justify-between px-4 shrink-0 z-20 border-b border-white/5">
+                    <div className="flex items-center gap-3 overflow-hidden">
+                        <button onClick={() => setMobileMenuOpen(true)} className="p-2 bg-white/10 rounded-lg text-white">
+                            <List className="w-5 h-5"/>
+                        </button>
+                        <h3 className="text-white font-bold text-xs truncate flex-1">{course.title}</h3>
+                    </div>
                     <button onClick={onClose}><X className="w-6 h-6 text-gray-400"/></button>
                 </div>
 
@@ -210,7 +247,7 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
                              <img src={course.thumbnail} className="w-full h-full object-cover opacity-50"/>
                              <div className="absolute inset-0 flex items-center justify-center">
                                 {!isPlaying && progress < 100 && (
-                                    <button onClick={() => setIsPlaying(true)} className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform">
+                                    <button onClick={() => setIsPlaying(true)} className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center text-white hover:scale-110 transition-transform shadow-xl">
                                         <PlayCircle className="w-10 h-10 fill-white"/>
                                     </button>
                                 )}
@@ -221,21 +258,24 @@ export const VirtualClassroom: React.FC<Props> = ({ course, onClose }) => {
                         /* MASSIVE TEXT RENDERER */
                         <div className="w-full max-w-4xl bg-white rounded-2xl shadow-xl overflow-hidden my-auto min-h-min pb-20">
                              {/* Dynamic Banner */}
-                             <div className="w-full h-64 md:h-80 relative">
+                             <div className="w-full h-48 md:h-80 relative">
                                  <img src={(currentModule as any).banner || course.thumbnail} className="w-full h-full object-cover"/>
-                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-8">
-                                     <h1 className="text-3xl md:text-5xl font-black text-white drop-shadow-lg">{currentModule.title}</h1>
+                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-6 md:p-8">
+                                     <div>
+                                         <span className="bg-blue-600 text-white px-3 py-1 rounded text-xs font-bold uppercase mb-2 inline-block">Chapter {currentModuleIdx + 1} / {modules.length}</span>
+                                         <h1 className="text-2xl md:text-5xl font-black text-white drop-shadow-lg leading-tight">{currentModule.title}</h1>
+                                     </div>
                                  </div>
                              </div>
                              
-                             <div className="p-8 md:p-16">
+                             <div className="p-6 md:p-16">
                                 {/* The 5000 Words Simulation */}
                                 {generateDeepText(course.title)}
 
                                 <div className="mt-12 flex justify-center border-t pt-12">
-                                    <button onClick={handleModuleComplete} className="px-12 py-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg rounded-xl shadow-xl transition-all flex items-center gap-3 transform hover:scale-105">
+                                    <button onClick={handleModuleComplete} className="w-full md:w-auto px-12 py-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-lg rounded-xl shadow-xl transition-all flex items-center justify-center gap-3 transform hover:scale-105">
                                         <CheckCircle2 className="w-6 h-6"/> 
-                                        إتمام الوحدة والانتقال
+                                        {currentModuleIdx === modules.length - 1 ? 'إنهاء الدورة والاختبار' : 'إتمام الوحدة والانتقال'}
                                     </button>
                                 </div>
                              </div>

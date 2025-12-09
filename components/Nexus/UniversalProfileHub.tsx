@@ -25,19 +25,21 @@ interface Props {
 }
 
 // --- ACADEMY DATA GENERATOR ---
+// Updated to strictly follow: AI, Software, Networks, InfoSec
 const ACADEMY_CATEGORIES = [
-    { id: 'ai', title: 'الذكاء الاصطناعي (AI)', icon: <Cpu/>, color: 'text-purple-400' },
-    { id: 'cyber', title: 'الأمن السيبراني (Cybersecurity)', icon: <Shield/>, color: 'text-emerald-400' },
-    { id: 'networks', title: 'الشبكات والبنية التحتية (Networks)', icon: <Wifi/>, color: 'text-blue-400' },
-    { id: 'dev', title: 'هندسة البرمجيات (Software Eng)', icon: <Code/>, color: 'text-pink-400' },
+    { id: 'ai', title: 'الذكاء الاصطناعي (Artificial Intelligence)', icon: <Cpu/>, color: 'text-purple-400' },
+    { id: 'dev', title: 'البرمجيات والتطوير (Software Eng)', icon: <Code/>, color: 'text-blue-400' },
+    { id: 'networks', title: 'الشبكات والبنية التحتية (Networks)', icon: <Wifi/>, color: 'text-cyan-400' },
+    { id: 'cyber', title: 'أمن المعلومات (Information Security)', icon: <Shield/>, color: 'text-emerald-400' },
+    // Secondary Categories
     { id: 'data', title: 'علم البيانات (Data Science)', icon: <Database/>, color: 'text-amber-400' },
-    { id: 'cloud', title: 'الحوسبة السحابية (Cloud)', icon: <Server/>, color: 'text-cyan-400' },
+    { id: 'cloud', title: 'الحوسبة السحابية (Cloud)', icon: <Server/>, color: 'text-indigo-400' },
     { id: 'blockchain', title: 'البلوك تشين (Blockchain)', icon: <Layers/>, color: 'text-orange-400' },
-    { id: 'iot', title: 'إنترنت الأشياء (IoT)', icon: <Globe/>, color: 'text-indigo-400' },
-    // Generating remaining categories to reach 50
+    { id: 'iot', title: 'إنترنت الأشياء (IoT)', icon: <Globe/>, color: 'text-pink-400' },
+    // Generating remaining categories to reach 50+
     ...Array.from({ length: 42 }, (_, i) => ({
         id: `tech_${i+9}`,
-        title: `تقنيات متقدمة - قسم ${i+1}`,
+        title: `تخصصات تقنية دقيقة - مسار ${i+1}`,
         icon: <BriefcaseIcon/>,
         color: 'text-gray-400'
     }))
@@ -122,28 +124,44 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
     const handleTopicClick = (topicId: number, categoryTitle: string) => {
         // Construct a rich course object
-        const topicName = `${categoryTitle}: الموضوع رقم ${topicId}`;
+        const topicName = `${categoryTitle}: الحقيبة التدريبية رقم ${topicId}`;
         
         // Dynamic Banner based on category
         let bannerUrl = 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=1000';
         if (categoryTitle.includes('AI')) bannerUrl = 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1000';
         if (categoryTitle.includes('Cyber')) bannerUrl = 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1000';
-        if (categoryTitle.includes('Code')) bannerUrl = 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=1000';
+        if (categoryTitle.includes('Code') || categoryTitle.includes('Soft')) bannerUrl = 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=1000';
+
+        // GENERATE 30 CHAPTERS (MODULES) PER TOPIC
+        const modules = Array.from({ length: 30 }, (_, i) => ({
+            id: `m_${i + 1}`,
+            title: `الشابتر ${i + 1}: ${getChapterTitle(categoryTitle, i)}`,
+            type: i % 5 === 0 ? 'video' : 'text', // Mix of video and heavy text
+            duration: i % 5 === 0 ? '60:00' : '120 دقيقة',
+            isCompleted: false,
+            contentLength: '5000+ كلمة' // Indicator
+        }));
 
         setActiveCourse({
             id: `course_${selectedCategory.id}_${topicId}`,
             title: topicName,
-            description: `حقيبة تدريبية شاملة ومتكاملة في ${categoryTitle}. تحتوي على محتوى نصي مكثف، شروحات مرئية، وتطبيقات عملية.`,
+            description: `حقيبة تدريبية شاملة ومتكاملة في ${categoryTitle}. تحتوي على 30 شابتر (فصل دراسي) تغطي أكثر من 5000 كلمة من المحتوى العميق، شروحات مرئية، وتطبيقات عملية.`,
             thumbnail: bannerUrl,
             category: selectedCategory.title,
-            modules: [
-                { id: 'm1', title: 'المفاهيم الأساسية والإطار النظري', type: 'text', duration: '45 دقيقة', isCompleted: false },
-                { id: 'm2', title: 'شرح الفيديو التفصيلي', type: 'video', duration: '60:00', isCompleted: false },
-                { id: 'm3', title: 'الدراسة المتعمقة (5000 كلمة)', type: 'text', duration: '120 دقيقة', isCompleted: false }, // The big content
-                { id: 'm4', title: 'الاختبار النهائي للحقيبة', type: 'quiz', duration: '30:00', isCompleted: false }
-            ],
+            modules: modules,
             unlocksPermission: 'certified'
         });
+    };
+
+    // Helper to fake chapter titles
+    const getChapterTitle = (cat: string, index: number) => {
+        const basics = ["المقدمة والأهداف", "الإطار النظري", "المفاهيم الأساسية", "التاريخ والنشأة", "الأدوات اللازمة"];
+        const advanced = ["التحليل المتقدم", "التطبيقات العملية", "دراسة الحالة", "المشكلات والحلول", "المعايير العالمية"];
+        const expert = ["البحث والتطوير", "المستقبل والابتكار", "الخلاصة والتوصيات", "المشروع النهائي", "المراجعة الشاملة"];
+        
+        if (index < 5) return basics[index] || `أساسيات ${cat} - جزء ${index+1}`;
+        if (index > 25) return expert[index - 26] || `خاتمة ${cat} - جزء ${index+1}`;
+        return `محور ${cat} التفصيلي رقم ${index + 1}`;
     };
 
     const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -192,23 +210,23 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-10 h-10 rounded-full border border-white/20 object-cover"/>
                         <div>
                             <h2 className="text-white font-bold text-sm">{user.name}</h2>
-                            <p className="text-xs text-gray-400">لوحة التحكم</p>
+                            <p className="text-xs text-gray-400">لوحة التحكم المركزية</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 bg-white/10 rounded-lg text-white">
+                         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 bg-white/10 rounded-lg text-white hover:bg-white/20">
                              {mobileMenuOpen ? <X className="w-5 h-5"/> : <Menu className="w-5 h-5"/>}
                          </button>
-                         <button onClick={onClose} className="p-2 bg-red-500/10 text-red-500 rounded-lg"><LogOut className="w-5 h-5 rtl:rotate-180"/></button>
+                         <button onClick={onClose} className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20"><LogOut className="w-5 h-5 rtl:rotate-180"/></button>
                     </div>
                 </div>
 
                 {/* Sidebar */}
                 <div className={`
-                    fixed md:relative inset-0 z-20 md:z-auto bg-[#0b1120] md:bg-transparent md:w-72 md:border-l border-white/10 flex flex-col p-6 transition-transform duration-300 overflow-y-auto
+                    absolute md:relative inset-0 z-20 md:z-auto bg-[#0b1120] md:bg-transparent md:w-72 md:border-l border-white/10 flex flex-col p-6 transition-transform duration-300 overflow-y-auto
                     ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
                 `}>
-                    <button onClick={() => setMobileMenuOpen(false)} className="md:hidden absolute top-4 left-4 p-2 text-gray-400"><X className="w-6 h-6"/></button>
+                    <button onClick={() => setMobileMenuOpen(false)} className="md:hidden absolute top-4 left-4 p-2 text-gray-400 hover:text-white"><X className="w-6 h-6"/></button>
 
                     <div className="text-center mb-8 hidden md:block">
                         <div className="relative w-24 h-24 mx-auto mb-4 group">
@@ -246,7 +264,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     <div className="flex-1 space-y-2">
                         <SidebarItem id="overview" icon={<Home className="w-5 h-5"/>} label="الرئيسية" />
                         <SidebarItem id="settings" icon={<Settings className="w-5 h-5 text-gray-300"/>} label="الإعدادات وتعديل الملف" />
-                        <SidebarItem id="academy" icon={<BriefcaseIcon className="w-5 h-5 text-blue-400"/>} label="الحقائب الإلكترونية" />
+                        <SidebarItem id="academy" icon={<BriefcaseIcon className="w-5 h-5 text-blue-400"/>} label="الحقائب التدريبية" />
                         <SidebarItem id="wallet" icon={<Wallet className="w-5 h-5 text-emerald-400"/>} label="المحفظة الرقمية" />
                         <SidebarItem id="experience" icon={<Award className="w-5 h-5 text-amber-500"/>} label="اشتري خبرتك" onClick={() => setShowExperienceModal(true)} />
                         
@@ -276,7 +294,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         </div>
                     </div>
 
-                    <div className="pt-6 border-t border-white/10">
+                    <div className="pt-6 border-t border-white/10 hidden md:block">
                         <button onClick={() => { logout(); onClose(); }} className="w-full flex items-center gap-3 p-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all text-sm font-bold">
                             <LogOut className="w-5 h-5 rtl:rotate-180"/> تسجيل الخروج
                         </button>
@@ -291,14 +309,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                     {/* VIEW: ACADEMY (Hierarchy: Categories -> Topics -> Content) */}
                     {activeSection === 'academy' && (
-                        <div className="space-y-6 animate-fade-in-up">
+                        <div className="space-y-6 animate-fade-in-up pb-20">
                             
                             {/* Breadcrumb Navigation */}
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-4">
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                                    <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
                                         <BookOpen className="w-6 h-6 text-purple-400"/>
-                                        {academyView === 'categories' ? 'الحقائب الإلكترونية (الأقسام)' : selectedCategory.title}
+                                        {academyView === 'categories' ? 'الحقائب التدريبية (التخصصات)' : selectedCategory.title}
                                     </h2>
                                     {academyView === 'topics' && (
                                         <button onClick={() => setAcademyView('categories')} className="text-sm text-blue-400 hover:text-white mt-1 flex items-center gap-1">
@@ -321,7 +339,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                                 <div className={`p-2 rounded-lg bg-black/30 ${cat.color}`}>{cat.icon}</div>
                                                 <h3 className="font-bold text-white text-sm line-clamp-1">{cat.title}</h3>
                                             </div>
-                                            <p className="text-xs text-gray-500 mb-3">يحتوي على 50 موضوع متخصص</p>
+                                            <p className="text-xs text-gray-500 mb-3">50 حقيبة تدريبية متخصصة</p>
                                             <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
                                                 <div className="bg-purple-600 h-full w-[0%] group-hover:w-[100%] transition-all duration-700"></div>
                                             </div>
@@ -332,23 +350,28 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                             {/* LEVEL 2: TOPICS (50 Topics per Category) */}
                             {academyView === 'topics' && selectedCategory && (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {Array.from({ length: 50 }, (_, i) => (
                                         <div 
                                             key={i} 
                                             onClick={() => handleTopicClick(i + 1, selectedCategory.title)}
-                                            className="bg-[#1e293b] p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all cursor-pointer flex justify-between items-center group"
+                                            className="bg-[#1e293b] p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all cursor-pointer flex justify-between items-center group relative overflow-hidden"
                                         >
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-black/30 flex items-center justify-center text-xs font-bold text-gray-400 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                            {/* Decorative Number */}
+                                            <div className="absolute -left-2 -bottom-4 text-6xl font-black text-white/5 z-0">{i+1}</div>
+                                            
+                                            <div className="flex items-center gap-4 relative z-10">
+                                                <div className="w-10 h-10 rounded-full bg-black/30 flex items-center justify-center text-xs font-bold text-gray-400 group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
                                                     {i + 1}
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-white font-bold text-sm">{selectedCategory.title} - موضوع {i + 1}</h4>
-                                                    <p className="text-[10px] text-gray-500">حقيبة شاملة (5000 كلمة + فيديو)</p>
+                                                    <h4 className="text-white font-bold text-sm line-clamp-1">{selectedCategory.title} - حقيبة {i + 1}</h4>
+                                                    <p className="text-[10px] text-gray-500 flex items-center gap-1">
+                                                        <FileText className="w-3 h-3"/> 30 شابتر • 5000 كلمة
+                                                    </p>
                                                 </div>
                                             </div>
-                                            <PlayCircle className="w-5 h-5 text-gray-500 group-hover:text-purple-400 transition-colors"/>
+                                            <PlayCircle className="w-6 h-6 text-gray-500 group-hover:text-purple-400 transition-colors z-10"/>
                                         </div>
                                     ))}
                                 </div>
@@ -358,9 +381,9 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                     {/* VIEW: OVERVIEW */}
                     {activeSection === 'overview' && (
-                        <div className="space-y-8 animate-fade-in-up">
+                        <div className="space-y-8 animate-fade-in-up pb-20">
                             <div className="flex flex-col md:flex-row justify-between items-start gap-6">
-                                <div>
+                                <div className="w-full">
                                     <h1 className="text-2xl md:text-3xl font-black text-white mb-2">لوحة التحكم المركزية</h1>
                                     <p className="text-gray-400 text-sm mb-6">مرحباً بك في نظام ميلاف الموحد. تحكم في مسارك المهني والتعليمي من هنا.</p>
                                     
@@ -391,9 +414,10 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     {/* --- END STUDENT CARD --- */}
 
                                 </div>
-                                <div className="w-full md:w-auto">
-                                    <CommunityPulse />
-                                </div>
+                            </div>
+                            
+                            <div className="w-full">
+                                <CommunityPulse />
                             </div>
 
                             {/* SPLIT LAYOUT: Right (Stats) and Left (Academic Services) */}
@@ -505,7 +529,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                     {/* VIEW: DOCUMENTS (Unified Docs & Transcript) */}
                     {activeSection === 'documents' && (
-                        <div className="space-y-8 animate-fade-in-up">
+                        <div className="space-y-8 animate-fade-in-up pb-20">
                             <h2 className="text-2xl font-bold text-white border-b border-white/10 pb-4 mb-6">مركز الوثائق والسجل الأكاديمي</h2>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -572,7 +596,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                     {/* VIEW: WALLET */}
                     {activeSection === 'wallet' && (
-                        <div className="space-y-6 animate-fade-in-up">
+                        <div className="space-y-6 animate-fade-in-up pb-20">
                              <h2 className="text-2xl font-bold text-white border-b border-white/10 pb-4 mb-6">المحفظة المالية</h2>
                              <div className="bg-gradient-to-r from-emerald-600 to-teal-800 p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
                                  <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet className="w-32 h-32"/></div>
