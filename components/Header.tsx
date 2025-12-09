@@ -2,9 +2,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Menu, LogIn, Globe, Sun, Moon, LogOut, 
-  Settings, User, ChevronDown, LayoutGrid, 
+  Settings, User as UserIcon, ChevronDown, LayoutGrid, 
   Building2, ShoppingBag, FileText, Clock, 
-  Cloud, Zap, Check 
+  Cloud, Zap, Check, ChevronRight, Palette
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AuthModal } from './AuthModal';
@@ -23,23 +23,22 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  const [showLanguageSubmenu, setShowLanguageSubmenu] = useState(false);
   
-  // Ref for clicking outside the language menu
-  const langMenuRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menus when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
-        setIsLangMenuOpen(false);
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+        setShowLanguageSubmenu(false); // Reset submenu on close
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Sync internal state with context state
   useEffect(() => {
       if (showLoginModal) {
           setIsAuthOpen(true);
@@ -59,9 +58,11 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
       onNavigate('landing');
   };
 
+  const currentLangName = SUPPORTED_LANGUAGES.find(l => l.code === language)?.name;
+
   return (
     <>
-    <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
+    <header className="sticky top-0 z-50 w-full bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         
         {/* BRAND & LOGO */}
@@ -95,102 +96,132 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
 
         {/* DESKTOP NAVIGATION */}
         <nav className="hidden lg:flex items-center gap-1">
-            <NavButton onClick={() => handleNav('corporate')} icon={<Building2 className="w-4 h-4"/>} label={t.nav_corp} active={false} />
-            <NavButton onClick={() => handleNav('market')} icon={<ShoppingBag className="w-4 h-4"/>} label={t.nav_market} active={false} />
-            <NavButton onClick={() => handleNav('academy')} icon={<FileText className="w-4 h-4"/>} label={t.nav_academy} active={false} />
-            <NavButton onClick={() => handleNav('jobs')} icon={<BriefcaseIcon className="w-4 h-4"/>} label={t.nav_jobs} active={false} />
+            <NavButton onClick={() => handleNav('corporate')} icon={<Building2 className="w-4 h-4"/>} label={t.nav_corp} />
+            <NavButton onClick={() => handleNav('market')} icon={<ShoppingBag className="w-4 h-4"/>} label={t.nav_market} />
+            <NavButton onClick={() => handleNav('academy')} icon={<FileText className="w-4 h-4"/>} label={t.nav_academy} />
+            <NavButton onClick={() => handleNav('jobs')} icon={<BriefcaseIcon className="w-4 h-4"/>} label={t.nav_jobs} />
         </nav>
 
         {/* USER CONTROLS */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-2 sm:gap-3" ref={menuRef}>
             
-            {/* LANGUAGE DROPDOWN */}
-            <div className="relative" ref={langMenuRef}>
-                <button 
-                    onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
-                    className="p-2 text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors flex items-center gap-1"
-                    title="Change Language / تغيير اللغة"
-                >
-                    <Globe className="w-5 h-5" />
-                    <span className="text-[10px] font-bold uppercase hidden xl:block">{language}</span>
-                </button>
-
-                {isLangMenuOpen && (
-                    <div className={`absolute top-full mt-2 w-48 bg-white dark:bg-[#1e293b] rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 animate-fade-in-up overflow-hidden z-50 ${direction === 'rtl' ? 'left-0' : 'right-0'}`}>
-                        <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
-                            {SUPPORTED_LANGUAGES.map((lang) => (
-                                <button
-                                    key={lang.code}
-                                    onClick={() => {
-                                        changeLanguage(lang.code);
-                                        setIsLangMenuOpen(false);
-                                    }}
-                                    className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors ${
-                                        language === lang.code 
-                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold' 
-                                        : 'text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
-                                    }`}
-                                >
-                                    <span>{lang.name}</span>
-                                    {language === lang.code && <Check className="w-4 h-4"/>}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {/* THEME TOGGLE */}
-            {toggleTheme && (
-                <button 
-                    onClick={toggleTheme}
-                    className="p-2 text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                    title={theme === 'dark' ? t.theme_light : t.theme_dark}
-                >
-                    {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
-                </button>
-            )}
-
-            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block"></div>
-
             {/* AUTH ACTION */}
             {user ? (
                 <div className="relative">
                     <button 
                         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                        className="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full border border-gray-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition-all bg-white dark:bg-slate-900"
+                        className={`flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border transition-all ${
+                            isUserMenuOpen 
+                            ? 'bg-blue-50 dark:bg-slate-800 border-blue-200 dark:border-slate-600' 
+                            : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                        }`}
                     >
                         <img 
                             src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
                             className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-600"
                             alt="User"
                         />
-                        <span className="text-xs font-bold text-slate-700 dark:text-gray-200 max-w-[80px] truncate hidden md:block">
-                            {user.name.split(' ')[0]}
-                        </span>
-                        <ChevronDown className="w-4 h-4 text-slate-400" />
+                        <div className="hidden md:flex flex-col items-start">
+                             <span className="text-xs font-bold text-slate-700 dark:text-gray-200 max-w-[80px] truncate leading-tight">
+                                {user.name.split(' ')[0]}
+                            </span>
+                        </div>
+                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
 
-                    {/* User Dropdown */}
+                    {/* PREMIUM USER DROPDOWN (Twitter/SaaS Style) */}
                     {isUserMenuOpen && (
-                        <div className={`absolute top-full mt-2 w-56 bg-white dark:bg-[#1e293b] rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 animate-fade-in-up z-50 ${direction === 'rtl' ? 'left-0' : 'right-0'}`}>
-                            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 mb-2">
-                                <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
-                                <p className="text-xs text-slate-500 dark:text-gray-400 truncate">{user.email}</p>
+                        <div className={`absolute top-full mt-3 w-80 origin-top-right bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl dark:shadow-slate-900/20 z-50 overflow-hidden ring-1 ring-black/5 ${direction === 'rtl' ? 'left-0' : 'right-0'} animate-fade-in-up`}>
+                            
+                            {/* 1. User Info Header */}
+                            <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.name}</h3>
+                                <p className="text-xs text-slate-500 dark:text-gray-500 truncate mt-0.5">{user.email}</p>
                             </div>
-                            
-                            <DropdownItem onClick={() => handleNav('profile')} icon={<LayoutGrid className="w-4 h-4"/>} label={t.dashboard} />
-                            <DropdownItem onClick={() => handleNav('settings')} icon={<Settings className="w-4 h-4"/>} label={t.settings} />
-                            
-                            <div className="border-t border-gray-100 dark:border-gray-700 my-2"></div>
-                            
-                            <button 
-                                onClick={handleLogout}
-                                className={`w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors ${direction === 'rtl' ? 'text-right' : 'text-left'}`}
-                            >
-                                <LogOut className="w-4 h-4" />
-                                <span>{t.logout}</span>
-                            </button>
+
+                            <div className="py-2">
+                                {/* 2. Appearance Toggle */}
+                                <button 
+                                    onClick={toggleTheme}
+                                    className="w-full flex items-center justify-between px-5 py-3 text-sm text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        {theme === 'dark' ? <Moon className="w-5 h-5 text-purple-400" /> : <Sun className="w-5 h-5 text-amber-500" />}
+                                        <span className="font-medium">المظهر</span>
+                                    </div>
+                                    <span className="text-[10px] font-bold bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                                        {theme === 'dark' ? 'Dark' : 'Light'}
+                                    </span>
+                                </button>
+
+                                {/* 3. Language Switcher (Expandable) */}
+                                <button 
+                                    onClick={() => setShowLanguageSubmenu(!showLanguageSubmenu)}
+                                    className={`w-full flex items-center justify-between px-5 py-3 text-sm text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors ${showLanguageSubmenu ? 'bg-gray-50 dark:bg-gray-900' : ''}`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Globe className="w-5 h-5 text-blue-500" />
+                                        <span className="font-medium">اللغة (Language)</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-gray-400">{currentLangName}</span>
+                                        <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${showLanguageSubmenu ? 'rotate-90' : 'rtl:rotate-180'}`}/>
+                                    </div>
+                                </button>
+
+                                {/* Language Submenu */}
+                                {showLanguageSubmenu && (
+                                    <div className="bg-gray-50 dark:bg-gray-900/50 border-y border-gray-100 dark:border-gray-800 max-h-48 overflow-y-auto">
+                                        {SUPPORTED_LANGUAGES.map((lang) => (
+                                            <button
+                                                key={lang.code}
+                                                onClick={() => {
+                                                    changeLanguage(lang.code);
+                                                    setShowLanguageSubmenu(false);
+                                                }}
+                                                className={`w-full flex items-center justify-between px-8 py-2.5 text-xs transition-colors ${
+                                                    language === lang.code 
+                                                    ? 'text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-900/20' 
+                                                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                }`}
+                                            >
+                                                <span>{lang.name}</span>
+                                                {language === lang.code && <Check className="w-3 h-3"/>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="h-px bg-gray-100 dark:bg-gray-800 mx-4 my-1"></div>
+
+                            {/* 4. App Navigation */}
+                            <div className="py-2">
+                                <DropdownItem 
+                                    onClick={() => handleNav('profile')} 
+                                    icon={<LayoutGrid className="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors"/>} 
+                                    label={t.dashboard} 
+                                />
+                                <DropdownItem 
+                                    onClick={() => handleNav('settings')} 
+                                    icon={<Settings className="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors"/>} 
+                                    label={t.settings} 
+                                />
+                            </div>
+
+                            <div className="h-px bg-gray-100 dark:bg-gray-800 mx-4 my-1"></div>
+
+                            {/* 5. Logout */}
+                            <div className="py-2">
+                                <button 
+                                    onClick={handleLogout}
+                                    className={`w-full flex items-center gap-3 px-5 py-3 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ${direction === 'rtl' ? 'text-right' : 'text-left'}`}
+                                >
+                                    <LogOut className="w-5 h-5" />
+                                    <span className="font-bold">{t.logout}</span>
+                                </button>
+                            </div>
+
                         </div>
                     )}
                 </div>
@@ -221,9 +252,24 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
                 
                 <div className="border-t border-gray-100 dark:border-gray-800 my-2"></div>
                 
-                <MobileNavItem onClick={() => handleNav('clock-system')} icon={<Clock className="w-5 h-5 text-cyan-500"/>} label="Murad Clock" />
-                <MobileNavItem onClick={() => handleNav('cloud')} icon={<Cloud className="w-5 h-5 text-blue-400"/>} label="Murad Cloud" />
-                <MobileNavItem onClick={() => handleNav('dopamine')} icon={<Zap className="w-5 h-5 text-yellow-500"/>} label="Dopamine" />
+                {/* Mobile Extra Controls (Since we removed them from top header) */}
+                <div className="flex items-center justify-between px-3 py-2">
+                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">المظهر</span>
+                    <button onClick={toggleTheme} className="p-2 bg-gray-100 dark:bg-slate-800 rounded-lg">
+                         {theme === 'dark' ? <Moon className="w-5 h-5 text-purple-400"/> : <Sun className="w-5 h-5 text-amber-500"/>}
+                    </button>
+                </div>
+                
+                <div className="flex items-center justify-between px-3 py-2">
+                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">اللغة</span>
+                    <button onClick={() => {
+                        const nextLang = language === 'ar' ? 'en' : 'ar'; // Simple toggle for mobile quick access
+                        changeLanguage(nextLang);
+                    }} className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-slate-800 rounded-lg text-xs font-bold text-slate-700 dark:text-gray-200">
+                         <Globe className="w-4 h-4"/> {language.toUpperCase()}
+                    </button>
+                </div>
+
             </div>
           </div>
       )}
@@ -255,10 +301,10 @@ const DropdownItem = ({ onClick, icon, label }: any) => {
     return (
         <button 
             onClick={onClick}
-            className={`w-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors ${direction === 'rtl' ? 'text-right' : 'text-left'}`}
+            className={`group w-full px-5 py-3 text-sm text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 flex items-center gap-3 transition-colors ${direction === 'rtl' ? 'text-right' : 'text-left'}`}
         >
             {icon}
-            <span>{label}</span>
+            <span className="font-medium">{label}</span>
         </button>
     );
 };
