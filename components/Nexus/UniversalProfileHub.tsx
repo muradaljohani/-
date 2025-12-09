@@ -44,10 +44,7 @@ const ACADEMY_CATEGORIES = [
 
 export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const { user, logout, updateProfile } = useAuth();
-    const [activeSection, setActiveSection] = useState<'overview' | 'academy' | 'wallet' | 'experience' | 'documents' | 'settings' | 'certificates'>('overview');
-    
-    // UI State
-    const [showInfoDropdown, setShowInfoDropdown] = useState(false);
+    const [activeSection, setActiveSection] = useState<'overview' | 'academy' | 'wallet' | 'experience' | 'documents' | 'settings'>('overview');
     
     // Academy Navigation State
     const [academyView, setAcademyView] = useState<'categories' | 'topics'>('categories');
@@ -202,6 +199,18 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         }
     };
 
+    const handleRemoveAvatar = () => {
+        if (confirm("هل أنت متأكد من حذف الصورة الشخصية؟")) {
+            updateProfile({ avatar: "" });
+        }
+    };
+
+    const handleRemoveCover = () => {
+        if (confirm("هل أنت متأكد من حذف صورة الغلاف؟")) {
+            updateProfile({ coverImage: "" });
+        }
+    };
+
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
@@ -226,24 +235,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const NavButton = ({ label, icon: Icon, onClick, active }: any) => (
         <button 
             onClick={onClick}
-            className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all border ${active ? 'bg-blue-600/20 border-blue-500/50 text-blue-300' : 'bg-[#1e293b] border-white/5 text-gray-400 hover:bg-white/5 hover:text-white hover:border-white/20'}`}
+            className={`flex flex-col items-center justify-center p-4 rounded-2xl transition-all border ${active ? 'bg-blue-600/20 border-blue-500/50 text-blue-300' : 'bg-[#1e293b] border-white/5 text-gray-400 hover:bg-white/5 hover:text-white hover:border-white/20'}`}
         >
-            <div className={`p-1.5 rounded-full mb-1 ${active ? 'bg-blue-500 text-white' : 'bg-white/5'}`}>
-                <Icon className={`w-4 h-4`} />
+            <div className={`p-2 rounded-full mb-2 ${active ? 'bg-blue-500 text-white' : 'bg-white/5'}`}>
+                <Icon className={`w-5 h-5`} />
             </div>
-            <span className="text-[10px] font-bold">{label}</span>
+            <span className="text-xs font-bold">{label}</span>
         </button>
     );
-
-    // Navigation Handler
-    const handleNavClick = (section: string) => {
-        if (section === 'info') {
-            setShowInfoDropdown(!showInfoDropdown);
-        } else {
-            setShowInfoDropdown(false);
-            setActiveSection(section as any);
-        }
-    };
 
     return (
         <>
@@ -282,6 +281,17 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer pointer-events-none">
                                 <Edit3 className="w-6 h-6 text-white"/>
                             </div>
+                            
+                            {user.avatar && (
+                                <button 
+                                    onClick={handleRemoveAvatar}
+                                    className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-500 text-white p-1.5 rounded-full shadow-lg border-2 border-[#0b1120] transition-colors z-20"
+                                    title="حذف الصورة"
+                                >
+                                    <Trash2 className="w-3 h-3"/>
+                                </button>
+                            )}
+
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload}/>
                             {user.isIdentityVerified && <div className="absolute bottom-0 right-0 bg-emerald-500 border-4 border-[#0b1120] rounded-full p-1 pointer-events-none"><CheckCircle2 className="w-4 h-4 text-white"/></div>}
                         </div>
@@ -516,81 +526,32 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             </div>
 
                             {/* --- NAVIGATION STRIP --- */}
-                            <div className="grid grid-cols-4 gap-3 mb-4">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
                                 <NavButton 
                                     label="معلوماتي" 
                                     icon={User} 
-                                    onClick={() => handleNavClick('info')} 
-                                    active={showInfoDropdown}
+                                    onClick={() => setActiveSection('overview')} 
+                                    active={true}
                                 />
                                 <NavButton 
                                     label="شهادتي" 
                                     icon={Award} 
-                                    onClick={() => handleNavClick('certificates')}
-                                    active={activeSection === 'certificates'}
+                                    onClick={() => setShowCertPreview(true)} // Or navigate to documents
+                                    active={false}
                                 />
                                 <NavButton 
                                     label="مستنداتي" 
                                     icon={FileText} 
-                                    onClick={() => handleNavClick('documents')} 
-                                    active={activeSection === 'documents'}
+                                    onClick={() => setActiveSection('documents')} 
+                                    active={false}
                                 />
                                 <NavButton 
                                     label="سيرتي" 
                                     icon={BriefcaseIcon} 
-                                    onClick={() => handleNavClick('settings')} 
-                                    active={activeSection === 'settings'}
+                                    onClick={() => setActiveSection('settings')} // Usually CV/Profile edit
+                                    active={false}
                                 />
                             </div>
-
-                            {/* --- MY INFO DROPDOWN --- */}
-                            {showInfoDropdown && (
-                                <div className="bg-[#1e293b] border border-white/10 rounded-2xl p-6 mb-8 animate-fade-in-down shadow-xl relative z-10">
-                                    <div className="absolute -top-2 right-[12%] w-4 h-4 bg-[#1e293b] border-t border-r border-white/10 transform -rotate-45"></div>
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2 text-sm uppercase tracking-wide border-b border-white/10 pb-2">
-                                        <Fingerprint className="w-4 h-4 text-blue-400"/> البيانات الأساسية الكاملة
-                                    </h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-8 text-sm">
-                                        <div className="flex justify-between border-b border-white/5 pb-2">
-                                            <span className="text-gray-400">الاسم الكامل:</span>
-                                            <span className="text-white font-bold">{user.name}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b border-white/5 pb-2">
-                                            <span className="text-gray-400">رقم الهوية:</span>
-                                            <span className="text-white font-mono">{user.nationalId || '---'}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b border-white/5 pb-2">
-                                            <span className="text-gray-400">تاريخ الميلاد:</span>
-                                            <span className="text-white font-mono">{user.birthDate || '---'}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b border-white/5 pb-2">
-                                            <span className="text-gray-400">الجنسية:</span>
-                                            <span className="text-white">{user.nationality || '---'}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b border-white/5 pb-2">
-                                            <span className="text-gray-400">فصيلة الدم:</span>
-                                            <span className="text-red-400 font-bold">{user.bloodType || '---'}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b border-white/5 pb-2">
-                                            <span className="text-gray-400">رقم الهاتف:</span>
-                                            <span className="text-white font-mono dir-ltr">{user.phone || '---'}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b border-white/5 pb-2">
-                                            <span className="text-gray-400">العنوان:</span>
-                                            <span className="text-white truncate max-w-[200px]">{user.address || '---'}</span>
-                                        </div>
-                                        <div className="flex justify-between border-b border-white/5 pb-2">
-                                            <span className="text-gray-400">المسمى الوظيفي:</span>
-                                            <span className="text-white">{user.currentJobTitle || '---'}</span>
-                                        </div>
-                                    </div>
-                                    <div className="mt-6 pt-4 border-t border-white/10 text-center">
-                                        <button onClick={() => setActiveSection('settings')} className="text-xs text-blue-400 hover:text-white transition-colors">
-                                            تحديث البيانات
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
                             
                             <div className="w-full">
                                 <CommunityPulse />
@@ -688,66 +649,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         </div>
                     )}
 
-                    {/* VIEW: CERTIFICATES (Grid of Passed Certificates) */}
-                    {activeSection === 'certificates' && (
-                        <div className="space-y-8 animate-fade-in-up pb-20">
-                            <h2 className="text-2xl font-bold text-white border-b border-white/10 pb-4 mb-6">الشهادات المجتازة</h2>
-                            
-                            {user.certificates && user.certificates.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                    {user.certificates.map(cert => (
-                                        <div key={cert.id} className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 hover:border-emerald-500/30 transition-all group relative overflow-hidden">
-                                            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                                <Award className="w-24 h-24 text-white"/>
-                                            </div>
-                                            
-                                            <div className="relative z-10">
-                                                <div className="flex items-center gap-3 mb-4">
-                                                    <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-400 border border-emerald-500/20">
-                                                        <CheckCircle2 className="w-6 h-6"/>
-                                                    </div>
-                                                    <div>
-                                                        <h3 className="text-white font-bold text-lg leading-tight">{cert.courseName}</h3>
-                                                        <span className="text-xs text-gray-400">{cert.provider}</span>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="space-y-2 text-sm text-gray-300 mb-6">
-                                                    <div className="flex justify-between border-b border-white/5 pb-1">
-                                                        <span>تاريخ الإصدار:</span>
-                                                        <span className="font-mono text-emerald-400">{new Date(cert.issuedAt).toLocaleDateString()}</span>
-                                                    </div>
-                                                    <div className="flex justify-between border-b border-white/5 pb-1">
-                                                        <span>الدرجة:</span>
-                                                        <span className="font-bold text-white">{cert.finalScore}% ({cert.grade})</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span>رقم المرجع:</span>
-                                                        <span className="font-mono text-xs">{cert.id}</span>
-                                                    </div>
-                                                </div>
-
-                                                <button className="w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors border border-white/10">
-                                                    <Download className="w-4 h-4"/> تحميل الشهادة
-                                                </button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-20 bg-[#1e293b] rounded-3xl border border-white/5">
-                                    <Award className="w-16 h-16 text-gray-600 mx-auto mb-4"/>
-                                    <h3 className="text-white font-bold text-lg mb-2">لا توجد شهادات مجتازة بعد</h3>
-                                    <p className="text-gray-400 text-sm mb-6">أكمل الدورات التدريبية واجتز الاختبارات لتحصل على شهاداتك هنا.</p>
-                                    <button onClick={() => setActiveSection('academy')} className="px-6 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm">
-                                        تصفح الدورات
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* VIEW: DOCUMENTS (Academic Transcript) */}
+                    {/* VIEW: DOCUMENTS */}
                     {activeSection === 'documents' && (
                         <div className="space-y-8 animate-fade-in-up pb-20">
                             <h2 className="text-2xl font-bold text-white border-b border-white/10 pb-4 mb-6">مركز الوثائق والسجل الأكاديمي</h2>
@@ -770,6 +672,28 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                                 إصدار شهادة تجريبية
                                             </button>
                                         </div>
+                                    </div>
+
+                                    <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
+                                        <h3 className="text-white font-bold mb-4">شهاداتي المكتسبة</h3>
+                                        {user.certificates && user.certificates.length > 0 ? (
+                                            <div className="space-y-2">
+                                                {user.certificates.map(cert => (
+                                                    <div key={cert.id} className="flex justify-between items-center p-3 bg-black/20 rounded-lg">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="bg-emerald-500/20 p-2 rounded-lg"><Award className="w-4 h-4 text-emerald-400"/></div>
+                                                            <div>
+                                                                <span className="text-sm text-gray-200 block font-bold">{cert.courseName}</span>
+                                                                <span className="text--[10px] text-gray-500 block">{cert.id}</span>
+                                                            </div>
+                                                        </div>
+                                                        <span className="text-xs text-emerald-500 font-mono">{new Date(cert.issuedAt).toLocaleDateString()}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <p className="text-sm text-gray-500 text-center py-4">لا توجد شهادات حتى الآن.</p>
+                                        )}
                                     </div>
                                     
                                     <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
@@ -823,6 +747,16 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                                             <ImageIcon className="w-8 h-8 text-white" />
                                         </div>
+                                        {user.coverImage && (
+                                            <button 
+                                                type="button" 
+                                                onClick={(e) => { e.stopPropagation(); handleRemoveCover(); }}
+                                                className="absolute top-2 right-2 bg-red-600 hover:bg-red-500 text-white p-1.5 rounded-full z-20 shadow-lg"
+                                                title="حذف الغلاف"
+                                            >
+                                                <Trash2 className="w-3 h-3"/>
+                                            </button>
+                                        )}
                                         <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleCoverUpload}/>
                                     </div>
                                     <p className="text-[10px] text-gray-500">يفضل صورة بالعرض (1500x500)</p>
@@ -839,9 +773,20 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                             <Camera className="w-8 h-8 text-white"/>
                                         </div>
                                         
+                                        {user.avatar && (
+                                            <button 
+                                                type="button"
+                                                onClick={handleRemoveAvatar}
+                                                className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-500 text-white p-2 rounded-full shadow-lg border-2 border-[#0f172a] transition-colors z-20"
+                                                title="حذف الصورة"
+                                            >
+                                                <Trash2 className="w-4 h-4"/>
+                                            </button>
+                                        )}
+                                        
                                         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload}/>
                                     </div>
-                                    <p className="text-xs text-gray-400">اضغط على الصورة للتغيير</p>
+                                    <p className="text-xs text-gray-400">اضغط على الصورة للتغيير أو أيقونة الحذف للإزالة</p>
                                 </div>
 
                                 <div className="bg-[#1e293b] p-6 rounded-xl border border-white/5 mb-6">
