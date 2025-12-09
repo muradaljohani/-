@@ -1,5 +1,6 @@
 
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     User, Briefcase, GraduationCap, ShoppingBag, 
@@ -66,6 +67,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
+        username: '',
         bio: '',
         phone: '',
         currentJobTitle: '',
@@ -84,6 +86,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         if (user) {
             setFormData({
                 name: user.name || '',
+                username: user.username || '',
                 bio: user.bio || '',
                 phone: user.phone || '',
                 currentJobTitle: user.currentJobTitle || '',
@@ -214,6 +217,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         await new Promise(r => setTimeout(r, 800));
         updateProfile({
             name: formData.name,
+            username: formData.username,
             bio: formData.bio,
             phone: formData.phone,
             currentJobTitle: formData.currentJobTitle,
@@ -473,7 +477,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                             {user.name}
                                             {user.isIdentityVerified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-black"/>}
                                         </h1>
-                                        <p className="text-gray-500 text-sm font-mono dir-ltr text-right">@{user.trainingId}</p>
+                                        <p className="text-gray-500 text-sm font-mono dir-ltr text-right">@{user.username || user.trainingId}</p>
                                     </div>
 
                                     {/* Bio / Major */}
@@ -785,6 +789,19 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">الاسم الكامل</label>
                                             <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">اسم المستخدم (Username)</label>
+                                            <div className="relative">
+                                                <input 
+                                                    type="text" 
+                                                    value={formData.username} 
+                                                    onChange={e => setFormData({...formData, username: e.target.value})} 
+                                                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-blue-500 outline-none transition-colors text-left dir-ltr" 
+                                                    placeholder="username" 
+                                                />
+                                                <span className="absolute left-3 top-3.5 text-gray-500 font-bold">@</span>
+                                            </div>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">المسمى الوظيفي</label>
