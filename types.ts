@@ -938,7 +938,6 @@ export interface KYCData {
 
 export interface User {
   id: string;
-  username?: string; // Add username field
   name: string;
   email?: string;
   passwordHash?: string; 
