@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     User, Briefcase, GraduationCap, ShoppingBag, 
@@ -107,10 +106,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
     const calculateAge = (dobString: string): string => {
         if (!dobString) return '--';
-        const dob = new Date(dobString);
-        const diff_ms = Date.now() - dob.getTime();
-        const age_dt = new Date(diff_ms);
-        return Math.abs(age_dt.getUTCFullYear() - 1970).toString();
+        const today = new Date();
+        const birthDate = new Date(dobString);
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age.toString();
     };
 
     const SidebarItem = ({ id, icon, label, onClick }: any) => (
@@ -229,13 +232,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         alert("✅ تم تحديث البيانات الشخصية بنجاح!");
     };
 
-    // Nav Button Component for the Quick Links bar
     const NavButton = ({ label, icon: Icon, onClick, active }: any) => (
         <button 
             onClick={onClick}
-            className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all border ${active ? 'bg-blue-600/20 border-blue-500/50 text-blue-300' : 'bg-[#1e293b] border-white/5 text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            className={`flex flex-col items-center justify-center p-4 rounded-2xl transition-all border ${active ? 'bg-blue-600/20 border-blue-500/50 text-blue-300' : 'bg-[#1e293b] border-white/5 text-gray-400 hover:bg-white/5 hover:text-white hover:border-white/20'}`}
         >
-            <Icon className={`w-5 h-5 mb-1 ${active ? 'text-blue-400' : ''}`} />
+            <div className={`p-2 rounded-full mb-2 ${active ? 'bg-blue-500 text-white' : 'bg-white/5'}`}>
+                <Icon className={`w-5 h-5`} />
+            </div>
             <span className="text-xs font-bold">{label}</span>
         </button>
     );
@@ -410,120 +414,129 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         <div className="space-y-8 animate-fade-in-up pb-20">
                             
                             {/* --- DIGITAL ID CARD (SOCIAL PROFILE STYLE) --- */}
-                            <div className="relative w-full rounded-2xl overflow-hidden bg-[#1e293b] border border-white/10 shadow-xl">
+                            <div className="relative w-full rounded-2xl overflow-hidden bg-[#1e293b] border border-white/10 shadow-xl mb-6">
                                 
                                 {/* 1. Cover Image Header */}
-                                <div className="h-40 w-full relative bg-gradient-to-r from-blue-900 to-slate-900 overflow-hidden">
+                                <div className="h-48 w-full relative bg-gray-800 group">
                                     {user.coverImage ? (
                                         <img src={user.coverImage} className="absolute inset-0 w-full h-full object-cover" alt="Cover" />
                                     ) : (
-                                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                                        <div className="absolute inset-0 bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900">
+                                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                                        </div>
                                     )}
                                     
-                                    {/* Header Actions (Title & Search) */}
-                                    <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10">
-                                        <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
-                                            <User className="w-4 h-4 text-blue-400"/>
-                                            <span className="text-sm font-bold text-white">معلوماتي</span>
-                                        </div>
-                                        
-                                        <div className="relative group/search">
-                                            <input 
-                                                type="text" 
-                                                placeholder="بحث في البيانات..." 
-                                                className="bg-black/30 backdrop-blur-sm text-white text-xs px-3 py-1.5 pl-8 rounded-full border border-white/10 focus:border-blue-500 outline-none w-32 focus:w-48 transition-all"
-                                            />
-                                            <Search className="w-3 h-3 text-gray-300 absolute left-2 top-2"/>
-                                        </div>
+                                    {/* Action Icons Top Left */}
+                                    <div className="absolute top-4 left-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => setActiveSection('settings')} className="p-2 bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60 transition-colors" title="إعدادات الغلاف">
+                                            <Settings className="w-4 h-4"/>
+                                        </button>
+                                        <button onClick={() => setActiveSection('settings')} className="p-2 bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60 transition-colors" title="تعديل">
+                                            <Edit3 className="w-4 h-4"/>
+                                        </button>
                                     </div>
                                 </div>
 
                                 {/* 2. Profile Content Area */}
                                 <div className="px-6 pb-6 relative">
                                     
-                                    {/* Avatar & Edit Button Row */}
-                                    <div className="flex justify-between items-end -mt-12 mb-4">
-                                        {/* Avatar (Overlapping Cover) */}
+                                    {/* Avatar & Edit Row */}
+                                    <div className="flex justify-between items-end -mt-16 mb-4">
+                                        {/* Avatar */}
                                         <div className="relative group cursor-pointer" onClick={() => setActiveSection('settings')}>
-                                            <div className="w-24 h-24 rounded-full border-4 border-[#1e293b] overflow-hidden bg-black shadow-lg">
+                                            <div className="w-32 h-32 rounded-full border-4 border-[#1e293b] overflow-hidden bg-black shadow-lg">
                                                 <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover transition-transform group-hover:scale-105"/>
                                             </div>
-                                            <div className="absolute bottom-1 right-1 bg-black/50 p-1 rounded-full border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <Camera className="w-3 h-3 text-white"/>
+                                            <div className="absolute bottom-2 right-2 bg-blue-600 text-white p-1.5 rounded-full border-2 border-[#1e293b] shadow-sm group-hover:scale-110 transition-transform">
+                                                <Camera className="w-3 h-3"/>
                                             </div>
                                         </div>
 
-                                        {/* Edit Profile Button */}
-                                        <div className="flex gap-2 mb-2">
-                                            <button 
-                                                onClick={() => setActiveSection('settings')} 
-                                                className="px-4 py-1.5 rounded-full border border-white/20 font-bold text-sm hover:bg-white/5 transition-colors text-white"
-                                            >
-                                                تعديل الملف
-                                            </button>
-                                            <button onClick={() => setActiveSection('settings')} className="p-2 rounded-full border border-white/20 hover:bg-white/5 text-white">
-                                                <Settings className="w-4 h-4"/>
-                                            </button>
+                                        {/* Search & Info Title */}
+                                        <div className="flex-1 mr-6 mb-2 hidden md:block">
+                                            <div className="flex items-center justify-between">
+                                                 <div className="flex items-center gap-2">
+                                                    <h2 className="text-xl font-black text-white">معلوماتي</h2>
+                                                    <span className="bg-blue-600/20 text-blue-400 text-[10px] px-2 py-0.5 rounded font-bold uppercase">Personal Data</span>
+                                                 </div>
+                                                 <div className="relative group/search w-64">
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="بحث في البيانات..." 
+                                                        className="w-full bg-black/30 backdrop-blur-sm text-white text-xs px-4 py-2 pl-8 rounded-full border border-white/10 focus:border-blue-500 outline-none transition-all placeholder-gray-500"
+                                                    />
+                                                    <Search className="w-3 h-3 text-gray-400 absolute left-3 top-2.5 group-focus-within/search:text-blue-500"/>
+                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Mobile Search & Info Title Fallback */}
+                                    <div className="md:hidden mb-6">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h2 className="text-xl font-black text-white">معلوماتي</h2>
+                                            <button onClick={() => setActiveSection('settings')} className="text-xs text-blue-400 font-bold border border-blue-500/30 px-3 py-1 rounded-full">تعديل</button>
+                                        </div>
+                                        <div className="relative">
+                                            <input 
+                                                type="text" 
+                                                placeholder="بحث في البيانات..." 
+                                                className="w-full bg-black/30 backdrop-blur-sm text-white text-xs px-4 py-2 pl-8 rounded-full border border-white/10 focus:border-blue-500 outline-none"
+                                            />
+                                            <Search className="w-3 h-3 text-gray-400 absolute left-3 top-2.5"/>
                                         </div>
                                     </div>
 
                                     {/* User Info Block */}
-                                    <div className="mb-4">
-                                        <h1 className="text-xl font-black text-white flex items-center gap-2">
+                                    <div className="mb-6">
+                                        <h1 className="text-2xl font-black text-white flex items-center gap-2">
                                             {user.name}
-                                            {user.isIdentityVerified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-black"/>}
+                                            {user.isIdentityVerified && <CheckCircle2 className="w-5 h-5 text-blue-500 fill-white"/>}
                                         </h1>
                                         <p className="text-gray-500 text-sm font-mono dir-ltr text-right">@{user.trainingId}</p>
-                                    </div>
-
-                                    {/* Bio / Major */}
-                                    <div className="mb-4">
-                                         <p className="text-gray-300 text-sm leading-relaxed mb-2">
+                                        <p className="text-gray-300 text-sm mt-2 max-w-2xl leading-relaxed">
                                             {user.bio || 'طالب في أكاديمية ميلاف مراد الوطنية.'}
-                                         </p>
-                                         <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-400">
-                                             <span className="flex items-center gap-1"><BriefcaseIcon className="w-3 h-3"/> {user.major || 'مسار عام'}</span>
-                                             <span className="flex items-center gap-1"><MapPin className="w-3 h-3"/> {user.nationality || 'المملكة العربية السعودية'}</span>
-                                             <span className="flex items-center gap-1"><Fingerprint className="w-3 h-3"/> {user.nationalId || '---'}</span>
-                                             <span className="flex items-center gap-1"><Calendar className="w-3 h-3"/> {user.birthDate || '---'}</span>
-                                         </div>
+                                        </p>
                                     </div>
 
-                                    {/* Vitals Stats */}
-                                    <div className="flex gap-6 border-t border-white/10 pt-4 mt-4">
-                                        <div className="flex items-center gap-1">
-                                            <span className="font-bold text-white">{calculateAge(user.birthDate || '')}</span>
-                                            <span className="text-xs text-gray-500">سنة (العمر)</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <span className="font-bold text-red-500">{user.bloodType || 'A+'}</span>
-                                            <span className="text-xs text-gray-500">فصيلة الدم</span>
-                                        </div>
-                                        <div className="flex items-center gap-1">
-                                            <span className="font-bold text-white">{user.trainingId}</span>
-                                            <span className="text-xs text-gray-500">الرقم الأكاديمي</span>
-                                        </div>
+                                    {/* Vitals Grid */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-black/20 p-4 rounded-xl border border-white/5">
+                                         <div className="text-center p-2 border-l border-white/5 last:border-0">
+                                            <span className="text-[10px] text-gray-500 block mb-1 uppercase tracking-wider">العمر (Age)</span>
+                                            <span className="font-bold text-white text-lg">{calculateAge(user.birthDate || '')}</span>
+                                         </div>
+                                         <div className="text-center p-2 border-l border-white/5 last:border-0">
+                                            <span className="text-[10px] text-gray-500 block mb-1 uppercase tracking-wider">فصيلة الدم</span>
+                                            <div className="flex items-center justify-center gap-1">
+                                                <Droplet className="w-3 h-3 text-red-500 fill-current"/>
+                                                <span className="font-bold text-white text-lg">{user.bloodType || '--'}</span>
+                                            </div>
+                                         </div>
+                                         <div className="text-center p-2 border-l border-white/5 last:border-0">
+                                            <span className="text-[10px] text-gray-500 block mb-1 uppercase tracking-wider">التخصص</span>
+                                            <span className="font-bold text-white text-sm block truncate">{user.major || 'عام'}</span>
+                                         </div>
+                                         <div className="text-center p-2">
+                                            <span className="text-[10px] text-gray-500 block mb-1 uppercase tracking-wider">الرقم الوطني</span>
+                                            <span className="font-bold text-white text-sm font-mono">{user.nationalId || '---'}</span>
+                                         </div>
                                     </div>
 
                                 </div>
                             </div>
-                            
-                            {/* --- NEW QUICK NAVIGATION BAR (BELOW CARD) --- */}
-                            <div className="grid grid-cols-4 gap-2">
+
+                            {/* --- NAVIGATION STRIP --- */}
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
                                 <NavButton 
                                     label="معلوماتي" 
                                     icon={User} 
                                     onClick={() => setActiveSection('overview')} 
-                                    active={true} // Since we are on overview
+                                    active={true}
                                 />
                                 <NavButton 
                                     label="شهادتي" 
                                     icon={Award} 
-                                    onClick={() => {
-                                        // Navigate to documents section but trigger certificate view logic if possible, 
-                                        // or just go to documents section where certificates live.
-                                        setActiveSection('documents');
-                                    }} 
+                                    onClick={() => setShowCertPreview(true)} // Or navigate to documents
                                     active={false}
                                 />
                                 <NavButton 
@@ -535,11 +548,10 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                 <NavButton 
                                     label="سيرتي" 
                                     icon={BriefcaseIcon} 
-                                    onClick={() => setActiveSection('settings')} // Profile/CV data is in settings
+                                    onClick={() => setActiveSection('settings')} // Usually CV/Profile edit
                                     active={false}
                                 />
                             </div>
-                            {/* --- END NAV BAR --- */}
                             
                             <div className="w-full">
                                 <CommunityPulse />
@@ -672,7 +684,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                                             <div className="bg-emerald-500/20 p-2 rounded-lg"><Award className="w-4 h-4 text-emerald-400"/></div>
                                                             <div>
                                                                 <span className="text-sm text-gray-200 block font-bold">{cert.courseName}</span>
-                                                                <span className="text-[10px] text-gray-500 block">{cert.id}</span>
+                                                                <span className="text--[10px] text-gray-500 block">{cert.id}</span>
                                                             </div>
                                                         </div>
                                                         <span className="text-xs text-emerald-500 font-mono">{new Date(cert.issuedAt).toLocaleDateString()}</span>
