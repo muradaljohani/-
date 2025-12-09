@@ -7,7 +7,7 @@ import {
     CreditCard, Save, MapPin, Phone, Mail, Edit3, Loader2, FileText,
     Menu, X, Camera, Award, Shield, FileCheck, Star, PlayCircle, Grid, List,
     Home, FileInput, Users, HeartHandshake, CheckSquare, AlertTriangle, Ban, Megaphone, ChevronDown, ChevronUp, Building2,
-    FileSignature, UserX, GitMerge, ChevronLeft, ChevronRight, ClipboardList, Briefcase as BriefcaseIcon, Database, Cpu, Globe, Server, Lock, Wifi, Code, Layers, Trash2, Search, Droplet, Calendar, Flag, Fingerprint, Image as ImageIcon, AtSign
+    FileSignature, UserX, GitMerge, ChevronLeft, ChevronRight, ClipboardList, Briefcase as BriefcaseIcon, Database, Cpu, Globe, Server, Lock, Wifi, Code, Layers, Trash2, Search, Droplet, Calendar, Flag, Fingerprint, Image as ImageIcon
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AcademicTranscript } from '../Academy/AcademicTranscript';
@@ -68,7 +68,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
-        username: '',
         bio: '',
         phone: '',
         currentJobTitle: '',
@@ -87,7 +86,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         if (user) {
             setFormData({
                 name: user.name || '',
-                username: user.username || '',
                 bio: user.bio || '',
                 phone: user.phone || '',
                 currentJobTitle: user.currentJobTitle || '',
@@ -204,21 +202,12 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         }
     };
 
-    const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value;
-        // Strict Validation: Allow only English letters, numbers, and underscores. No spaces, no Arabic.
-        if (/^[a-zA-Z0-9_]*$/.test(val)) {
-            setFormData({...formData, username: val});
-        }
-    };
-
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
         await new Promise(r => setTimeout(r, 800));
         updateProfile({
             name: formData.name,
-            username: formData.username,
             bio: formData.bio,
             phone: formData.phone,
             currentJobTitle: formData.currentJobTitle,
@@ -231,17 +220,18 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
             nationality: formData.nationality
         });
         setIsSaving(false);
-        alert("✅ تم حفظ التعديلات بنجاح!");
-        setActiveSection('overview'); // Navigate back to main dashboard
+        alert("✅ تم تحديث البيانات الشخصية بنجاح!");
     };
 
     const NavButton = ({ label, icon: Icon, onClick, active }: any) => (
         <button 
             onClick={onClick}
-            className={`flex items-center gap-3 p-4 rounded-xl transition-all border w-full ${active ? 'bg-blue-600/20 border-blue-500/50 text-blue-300' : 'bg-[#1e293b] border-white/5 text-gray-400 hover:bg-white/5 hover:text-white hover:border-white/20'}`}
+            className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all border ${active ? 'bg-blue-600/20 border-blue-500/50 text-blue-300' : 'bg-[#1e293b] border-white/5 text-gray-400 hover:bg-white/5 hover:text-white hover:border-white/20'}`}
         >
-            <Icon className={`w-5 h-5 shrink-0 ${active ? 'text-blue-400' : ''}`} />
-            <span className="text-xs font-bold whitespace-nowrap">{label}</span>
+            <div className={`p-1.5 rounded-full mb-1 ${active ? 'bg-blue-500 text-white' : 'bg-white/5'}`}>
+                <Icon className={`w-4 h-4`} />
+            </div>
+            <span className="text-[10px] font-bold">{label}</span>
         </button>
     );
 
@@ -413,11 +403,11 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     {activeSection === 'overview' && (
                         <div className="space-y-8 animate-fade-in-up pb-20">
                             
-                            {/* --- DIGITAL ID CARD (SOCIAL PROFILE STYLE - HORIZONTAL) --- */}
+                            {/* --- DIGITAL ID CARD (SOCIAL PROFILE STYLE) --- */}
                             <div className="relative w-full rounded-2xl overflow-hidden bg-[#1e293b] border border-white/10 shadow-xl mb-6">
                                 
                                 {/* 1. Cover Image Header */}
-                                <div className="h-40 w-full relative bg-gray-800 group">
+                                <div className="h-48 w-full relative bg-gray-800 group">
                                     {user.coverImage ? (
                                         <img src={user.coverImage} className="absolute inset-0 w-full h-full object-cover" alt="Cover" />
                                     ) : (
@@ -425,17 +415,26 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                                         </div>
                                     )}
+                                    
+                                    {/* Action Icons Top Left */}
+                                    <div className="absolute top-4 left-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button onClick={() => setActiveSection('settings')} className="p-2 bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60 transition-colors" title="إعدادات الغلاف">
+                                            <Settings className="w-4 h-4"/>
+                                        </button>
+                                        <button onClick={() => setActiveSection('settings')} className="p-2 bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60 transition-colors" title="تعديل">
+                                            <Edit3 className="w-4 h-4"/>
+                                        </button>
+                                    </div>
                                 </div>
 
-                                {/* 2. Profile Content Area (Horizontal Layout) */}
+                                {/* 2. Profile Content Area */}
                                 <div className="px-6 pb-6 relative">
                                     
-                                    {/* Avatar & Info Row */}
-                                    <div className="flex flex-col md:flex-row items-start md:items-end -mt-10 mb-4 gap-4">
-                                        
+                                    {/* Avatar & Edit Row */}
+                                    <div className="flex justify-between items-end -mt-16 mb-4">
                                         {/* Avatar */}
-                                        <div className="relative group cursor-pointer shrink-0 z-10" onClick={() => setActiveSection('settings')}>
-                                            <div className="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-[#1e293b] overflow-hidden bg-black shadow-lg">
+                                        <div className="relative group cursor-pointer" onClick={() => setActiveSection('settings')}>
+                                            <div className="w-32 h-32 rounded-full border-4 border-[#1e293b] overflow-hidden bg-black shadow-lg">
                                                 <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover transition-transform group-hover:scale-105"/>
                                             </div>
                                             <div className="absolute bottom-2 right-2 bg-blue-600 text-white p-1.5 rounded-full border-2 border-[#1e293b] shadow-sm group-hover:scale-110 transition-transform">
@@ -443,56 +442,81 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                             </div>
                                         </div>
 
-                                        {/* User Info (Horizontal Flow) */}
-                                        <div className="flex-1 text-right mb-2">
-                                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                                <div>
-                                                    <h1 className="text-2xl font-black text-white flex items-center gap-2">
-                                                        {user.name}
-                                                        {user.isIdentityVerified && <CheckCircle2 className="w-5 h-5 text-blue-500 fill-white"/>}
-                                                    </h1>
-                                                    <p className="text-gray-400 text-sm font-mono dir-ltr text-right md:text-right">@{user.username || user.trainingId}</p>
-                                                    <p className="text-gray-300 text-sm mt-1 max-w-2xl leading-relaxed line-clamp-1 md:line-clamp-2">
-                                                        {user.bio || 'طالب في أكاديمية ميلاف مراد الوطنية.'}
-                                                    </p>
-                                                </div>
-                                                
-                                                {/* Edit Button */}
-                                                <button onClick={() => setActiveSection('settings')} className="shrink-0 px-4 py-2 bg-white/5 hover:bg-white/10 rounded-lg text-xs font-bold text-white border border-white/10 transition-colors flex items-center gap-2 h-fit">
-                                                    <Edit3 className="w-3 h-3"/> تعديل الملف
-                                                </button>
+                                        {/* Search & Info Title */}
+                                        <div className="flex-1 mr-6 mb-2 hidden md:block">
+                                            <div className="flex items-center justify-between">
+                                                 <div className="flex items-center gap-2">
+                                                    <h2 className="text-xl font-black text-white">معلوماتي</h2>
+                                                    <span className="bg-blue-600/20 text-blue-400 text-[10px] px-2 py-0.5 rounded font-bold uppercase">Personal Data</span>
+                                                 </div>
+                                                 <div className="relative group/search w-64">
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="بحث في البيانات..." 
+                                                        className="w-full bg-black/30 backdrop-blur-sm text-white text-xs px-4 py-2 pl-8 rounded-full border border-white/10 focus:border-blue-500 outline-none transition-all placeholder-gray-500"
+                                                    />
+                                                    <Search className="w-3 h-3 text-gray-400 absolute left-3 top-2.5 group-focus-within/search:text-blue-500"/>
+                                                 </div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    {/* Vitals Grid (Compact) */}
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-black/20 p-3 rounded-xl border border-white/5">
-                                         <div className="flex flex-col items-center p-1 border-l border-white/5 last:border-0">
-                                            <span className="text-[9px] text-gray-500 uppercase tracking-wider">العمر</span>
-                                            <span className="font-bold text-white">{calculateAge(user.birthDate || '')}</span>
+                                    {/* Mobile Search & Info Title Fallback */}
+                                    <div className="md:hidden mb-6">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <h2 className="text-xl font-black text-white">معلوماتي</h2>
+                                            <button onClick={() => setActiveSection('settings')} className="text-xs text-blue-400 font-bold border border-blue-500/30 px-3 py-1 rounded-full">تعديل</button>
+                                        </div>
+                                        <div className="relative">
+                                            <input 
+                                                type="text" 
+                                                placeholder="بحث في البيانات..." 
+                                                className="w-full bg-black/30 backdrop-blur-sm text-white text-xs px-4 py-2 pl-8 rounded-full border border-white/10 focus:border-blue-500 outline-none"
+                                            />
+                                            <Search className="w-3 h-3 text-gray-400 absolute left-3 top-2.5"/>
+                                        </div>
+                                    </div>
+
+                                    {/* User Info Block */}
+                                    <div className="mb-6">
+                                        <h1 className="text-2xl font-black text-white flex items-center gap-2">
+                                            {user.name}
+                                            {user.isIdentityVerified && <CheckCircle2 className="w-5 h-5 text-blue-500 fill-white"/>}
+                                        </h1>
+                                        <p className="text-gray-500 text-sm font-mono dir-ltr text-right">@{user.trainingId}</p>
+                                        <p className="text-gray-300 text-sm mt-2 max-w-2xl leading-relaxed">
+                                            {user.bio || 'طالب في أكاديمية ميلاف مراد الوطنية.'}
+                                        </p>
+                                    </div>
+
+                                    {/* Vitals Grid */}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-black/20 p-4 rounded-xl border border-white/5">
+                                         <div className="text-center p-2 border-l border-white/5 last:border-0">
+                                            <span className="text-[10px] text-gray-500 block mb-1 uppercase tracking-wider">العمر (Age)</span>
+                                            <span className="font-bold text-white text-lg">{calculateAge(user.birthDate || '')}</span>
                                          </div>
-                                         <div className="flex flex-col items-center p-1 border-l border-white/5 last:border-0">
-                                            <span className="text-[9px] text-gray-500 uppercase tracking-wider">فصيلة الدم</span>
-                                            <div className="flex items-center gap-1">
+                                         <div className="text-center p-2 border-l border-white/5 last:border-0">
+                                            <span className="text-[10px] text-gray-500 block mb-1 uppercase tracking-wider">فصيلة الدم</span>
+                                            <div className="flex items-center justify-center gap-1">
                                                 <Droplet className="w-3 h-3 text-red-500 fill-current"/>
-                                                <span className="font-bold text-white">{user.bloodType || '--'}</span>
+                                                <span className="font-bold text-white text-lg">{user.bloodType || '--'}</span>
                                             </div>
                                          </div>
-                                         <div className="flex flex-col items-center p-1 border-l border-white/5 last:border-0">
-                                            <span className="text-[9px] text-gray-500 uppercase tracking-wider">التخصص</span>
-                                            <span className="font-bold text-white text-xs truncate max-w-[100px]">{user.major || 'عام'}</span>
+                                         <div className="text-center p-2 border-l border-white/5 last:border-0">
+                                            <span className="text-[10px] text-gray-500 block mb-1 uppercase tracking-wider">التخصص</span>
+                                            <span className="font-bold text-white text-sm block truncate">{user.major || 'عام'}</span>
                                          </div>
-                                         <div className="flex flex-col items-center p-1">
-                                            <span className="text-[9px] text-gray-500 uppercase tracking-wider">الرقم الوطني</span>
-                                            <span className="font-bold text-white text-xs font-mono">{user.nationalId || '---'}</span>
+                                         <div className="text-center p-2">
+                                            <span className="text-[10px] text-gray-500 block mb-1 uppercase tracking-wider">الرقم الوطني</span>
+                                            <span className="font-bold text-white text-sm font-mono">{user.nationalId || '---'}</span>
                                          </div>
                                     </div>
 
                                 </div>
                             </div>
 
-                            {/* --- NAVIGATION STRIP (RECTANGULAR BUTTONS) --- */}
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                            {/* --- NAVIGATION STRIP --- */}
+                            <div className="grid grid-cols-4 gap-3 mb-4">
                                 <NavButton 
                                     label="معلوماتي" 
                                     icon={User} 
@@ -830,20 +854,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                             <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-400 mb-2">اسم المستخدم (Handle)</label>
-                                            <div className="relative">
-                                                <input 
-                                                    type="text" 
-                                                    value={formData.username} 
-                                                    onChange={handleUsernameChange} 
-                                                    className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-blue-500 outline-none transition-colors dir-ltr" 
-                                                    placeholder="username"
-                                                />
-                                                <AtSign className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
-                                            </div>
-                                            <p className="text-[10px] text-gray-500 mt-1">يجب أن يحتوي على أحرف إنجليزية، أرقام، أو شرطة سفلية فقط.</p>
-                                        </div>
-                                        <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">المسمى الوظيفي</label>
                                             <input type="text" value={formData.currentJobTitle} onChange={e => setFormData({...formData, currentJobTitle: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" placeholder="مثال: مطور برمجيات" />
                                         </div>
@@ -854,7 +864,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                                 <Phone className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
                                             </div>
                                         </div>
-                                        <div className="md:col-span-2">
+                                        <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">العنوان</label>
                                             <div className="relative">
                                                 <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-blue-500 outline-none transition-colors" />
