@@ -5,7 +5,8 @@ import {
     Wallet, Settings, LogOut, CheckCircle2, 
     Clock, Trophy, TrendingUp, Download, ArrowUpRight, BookOpen, Play,
     CreditCard, Save, MapPin, Phone, Mail, Edit3, Loader2, FileText,
-    Menu, X, Camera, Award, Shield, FileCheck, Star, PlayCircle, Grid, List
+    Menu, X, Camera, Award, Shield, FileCheck, Star, PlayCircle, Grid, List,
+    Home, FileInput, Users, HeartHandshake, CheckSquare, AlertTriangle, Ban, Megaphone, ChevronDown, ChevronUp, Building2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AcademicTranscript } from '../Academy/AcademicTranscript';
@@ -28,6 +29,9 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const [activeSection, setActiveSection] = useState<'overview' | 'academy' | 'wallet' | 'experience' | 'documents' | 'settings'>('overview');
     const [activeCourse, setActiveCourse] = useState<any>(null);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    
+    // Dropdown State
+    const [isRecordDropdownOpen, setIsRecordDropdownOpen] = useState(false);
 
     // Modals
     const [showExperienceModal, setShowExperienceModal] = useState(false);
@@ -72,9 +76,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const statusColor = user.isIdentityVerified ? 'text-emerald-400' : 'text-amber-400';
     const statusBg = user.isIdentityVerified ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20';
 
-    const SidebarItem = ({ id, icon, label }: any) => (
+    // Helper for Sidebar Items
+    const SidebarItem = ({ id, icon, label, onClick }: any) => (
         <button 
-            onClick={() => { setActiveSection(id); setMobileMenuOpen(false); }}
+            onClick={() => { 
+                if (onClick) onClick();
+                else setActiveSection(id); 
+                setMobileMenuOpen(false); 
+            }}
             className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
                 activeSection === id 
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
@@ -236,7 +245,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     {/* Close Mobile Menu */}
                     <button onClick={() => setMobileMenuOpen(false)} className="md:hidden absolute top-4 left-4 p-2 text-gray-400"><X className="w-6 h-6"/></button>
 
-                    {/* Desktop User Card */}
+                    {/* Desktop User Card (KEEPING THIS AS REQUESTED) */}
                     <div className="text-center mb-8 hidden md:block">
                         <div className="relative w-24 h-24 mx-auto mb-4 group cursor-pointer" onClick={() => setActiveSection('settings')}>
                             <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full rounded-full border-4 border-[#1e293b] shadow-xl object-cover"/>
@@ -251,15 +260,54 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Nav Links */}
+                    {/* Nav Links (UPDATED MENU) */}
                     <div className="flex-1 space-y-2">
-                        <SidebarItem id="overview" icon={<User className="w-5 h-5"/>} label="النظرة العامة" />
-                        <SidebarItem id="academy" icon={<BookOpen className="w-5 h-5 text-purple-400"/>} label="أكاديمية ميلاف (الحقائب)" />
-                        <SidebarItem id="experience" icon={<Award className="w-5 h-5 text-amber-400"/>} label="اشتري خبرتك" />
-                        <SidebarItem id="documents" icon={<FileCheck className="w-5 h-5 text-blue-400"/>} label="الوثائق والشهادات" />
-                        <SidebarItem id="wallet" icon={<Wallet className="w-5 h-5 text-emerald-400"/>} label="المحفظة المالية" />
-                        <SidebarItem id="settings" icon={<Settings className="w-5 h-5"/>} label="الإعدادات وتعديل الملف" />
-                        <div className="pt-4"><InstallPrompt /></div>
+                        
+                        <SidebarItem id="overview" icon={<Home className="w-5 h-5"/>} label="الرئيسية" />
+                        
+                        <SidebarItem id="registration" icon={<FileInput className="w-5 h-5 text-gray-400"/>} label="التسجيل الالكتروني" onClick={() => alert('متاح في فترة القبول')} />
+                        
+                        <SidebarItem id="academy" icon={<BookOpen className="w-5 h-5 text-purple-400"/>} label="الدورات التدريبية" />
+                        
+                        <SidebarItem id="clubs" icon={<Users className="w-5 h-5 text-gray-400"/>} label="منصة الأندية الطلابية" onClick={() => alert('قريباً')} />
+                        
+                        <SidebarItem id="advising" icon={<HeartHandshake className="w-5 h-5 text-gray-400"/>} label="الارشاد الاكاديمي" onClick={() => alert('تواصل مع مرشدك')} />
+                        
+                        <SidebarItem id="prep" icon={<CheckSquare className="w-5 h-5 text-gray-400"/>} label="التحضير الإلكتروني" onClick={() => alert('نظام التحضير يعمل')} />
+                        
+                        <SidebarItem id="attendance" icon={<Clock className="w-5 h-5 text-gray-400"/>} label="سجل الحضور" onClick={() => alert('نسبة حضورك 98%')} />
+                        
+                        <SidebarItem id="warnings" icon={<AlertTriangle className="w-5 h-5 text-amber-500"/>} label="إنذارات الغياب" onClick={() => alert('لا توجد إنذارات')} />
+                        
+                        <SidebarItem id="ban" icon={<Ban className="w-5 h-5 text-red-500"/>} label="سجل الحرمان من الإختبارات" onClick={() => alert('سجلك نظيف')} />
+                        
+                        <SidebarItem id="marketers" icon={<Megaphone className="w-5 h-5 text-blue-400"/>} label="منصة المسوقين" onClick={() => setActiveSection('wallet')} />
+
+                        {/* Dropdown for Academic Record */}
+                        <div className="space-y-1">
+                            <button 
+                                onClick={() => setIsRecordDropdownOpen(!isRecordDropdownOpen)}
+                                className={`w-full flex items-center justify-between p-3 rounded-xl transition-all text-gray-400 hover:text-white hover:bg-white/5 ${isRecordDropdownOpen ? 'bg-white/5 text-white' : ''}`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <FileText className="w-5 h-5"/>
+                                    <span className="text-sm font-bold">السجل الاكاديمي</span>
+                                </div>
+                                {isRecordDropdownOpen ? <ChevronUp className="w-4 h-4"/> : <ChevronDown className="w-4 h-4"/>}
+                            </button>
+                            
+                            {isRecordDropdownOpen && (
+                                <div className="pr-10 space-y-1 animate-fade-in-up">
+                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-400 hover:text-white rounded-lg hover:bg-white/5">المقررات المتبقية</button>
+                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-400 hover:text-white rounded-lg hover:bg-white/5">السجل الاكاديمي</button>
+                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-400 hover:text-white rounded-lg hover:bg-white/5">الدرجات والتغييرات</button>
+                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-400 hover:text-white rounded-lg hover:bg-white/5">درجات الأعمال الفصلية</button>
+                                </div>
+                            )}
+                        </div>
+
+                        <SidebarItem id="department" icon={<Building2 className="w-5 h-5 text-gray-400"/>} label="القسم الاكاديمي" onClick={() => alert('القسم: علوم الحاسب')} />
+
                     </div>
 
                     {/* Footer Actions */}
@@ -303,7 +351,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     <div className="text-gray-400 text-xs font-bold uppercase mb-1">الشهادات</div>
                                     <div className="text-2xl font-black text-white">{certsCount}</div>
                                 </div>
-                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group cursor-pointer hover:bg-white/5" onClick={() => setActiveSection('experience')}>
+                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group cursor-pointer hover:bg-white/5" onClick={() => setShowExperienceModal(true)}>
                                     <div className="absolute top-0 right-0 p-4 opacity-10"><Award className="w-12 h-12 text-amber-500"/></div>
                                     <div className="text-amber-400 text-xs font-bold uppercase mb-1">توثيق الخبرة</div>
                                     <div className="text-sm font-bold text-white mt-2 flex items-center gap-1">ابدأ التوثيق <ArrowUpRight className="w-4 h-4"/></div>
@@ -370,32 +418,10 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         </div>
                     )}
 
-                    {/* VIEW: EXPERIENCE (Buy Experience) */}
-                    {activeSection === 'experience' && (
-                        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 animate-fade-in-up">
-                            <div className="w-24 h-24 bg-amber-500/10 rounded-full flex items-center justify-center border-2 border-amber-500/50 shadow-[0_0_30px_rgba(245,158,11,0.2)] animate-pulse">
-                                <Award className="w-12 h-12 text-amber-500"/>
-                            </div>
-                            <div>
-                                <h2 className="text-3xl font-black text-white mb-2">خدمة توثيق الخبرة (اشتري خبرتك)</h2>
-                                <p className="text-gray-400 max-w-lg mx-auto text-sm leading-relaxed">
-                                    خدمة حصرية تتيح لك معادلة مهاراتك وخبراتك السابقة بشهادة خبرة رسمية معتمدة من الأكاديمية، لتعزيز سيرتك الذاتية وزيادة فرصك الوظيفية.
-                                </p>
-                            </div>
-                            <button 
-                                onClick={() => setShowExperienceModal(true)}
-                                className="px-10 py-4 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white rounded-2xl font-bold text-lg shadow-xl transition-all transform hover:scale-105 flex items-center gap-2"
-                            >
-                                <Shield className="w-5 h-5"/> بدء توثيق الخبرة
-                            </button>
-                            <p className="text-xs text-gray-500">تطبق الشروط والأحكام • رسوم رمزية للتوثيق</p>
-                        </div>
-                    )}
-
-                    {/* VIEW: DOCUMENTS (Unified Docs) */}
+                    {/* VIEW: DOCUMENTS (Unified Docs & Transcript) */}
                     {activeSection === 'documents' && (
                         <div className="space-y-8 animate-fade-in-up">
-                            <h2 className="text-2xl font-bold text-white border-b border-white/10 pb-4 mb-6">مركز الوثائق والشهادات</h2>
+                            <h2 className="text-2xl font-bold text-white border-b border-white/10 pb-4 mb-6">مركز الوثائق والسجل الأكاديمي</h2>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Academic Transcript */}
