@@ -4,7 +4,7 @@ import {
   Menu, LogIn, Globe, Sun, Moon, LogOut, 
   Settings, User as UserIcon, ChevronDown, LayoutGrid, 
   Building2, ShoppingBag, FileText, Clock, 
-  Cloud, Zap, Check, ChevronRight, Palette
+  Cloud, Zap, Check, ChevronRight, Palette, MessageCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AuthModal } from './AuthModal';
@@ -100,6 +100,15 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
             <NavButton onClick={() => handleNav('market')} icon={<ShoppingBag className="w-4 h-4"/>} label={t.nav_market} />
             <NavButton onClick={() => handleNav('academy')} icon={<FileText className="w-4 h-4"/>} label={t.nav_academy} />
             <NavButton onClick={() => handleNav('jobs')} icon={<BriefcaseIcon className="w-4 h-4"/>} label={t.nav_jobs} />
+            
+            {/* NEW SOCIAL PORTAL BUTTON */}
+            <button 
+                onClick={() => handleNav('social')}
+                className="ml-2 flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold text-white bg-gradient-to-r from-pink-600 to-rose-500 hover:from-pink-500 hover:to-rose-400 shadow-lg shadow-pink-500/20 transition-all hover:scale-105"
+            >
+                <MessageCircle className="w-4 h-4 fill-current"/>
+                <span>مجتمع ميلاف</span>
+            </button>
         </nav>
 
         {/* USER CONTROLS */}
@@ -245,6 +254,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
                 {user && (
                     <MobileNavItem onClick={() => handleNav('profile')} icon={<LayoutGrid className="w-5 h-5 text-blue-500"/>} label={t.dashboard} />
                 )}
+                <MobileNavItem onClick={() => handleNav('social')} icon={<MessageCircle className="w-5 h-5 text-pink-500"/>} label="مجتمع ميلاف" />
                 <MobileNavItem onClick={() => handleNav('jobs')} icon={<BriefcaseIcon className="w-5 h-5 text-emerald-500"/>} label={t.nav_jobs} />
                 <MobileNavItem onClick={() => handleNav('academy')} icon={<FileText className="w-5 h-5 text-purple-500"/>} label={t.nav_academy} />
                 <MobileNavItem onClick={() => handleNav('market')} icon={<ShoppingBag className="w-5 h-5 text-amber-500"/>} label={t.nav_market} />

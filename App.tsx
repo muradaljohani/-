@@ -26,6 +26,7 @@ import { UserFieldsDashboard } from './components/UserFieldsDashboard';
 import { CoursesList } from './components/CoursesList';
 import { CourseView } from './components/CourseView';
 import { VisualSitemap } from './components/VisualSitemap';
+import { SocialLayout } from './components/Social/SocialLayout';
 
 const AppContent = () => {
   const [currentView, setCurrentView] = useState('landing');
@@ -121,12 +122,15 @@ const AppContent = () => {
       case 'courses': return <CoursesList onBack={() => navigate('landing')} />;
       case 'course-view': return <CourseView courseId={courseId!} onBack={() => navigate('courses')} />;
       
+      // SOCIAL PLATFORM
+      case 'social': return <SocialLayout onBack={() => navigate('landing')} />;
+
       default: return <LandingPage onStart={() => navigate('academy')} onSearch={() => {}} onOpenJobs={() => navigate('jobs')} onOpenTraining={() => navigate('academy')} onOpenMarket={() => navigate('market')} />;
     }
   };
 
   // Certain immersive views might want to hide the global header
-  const isImmersive = ['clock-system', 'dopamine'].includes(currentView);
+  const isImmersive = ['clock-system', 'dopamine', 'social'].includes(currentView);
 
   return (
     // STRICT COLOR LOGIC: 
