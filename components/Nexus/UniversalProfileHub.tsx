@@ -6,7 +6,8 @@ import {
     Clock, Trophy, TrendingUp, Download, ArrowUpRight, BookOpen, Play,
     CreditCard, Save, MapPin, Phone, Mail, Edit3, Loader2, FileText,
     Menu, X, Camera, Award, Shield, FileCheck, Star, PlayCircle, Grid, List,
-    Home, FileInput, Users, HeartHandshake, CheckSquare, AlertTriangle, Ban, Megaphone, ChevronDown, ChevronUp, Building2
+    Home, FileInput, Users, HeartHandshake, CheckSquare, AlertTriangle, Ban, Megaphone, ChevronDown, ChevronUp, Building2,
+    FileSignature, UserX, GitMerge, ChevronLeft, ClipboardList, Briefcase as BriefcaseIcon
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AcademicTranscript } from '../Academy/AcademicTranscript';
@@ -245,7 +246,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     {/* Close Mobile Menu */}
                     <button onClick={() => setMobileMenuOpen(false)} className="md:hidden absolute top-4 left-4 p-2 text-gray-400"><X className="w-6 h-6"/></button>
 
-                    {/* Desktop User Card (KEEPING THIS AS REQUESTED) */}
+                    {/* Desktop User Card (Preserved as requested) */}
                     <div className="text-center mb-8 hidden md:block">
                         <div className="relative w-24 h-24 mx-auto mb-4 group cursor-pointer" onClick={() => setActiveSection('settings')}>
                             <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full rounded-full border-4 border-[#1e293b] shadow-xl object-cover"/>
@@ -260,26 +261,32 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         </div>
                     </div>
 
-                    {/* Nav Links (UPDATED MENU) */}
+                    {/* NEW NAVIGATION MENU (Requested List + Additions) */}
                     <div className="flex-1 space-y-2">
                         
                         <SidebarItem id="overview" icon={<Home className="w-5 h-5"/>} label="الرئيسية" />
                         
-                        <SidebarItem id="registration" icon={<FileInput className="w-5 h-5 text-gray-400"/>} label="التسجيل الالكتروني" onClick={() => alert('متاح في فترة القبول')} />
+                        <SidebarItem id="settings" icon={<Settings className="w-5 h-5 text-gray-300"/>} label="الإعدادات وتعديل الملف" />
                         
-                        <SidebarItem id="academy" icon={<BookOpen className="w-5 h-5 text-purple-400"/>} label="الدورات التدريبية" />
+                        <SidebarItem id="academy" icon={<BriefcaseIcon className="w-5 h-5 text-blue-400"/>} label="الحقائب الإلكترونية" />
                         
-                        <SidebarItem id="clubs" icon={<Users className="w-5 h-5 text-gray-400"/>} label="منصة الأندية الطلابية" onClick={() => alert('قريباً')} />
+                        <SidebarItem id="wallet" icon={<Wallet className="w-5 h-5 text-emerald-400"/>} label="المحفظة الرقمية" />
                         
-                        <SidebarItem id="advising" icon={<HeartHandshake className="w-5 h-5 text-gray-400"/>} label="الارشاد الاكاديمي" onClick={() => alert('تواصل مع مرشدك')} />
+                        <SidebarItem id="experience" icon={<Award className="w-5 h-5 text-amber-500"/>} label="اشتري خبرتك" onClick={() => setShowExperienceModal(true)} />
                         
-                        <SidebarItem id="prep" icon={<CheckSquare className="w-5 h-5 text-gray-400"/>} label="التحضير الإلكتروني" onClick={() => alert('نظام التحضير يعمل')} />
+                        <SidebarItem id="registration" icon={<ClipboardList className="w-5 h-5 text-gray-400"/>} label="التسجيل الالكتروني" onClick={() => alert('نظام القبول والتسجيل متاح في الفترات المحددة.')} />
                         
-                        <SidebarItem id="attendance" icon={<Clock className="w-5 h-5 text-gray-400"/>} label="سجل الحضور" onClick={() => alert('نسبة حضورك 98%')} />
+                        <SidebarItem id="clubs" icon={<Users className="w-5 h-5 text-gray-400"/>} label="منصة الأندية الطلابية" onClick={() => alert('قريباً: الأنشطة اللاصفية والأندية.')} />
                         
-                        <SidebarItem id="warnings" icon={<AlertTriangle className="w-5 h-5 text-amber-500"/>} label="إنذارات الغياب" onClick={() => alert('لا توجد إنذارات')} />
+                        <SidebarItem id="advising" icon={<HeartHandshake className="w-5 h-5 text-gray-400"/>} label="الارشاد الاكاديمي" onClick={() => alert('تواصل مع المرشد الأكاديمي.')} />
                         
-                        <SidebarItem id="ban" icon={<Ban className="w-5 h-5 text-red-500"/>} label="سجل الحرمان من الإختبارات" onClick={() => alert('سجلك نظيف')} />
+                        <SidebarItem id="prep" icon={<CheckSquare className="w-5 h-5 text-gray-400"/>} label="التحضير الإلكتروني" onClick={() => alert('نظام التحضير الذكي مفعل.')} />
+                        
+                        <SidebarItem id="attendance" icon={<Clock className="w-5 h-5 text-gray-400"/>} label="سجل الحضور" onClick={() => alert('نسبة حضورك: 98%')} />
+                        
+                        <SidebarItem id="warnings" icon={<AlertTriangle className="w-5 h-5 text-amber-500"/>} label="إنذارات الغياب" onClick={() => alert('لا توجد إنذارات غياب مسجلة.')} />
+                        
+                        <SidebarItem id="ban" icon={<Ban className="w-5 h-5 text-red-500"/>} label="سجل الحرمان من الإختبارات" onClick={() => alert('سجلك نظيف. لا يوجد حرمان.')} />
                         
                         <SidebarItem id="marketers" icon={<Megaphone className="w-5 h-5 text-blue-400"/>} label="منصة المسوقين" onClick={() => setActiveSection('wallet')} />
 
@@ -306,7 +313,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             )}
                         </div>
 
-                        <SidebarItem id="department" icon={<Building2 className="w-5 h-5 text-gray-400"/>} label="القسم الاكاديمي" onClick={() => alert('القسم: علوم الحاسب')} />
+                        <SidebarItem id="department" icon={<Building2 className="w-5 h-5 text-gray-400"/>} label="القسم الاكاديمي" onClick={() => alert('القسم: علوم الحاسب وتقنية المعلومات')} />
 
                     </div>
 
@@ -339,34 +346,106 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                 </div>
                             </div>
 
-                            {/* Quick Stats */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10"><Wallet className="w-12 h-12 text-emerald-500"/></div>
-                                    <div className="text-gray-400 text-xs font-bold uppercase mb-1">الرصيد</div>
-                                    <div className="text-2xl font-black text-white">{walletBalance} <span className="text-sm font-normal text-gray-500">SAR</span></div>
+                            {/* SPLIT LAYOUT: Right (Stats) and Left (Academic Services) */}
+                            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+                                
+                                {/* RIGHT COLUMN (Stats) */}
+                                <div className="xl:col-span-2 space-y-8">
+                                    {/* Quick Stats */}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+                                            <div className="absolute top-0 right-0 p-4 opacity-10"><Wallet className="w-12 h-12 text-emerald-500"/></div>
+                                            <div className="text-gray-400 text-xs font-bold uppercase mb-1">الرصيد</div>
+                                            <div className="text-2xl font-black text-white">{walletBalance} <span className="text-sm font-normal text-gray-500">SAR</span></div>
+                                        </div>
+                                        <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group hover:border-purple-500/30 transition-all">
+                                            <div className="absolute top-0 right-0 p-4 opacity-10"><GraduationCap className="w-12 h-12 text-purple-500"/></div>
+                                            <div className="text-gray-400 text-xs font-bold uppercase mb-1">الشهادات</div>
+                                            <div className="text-2xl font-black text-white">{certsCount}</div>
+                                        </div>
+                                        <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group cursor-pointer hover:bg-white/5" onClick={() => setShowExperienceModal(true)}>
+                                            <div className="absolute top-0 right-0 p-4 opacity-10"><Award className="w-12 h-12 text-amber-500"/></div>
+                                            <div className="text-amber-400 text-xs font-bold uppercase mb-1">توثيق الخبرة</div>
+                                            <div className="text-sm font-bold text-white mt-2 flex items-center gap-1">ابدأ التوثيق <ArrowUpRight className="w-4 h-4"/></div>
+                                        </div>
+                                        <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group cursor-pointer hover:bg-white/5" onClick={() => setActiveSection('academy')}>
+                                            <div className="absolute top-0 right-0 p-4 opacity-10"><BookOpen className="w-12 h-12 text-blue-500"/></div>
+                                            <div className="text-blue-400 text-xs font-bold uppercase mb-1">الحقائب التدريبية</div>
+                                            <div className="text-sm font-bold text-white mt-2 flex items-center gap-1">تصفح (50) حقيبة <ArrowUpRight className="w-4 h-4"/></div>
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Smart ID Card Mini */}
+                                    <div className="mt-8">
+                                        <h3 className="text-white font-bold mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-gray-400"/> بطاقتي الرقمية</h3>
+                                        <SmartIDCard user={user} />
+                                    </div>
                                 </div>
-                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group hover:border-purple-500/30 transition-all">
-                                    <div className="absolute top-0 right-0 p-4 opacity-10"><GraduationCap className="w-12 h-12 text-purple-500"/></div>
-                                    <div className="text-gray-400 text-xs font-bold uppercase mb-1">الشهادات</div>
-                                    <div className="text-2xl font-black text-white">{certsCount}</div>
+
+                                {/* LEFT COLUMN (Academic Affairs Services) */}
+                                <div className="xl:col-span-1">
+                                    <div className="bg-[#1e293b] rounded-2xl border border-white/5 p-6 h-full">
+                                        {/* Breadcrumb */}
+                                        <div className="flex items-center gap-2 text-[10px] text-gray-500 mb-6">
+                                            <span>القائمة الرئيسية</span>
+                                            <ChevronLeft className="w-3 h-3"/>
+                                            <span className="text-blue-400 font-bold">الضوابط والأدلة</span>
+                                        </div>
+                                        
+                                        {/* Title */}
+                                        <h3 className="text-white font-bold text-lg mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
+                                            <Building2 className="w-5 h-5 text-blue-500"/> خدمات الشؤون الأكاديمية
+                                        </h3>
+
+                                        {/* Cards List */}
+                                        <div className="space-y-4">
+                                            {/* Card 1: Exam Guide */}
+                                            <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-blue-500/30">
+                                                 <div className="flex gap-4">
+                                                     <div className="p-3 bg-blue-600/20 rounded-lg text-blue-400 h-fit group-hover:scale-110 transition-transform">
+                                                         <FileSignature className="w-6 h-6"/>
+                                                     </div>
+                                                     <div>
+                                                         <h4 className="text-white font-bold text-sm mb-2 group-hover:text-blue-400 transition-colors">دليل الاختبارات</h4>
+                                                         <p className="text-xs text-gray-400 leading-relaxed">
+                                                             جداول الاختبارات، تعليمات دخول القاعات، الممنوعات أثناء الاختبار، وطريقة توزيع الدرجات.
+                                                         </p>
+                                                     </div>
+                                                 </div>
+                                            </div>
+
+                                            {/* Card 2: Excuses */}
+                                            <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-amber-500/30">
+                                                 <div className="flex gap-4">
+                                                     <div className="p-3 bg-amber-600/20 rounded-lg text-amber-400 h-fit group-hover:scale-110 transition-transform">
+                                                         <UserX className="w-6 h-6"/>
+                                                     </div>
+                                                     <div>
+                                                         <h4 className="text-white font-bold text-sm mb-2 group-hover:text-amber-400 transition-colors">ضوابط تقديم الأعذار</h4>
+                                                         <p className="text-xs text-gray-400 leading-relaxed">
+                                                             شروط قبول الأعذار الطبية والقهرية، المستندات المطلوبة، والمهلة الزمنية للتقديم.
+                                                         </p>
+                                                     </div>
+                                                 </div>
+                                            </div>
+                                            
+                                            {/* Card 3: Procedures */}
+                                            <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-emerald-500/30">
+                                                 <div className="flex gap-4">
+                                                     <div className="p-3 bg-emerald-600/20 rounded-lg text-emerald-400 h-fit group-hover:scale-110 transition-transform">
+                                                         <GitMerge className="w-6 h-6"/>
+                                                     </div>
+                                                     <div>
+                                                         <h4 className="text-white font-bold text-sm mb-2 group-hover:text-emerald-400 transition-colors">الإجراءات الأكاديمية</h4>
+                                                         <p className="text-xs text-gray-400 leading-relaxed">
+                                                             نظام الحرمان، حساب المعدل التراكمي، الانتقال بين المستويات، والحقوق والواجبات.
+                                                         </p>
+                                                     </div>
+                                                 </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group cursor-pointer hover:bg-white/5" onClick={() => setShowExperienceModal(true)}>
-                                    <div className="absolute top-0 right-0 p-4 opacity-10"><Award className="w-12 h-12 text-amber-500"/></div>
-                                    <div className="text-amber-400 text-xs font-bold uppercase mb-1">توثيق الخبرة</div>
-                                    <div className="text-sm font-bold text-white mt-2 flex items-center gap-1">ابدأ التوثيق <ArrowUpRight className="w-4 h-4"/></div>
-                                </div>
-                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group cursor-pointer hover:bg-white/5" onClick={() => setActiveSection('academy')}>
-                                    <div className="absolute top-0 right-0 p-4 opacity-10"><BookOpen className="w-12 h-12 text-blue-500"/></div>
-                                    <div className="text-blue-400 text-xs font-bold uppercase mb-1">الحقائب التدريبية</div>
-                                    <div className="text-sm font-bold text-white mt-2 flex items-center gap-1">تصفح (50) حقيبة <ArrowUpRight className="w-4 h-4"/></div>
-                                </div>
-                            </div>
-                            
-                            {/* Smart ID Card Mini */}
-                            <div className="mt-8">
-                                <h3 className="text-white font-bold mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-gray-400"/> بطاقتي الرقمية</h3>
-                                <SmartIDCard user={user} />
                             </div>
                         </div>
                     )}
@@ -377,7 +456,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-4">
                                 <div>
                                     <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                                        <BookOpen className="w-6 h-6 text-purple-400"/> أكاديمية ميلاف (الحقائب التدريبية)
+                                        <BookOpen className="w-6 h-6 text-purple-400"/> أكاديمية ميلاف (الحقائب الإلكترونية)
                                     </h2>
                                     <p className="text-gray-400 text-sm mt-1">تصفح وابدأ الدورات التدريبية المعتمدة.</p>
                                 </div>
