@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/Interactive/ToastContext';
+import { LanguageProvider } from './context/LanguageContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { LandingPage } from './components/LandingPage';
@@ -24,6 +25,7 @@ import { MuradDomain } from './components/Domain/MuradDomain';
 import { UserFieldsDashboard } from './components/UserFieldsDashboard';
 import { CoursesList } from './components/CoursesList';
 import { CourseView } from './components/CourseView';
+import { VisualSitemap } from './components/VisualSitemap';
 
 const AppContent = () => {
   const [currentView, setCurrentView] = useState('landing');
@@ -114,6 +116,7 @@ const AppContent = () => {
       case 'cloud': return <MuradCloud onExit={() => navigate('landing')} />;
       case 'dopamine': return <MuradDopamine onExit={() => navigate('landing')} />;
       case 'domains': return <MuradDomain onExit={() => navigate('landing')} />;
+      case 'sitemap': return <VisualSitemap onBack={() => navigate('landing')} />;
       case 'user-dashboard': return <UserFieldsDashboard onBack={() => navigate('landing')} />;
       case 'courses': return <CoursesList onBack={() => navigate('landing')} />;
       case 'course-view': return <CourseView courseId={courseId!} onBack={() => navigate('courses')} />;
@@ -153,7 +156,9 @@ const App = () => {
   return (
     <ToastProvider>
       <AuthProvider>
-        <AppContent />
+        <LanguageProvider>
+          <AppContent />
+        </LanguageProvider>
       </AuthProvider>
     </ToastProvider>
   );

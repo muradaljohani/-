@@ -1,13 +1,14 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Menu, LogIn, Globe, Sun, Moon, LogOut, 
   Settings, User, ChevronDown, LayoutGrid, 
   Building2, ShoppingBag, FileText, Clock, 
-  Cloud, Server, Zap 
+  Cloud, Zap, Check 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AuthModal } from './AuthModal';
+import { useTranslation, SUPPORTED_LANGUAGES } from '../context/LanguageContext';
 
 interface HeaderProps {
   onNavigate: (path: string) => void;
@@ -17,9 +18,26 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }) => {
   const { user, showLoginModal, setShowLoginModal, logout } = useAuth();
+  const { t, language, changeLanguage, direction } = useTranslation();
+  
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isLangMenuOpen, setIsLangMenuOpen] = useState(false);
+  
+  // Ref for clicking outside the language menu
+  const langMenuRef = useRef<HTMLDivElement>(null);
+
+  // Close menus when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (langMenuRef.current && !langMenuRef.current.contains(event.target as Node)) {
+        setIsLangMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Sync internal state with context state
   useEffect(() => {
@@ -46,7 +64,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
     <header className="sticky top-0 z-50 w-full bg-white/80 dark:bg-[#0f172a]/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         
-        {/* RIGHT SIDE: LOGO & BRAND */}
+        {/* BRAND & LOGO */}
         <div className="flex items-center gap-4">
             {/* Mobile Menu Button */}
             <button 
@@ -66,37 +84,68 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
                 
                 <div className="hidden sm:flex flex-col justify-center">
                     <span className="text-base font-bold text-slate-800 dark:text-white leading-none tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-                        ميلاف مراد
+                        {t.brand_name}
                     </span>
                     <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wider uppercase mt-0.5">
-                        National Platform
+                        {t.brand_sub}
                     </span>
                 </div>
             </div>
         </div>
 
-        {/* CENTER: DESKTOP NAVIGATION */}
+        {/* DESKTOP NAVIGATION */}
         <nav className="hidden lg:flex items-center gap-1">
-            <NavButton onClick={() => handleNav('corporate')} icon={<Building2 className="w-4 h-4"/>} label="الشركة" active={false} />
-            <NavButton onClick={() => handleNav('market')} icon={<ShoppingBag className="w-4 h-4"/>} label="السوق" active={false} />
-            <NavButton onClick={() => handleNav('academy')} icon={<FileText className="w-4 h-4"/>} label="الأكاديمية" active={false} />
-            <NavButton onClick={() => handleNav('jobs')} icon={<BriefcaseIcon className="w-4 h-4"/>} label="الوظائف" active={false} />
+            <NavButton onClick={() => handleNav('corporate')} icon={<Building2 className="w-4 h-4"/>} label={t.nav_corp} active={false} />
+            <NavButton onClick={() => handleNav('market')} icon={<ShoppingBag className="w-4 h-4"/>} label={t.nav_market} active={false} />
+            <NavButton onClick={() => handleNav('academy')} icon={<FileText className="w-4 h-4"/>} label={t.nav_academy} active={false} />
+            <NavButton onClick={() => handleNav('jobs')} icon={<BriefcaseIcon className="w-4 h-4"/>} label={t.nav_jobs} active={false} />
         </nav>
 
-        {/* LEFT SIDE: USER CONTROLS */}
+        {/* USER CONTROLS */}
         <div className="flex items-center gap-2 sm:gap-3">
             
-            {/* Language Switcher */}
-            <button className="p-2 text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors hidden sm:block" title="تغيير اللغة">
-                <Globe className="w-5 h-5" />
-            </button>
+            {/* LANGUAGE DROPDOWN */}
+            <div className="relative" ref={langMenuRef}>
+                <button 
+                    onClick={() => setIsLangMenuOpen(!isLangMenuOpen)}
+                    className="p-2 text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors flex items-center gap-1"
+                    title="Change Language / تغيير اللغة"
+                >
+                    <Globe className="w-5 h-5" />
+                    <span className="text-[10px] font-bold uppercase hidden xl:block">{language}</span>
+                </button>
 
-            {/* Theme Toggle */}
+                {isLangMenuOpen && (
+                    <div className={`absolute top-full mt-2 w-48 bg-white dark:bg-[#1e293b] rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 animate-fade-in-up overflow-hidden z-50 ${direction === 'rtl' ? 'left-0' : 'right-0'}`}>
+                        <div className="max-h-60 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600">
+                            {SUPPORTED_LANGUAGES.map((lang) => (
+                                <button
+                                    key={lang.code}
+                                    onClick={() => {
+                                        changeLanguage(lang.code);
+                                        setIsLangMenuOpen(false);
+                                    }}
+                                    className={`w-full flex items-center justify-between px-4 py-2 text-sm transition-colors ${
+                                        language === lang.code 
+                                        ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 font-bold' 
+                                        : 'text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-800'
+                                    }`}
+                                >
+                                    <span>{lang.name}</span>
+                                    {language === lang.code && <Check className="w-4 h-4"/>}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* THEME TOGGLE */}
             {toggleTheme && (
                 <button 
                     onClick={toggleTheme}
                     className="p-2 text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-                    title={theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي'}
+                    title={theme === 'dark' ? t.theme_light : t.theme_dark}
                 >
                     {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5 text-slate-600" />}
                 </button>
@@ -104,7 +153,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
 
             <div className="h-6 w-px bg-gray-200 dark:bg-gray-700 mx-1 hidden sm:block"></div>
 
-            {/* Auth Action */}
+            {/* AUTH ACTION */}
             {user ? (
                 <div className="relative">
                     <button 
@@ -124,23 +173,23 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
 
                     {/* User Dropdown */}
                     {isUserMenuOpen && (
-                        <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-[#1e293b] rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 animate-fade-in-up origin-top-left">
+                        <div className={`absolute top-full mt-2 w-56 bg-white dark:bg-[#1e293b] rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 animate-fade-in-up z-50 ${direction === 'rtl' ? 'left-0' : 'right-0'}`}>
                             <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700 mb-2">
                                 <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
                                 <p className="text-xs text-slate-500 dark:text-gray-400 truncate">{user.email}</p>
                             </div>
                             
-                            <DropdownItem onClick={() => handleNav('profile')} icon={<LayoutGrid className="w-4 h-4"/>} label="لوحة التحكم" />
-                            <DropdownItem onClick={() => handleNav('settings')} icon={<Settings className="w-4 h-4"/>} label="الإعدادات" />
+                            <DropdownItem onClick={() => handleNav('profile')} icon={<LayoutGrid className="w-4 h-4"/>} label={t.dashboard} />
+                            <DropdownItem onClick={() => handleNav('settings')} icon={<Settings className="w-4 h-4"/>} label={t.settings} />
                             
                             <div className="border-t border-gray-100 dark:border-gray-700 my-2"></div>
                             
                             <button 
                                 onClick={handleLogout}
-                                className="w-full text-right px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors"
+                                className={`w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 transition-colors ${direction === 'rtl' ? 'text-right' : 'text-left'}`}
                             >
                                 <LogOut className="w-4 h-4" />
-                                <span>تسجيل الخروج</span>
+                                <span>{t.logout}</span>
                             </button>
                         </div>
                     )}
@@ -151,7 +200,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
                     className="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-gray-100 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95"
                 >
                     <LogIn className="w-4 h-4"/>
-                    <span>دخول</span>
+                    <span>{t.login}</span>
                 </button>
             )}
 
@@ -163,18 +212,18 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
           <div className="lg:hidden bg-white dark:bg-[#0f172a] border-t border-gray-200 dark:border-gray-800 absolute w-full left-0 top-16 shadow-2xl z-40 max-h-[calc(100vh-64px)] overflow-y-auto">
             <div className="p-4 space-y-1">
                 {user && (
-                    <MobileNavItem onClick={() => handleNav('profile')} icon={<LayoutGrid className="w-5 h-5 text-blue-500"/>} label="لوحة التحكم" />
+                    <MobileNavItem onClick={() => handleNav('profile')} icon={<LayoutGrid className="w-5 h-5 text-blue-500"/>} label={t.dashboard} />
                 )}
-                <MobileNavItem onClick={() => handleNav('jobs')} icon={<BriefcaseIcon className="w-5 h-5 text-emerald-500"/>} label="الوظائف" />
-                <MobileNavItem onClick={() => handleNav('academy')} icon={<FileText className="w-5 h-5 text-purple-500"/>} label="الأكاديمية" />
-                <MobileNavItem onClick={() => handleNav('market')} icon={<ShoppingBag className="w-5 h-5 text-amber-500"/>} label="السوق" />
-                <MobileNavItem onClick={() => handleNav('corporate')} icon={<Building2 className="w-5 h-5 text-slate-500"/>} label="الشركات" />
+                <MobileNavItem onClick={() => handleNav('jobs')} icon={<BriefcaseIcon className="w-5 h-5 text-emerald-500"/>} label={t.nav_jobs} />
+                <MobileNavItem onClick={() => handleNav('academy')} icon={<FileText className="w-5 h-5 text-purple-500"/>} label={t.nav_academy} />
+                <MobileNavItem onClick={() => handleNav('market')} icon={<ShoppingBag className="w-5 h-5 text-amber-500"/>} label={t.nav_market} />
+                <MobileNavItem onClick={() => handleNav('corporate')} icon={<Building2 className="w-5 h-5 text-slate-500"/>} label={t.nav_corp} />
                 
                 <div className="border-t border-gray-100 dark:border-gray-800 my-2"></div>
                 
-                <MobileNavItem onClick={() => handleNav('clock-system')} icon={<Clock className="w-5 h-5 text-cyan-500"/>} label="مراد كلوك" />
-                <MobileNavItem onClick={() => handleNav('cloud')} icon={<Cloud className="w-5 h-5 text-blue-400"/>} label="مراد كلاود" />
-                <MobileNavItem onClick={() => handleNav('dopamine')} icon={<Zap className="w-5 h-5 text-yellow-500"/>} label="دوبامين" />
+                <MobileNavItem onClick={() => handleNav('clock-system')} icon={<Clock className="w-5 h-5 text-cyan-500"/>} label="Murad Clock" />
+                <MobileNavItem onClick={() => handleNav('cloud')} icon={<Cloud className="w-5 h-5 text-blue-400"/>} label="Murad Cloud" />
+                <MobileNavItem onClick={() => handleNav('dopamine')} icon={<Zap className="w-5 h-5 text-yellow-500"/>} label="Dopamine" />
             </div>
           </div>
       )}
@@ -201,15 +250,18 @@ const NavButton = ({ onClick, icon, label, active }: any) => (
     </button>
 );
 
-const DropdownItem = ({ onClick, icon, label }: any) => (
-    <button 
-        onClick={onClick}
-        className="w-full text-right px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors"
-    >
-        {icon}
-        <span>{label}</span>
-    </button>
-);
+const DropdownItem = ({ onClick, icon, label }: any) => {
+    const { direction } = useTranslation();
+    return (
+        <button 
+            onClick={onClick}
+            className={`w-full px-4 py-2 text-sm text-slate-700 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2 transition-colors ${direction === 'rtl' ? 'text-right' : 'text-left'}`}
+        >
+            {icon}
+            <span>{label}</span>
+        </button>
+    );
+};
 
 const MobileNavItem = ({ onClick, icon, label }: any) => (
     <button 
