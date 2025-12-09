@@ -1,5 +1,7 @@
 
 
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     User, Briefcase, GraduationCap, ShoppingBag, 
@@ -8,7 +10,7 @@ import {
     CreditCard, Save, MapPin, Phone, Mail, Edit3, Loader2, FileText,
     Menu, X, Camera, Award, Shield, FileCheck, Star, PlayCircle, Grid, List,
     Home, FileInput, Users, HeartHandshake, CheckSquare, AlertTriangle, Ban, Megaphone, ChevronDown, ChevronUp, Building2,
-    FileSignature, UserX, GitMerge, ChevronLeft, ChevronRight, ClipboardList, Briefcase as BriefcaseIcon, Database, Cpu, Globe, Server, Lock, Wifi, Code, Layers, Trash2, Search, Droplet, Calendar, Flag, Fingerprint, Image as ImageIcon
+    FileSignature, UserX, GitMerge, ChevronLeft, ChevronRight, ClipboardList, Briefcase as BriefcaseIcon, Database, Cpu, Globe, Server, Lock, Wifi, Code, Layers, Trash2, Search, Droplet, Calendar, Flag, Fingerprint, Image as ImageIcon, AtSign
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AcademicTranscript } from '../Academy/AcademicTranscript';
@@ -66,6 +68,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const [isSaving, setIsSaving] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
+        username: '',
         bio: '',
         phone: '',
         currentJobTitle: '',
@@ -84,6 +87,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         if (user) {
             setFormData({
                 name: user.name || '',
+                username: user.username || '',
                 bio: user.bio || '',
                 phone: user.phone || '',
                 currentJobTitle: user.currentJobTitle || '',
@@ -123,7 +127,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
             className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
                 activeSection === id 
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
-                : 'text-gray-400 hover:text-white hover:bg-white/5'
+                : 'text-gray-400 hover:text-white dark:hover:text-white hover:text-black hover:bg-white/5 dark:hover:bg-white/5 hover:bg-gray-100'
             }`}
         >
             {icon}
@@ -214,6 +218,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         await new Promise(r => setTimeout(r, 800));
         updateProfile({
             name: formData.name,
+            username: formData.username,
             bio: formData.bio,
             phone: formData.phone,
             currentJobTitle: formData.currentJobTitle,
@@ -229,11 +234,18 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         alert("✅ تم تحديث البيانات الشخصية بنجاح!");
     };
 
+    const handleUsernameChange = (val: string) => {
+        // Only allow alphanumeric and underscore
+        if (/^[a-zA-Z0-9_]*$/.test(val)) {
+            setFormData(prev => ({ ...prev, username: val }));
+        }
+    };
+
     // Nav Button Component for the Quick Links bar
     const NavButton = ({ label, icon: Icon, onClick, active }: any) => (
         <button 
             onClick={onClick}
-            className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all border ${active ? 'bg-blue-600/20 border-blue-500/50 text-blue-300' : 'bg-[#1e293b] border-white/5 text-gray-400 hover:bg-white/5 hover:text-white'}`}
+            className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all border ${active ? 'bg-blue-600/20 border-blue-500/50 text-blue-300' : 'bg-[#1e293b] dark:bg-[#1e293b] bg-white border-white/5 dark:border-white/5 border-gray-200 text-gray-400 dark:text-gray-400 text-gray-600 hover:bg-white/5 dark:hover:bg-white/5 hover:bg-gray-100 hover:text-black dark:hover:text-white'}`}
         >
             <Icon className={`w-5 h-5 mb-1 ${active ? 'text-blue-400' : ''}`} />
             <span className="text-xs font-bold">{label}</span>
@@ -242,20 +254,20 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
     return (
         <>
-        <div className="fixed inset-0 z-[9000] flex items-center justify-center p-0 md:p-4 bg-[#0f172a]/95 backdrop-blur-xl font-sans animate-fade-in-up" dir="rtl">
-            <div className="relative w-full h-full bg-[#0f172a] md:rounded-3xl shadow-2xl border border-white/10 flex overflow-hidden flex-col md:flex-row">
+        <div className="fixed inset-0 z-[9000] flex items-center justify-center p-0 md:p-4 bg-[#0f172a]/95 dark:bg-[#0f172a]/95 bg-white/95 backdrop-blur-xl font-sans animate-fade-in-up" dir="rtl">
+            <div className="relative w-full h-full bg-[#0f172a] dark:bg-[#0f172a] bg-gray-50 md:rounded-3xl shadow-2xl border border-white/10 dark:border-white/10 border-gray-200 flex overflow-hidden flex-col md:flex-row">
                 
                 {/* Mobile Header */}
-                <div className="md:hidden flex items-center justify-between p-4 bg-[#1e293b] border-b border-white/10 shrink-0 z-30">
+                <div className="md:hidden flex items-center justify-between p-4 bg-[#1e293b] dark:bg-[#1e293b] bg-white border-b border-white/10 dark:border-white/10 border-gray-200 shrink-0 z-30">
                     <div className="flex items-center gap-3">
                         <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-10 h-10 rounded-full border border-white/20 object-cover"/>
                         <div>
-                            <h2 className="text-white font-bold text-sm">{user.name}</h2>
+                            <h2 className="text-white dark:text-white text-gray-900 font-bold text-sm">{user.name}</h2>
                             <p className="text-xs text-gray-400">لوحة التحكم المركزية</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 bg-white/10 rounded-lg text-white hover:bg-white/20">
+                         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 bg-white/10 dark:bg-white/10 bg-gray-100 rounded-lg text-white dark:text-white text-gray-800 hover:bg-white/20 dark:hover:bg-white/20 hover:bg-gray-200">
                              {mobileMenuOpen ? <X className="w-5 h-5"/> : <Menu className="w-5 h-5"/>}
                          </button>
                          <button onClick={onClose} className="p-2 bg-red-500/10 text-red-500 rounded-lg hover:bg-red-500/20"><LogOut className="w-5 h-5 rtl:rotate-180"/></button>
@@ -264,14 +276,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                 {/* Sidebar */}
                 <div className={`
-                    absolute md:relative inset-0 z-20 md:z-auto bg-[#0b1120] md:bg-transparent md:w-72 md:border-l border-white/10 flex flex-col p-6 transition-transform duration-300 overflow-y-auto
+                    absolute md:relative inset-0 z-20 md:z-auto bg-[#0b1120] dark:bg-[#0b1120] bg-white md:bg-transparent md:w-72 md:border-l border-white/10 dark:border-white/10 border-gray-200 flex flex-col p-6 transition-transform duration-300 overflow-y-auto
                     ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
                 `}>
                     <button onClick={() => setMobileMenuOpen(false)} className="md:hidden absolute top-4 left-4 p-2 text-gray-400 hover:text-white"><X className="w-6 h-6"/></button>
 
                     <div className="text-center mb-8 hidden md:block">
                         <div className="relative w-24 h-24 mx-auto mb-4 group">
-                            <div className="w-full h-full rounded-full border-4 border-[#1e293b] shadow-xl overflow-hidden cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                            <div className="w-full h-full rounded-full border-4 border-[#1e293b] dark:border-[#1e293b] border-gray-200 shadow-xl overflow-hidden cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                                 <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover"/>
                             </div>
                             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer pointer-events-none">
@@ -292,7 +304,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             {user.isIdentityVerified && <div className="absolute bottom-0 right-0 bg-emerald-500 border-4 border-[#0b1120] rounded-full p-1 pointer-events-none"><CheckCircle2 className="w-4 h-4 text-white"/></div>}
                         </div>
 
-                        <h2 className="text-white font-bold text-lg mb-1">{user.name}</h2>
+                        <h2 className="text-white dark:text-white text-gray-900 font-bold text-lg mb-1">{user.name}</h2>
                         <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${statusBg} ${statusColor}`}>
                             {user.isIdentityVerified ? 'هوية موثقة' : 'غير موثق'}
                         </div>
@@ -308,7 +320,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         <div className="space-y-1">
                             <button 
                                 onClick={() => setIsRecordDropdownOpen(!isRecordDropdownOpen)}
-                                className={`w-full flex items-center justify-between p-3 rounded-xl transition-all text-gray-400 hover:text-white hover:bg-white/5 ${isRecordDropdownOpen ? 'bg-white/5 text-white' : ''}`}
+                                className={`w-full flex items-center justify-between p-3 rounded-xl transition-all text-gray-400 hover:text-white dark:hover:text-white hover:text-black hover:bg-white/5 dark:hover:bg-white/5 hover:bg-gray-100 ${isRecordDropdownOpen ? 'bg-white/5 text-white dark:text-white text-black' : ''}`}
                             >
                                 <div className="flex items-center gap-3">
                                     <FileText className="w-5 h-5"/>
@@ -319,14 +331,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             
                             {isRecordDropdownOpen && (
                                 <div className="pr-10 space-y-1 animate-fade-in-up">
-                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-400 hover:text-white rounded-lg hover:bg-white/5">المقررات المتبقية</button>
-                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-400 hover:text-white rounded-lg hover:bg-white/5">السجل الاكاديمي</button>
+                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-400 hover:text-white dark:hover:text-white hover:text-black rounded-lg hover:bg-white/5 dark:hover:bg-white/5 hover:bg-gray-100">المقررات المتبقية</button>
+                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-400 hover:text-white dark:hover:text-white hover:text-black rounded-lg hover:bg-white/5 dark:hover:bg-white/5 hover:bg-gray-100">السجل الاكاديمي</button>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    <div className="pt-6 border-t border-white/10 hidden md:block">
+                    <div className="pt-6 border-t border-white/10 dark:border-white/10 border-gray-200 hidden md:block">
                         <button onClick={() => { logout(); onClose(); }} className="w-full flex items-center gap-3 p-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all text-sm font-bold">
                             <LogOut className="w-5 h-5 rtl:rotate-180"/> تسجيل الخروج
                         </button>
@@ -334,17 +346,17 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Main Content Area */}
-                <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-4 md:p-10 relative scrollbar-thin scrollbar-thumb-white/10">
-                    <button onClick={onClose} className="hidden md:block absolute top-6 left-6 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all z-20">
+                <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-[#0f172a] dark:to-[#1e293b] from-white to-gray-100 p-4 md:p-10 relative scrollbar-thin scrollbar-thumb-white/10">
+                    <button onClick={onClose} className="hidden md:block absolute top-6 left-6 p-2 bg-white/10 dark:bg-white/10 bg-gray-200 rounded-full text-white dark:text-white text-gray-800 hover:bg-white/20 dark:hover:bg-white/20 hover:bg-gray-300 transition-all z-20">
                         <X className="w-5 h-5"/>
                     </button>
 
                     {/* VIEW: ACADEMY */}
                     {activeSection === 'academy' && (
                         <div className="space-y-6 animate-fade-in-up pb-20">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-4">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 dark:border-white/10 border-gray-200 pb-4">
                                 <div>
-                                    <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
+                                    <h2 className="text-xl md:text-2xl font-bold text-white dark:text-white text-gray-900 flex items-center gap-2">
                                         <BookOpen className="w-6 h-6 text-purple-400"/>
                                         {academyView === 'categories' ? 'الحقائب التدريبية (التخصصات)' : selectedCategory.title}
                                     </h2>
@@ -362,14 +374,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         <div 
                                             key={i} 
                                             onClick={() => handleCategoryClick(cat)}
-                                            className="bg-[#1e293b] p-5 rounded-2xl border border-white/5 hover:border-purple-500/50 hover:bg-white/5 transition-all cursor-pointer group"
+                                            className="bg-[#1e293b] dark:bg-[#1e293b] bg-white p-5 rounded-2xl border border-white/5 dark:border-white/5 border-gray-200 hover:border-purple-500/50 hover:bg-white/5 dark:hover:bg-white/5 hover:bg-gray-50 transition-all cursor-pointer group"
                                         >
                                             <div className="flex items-center gap-3 mb-3">
-                                                <div className={`p-2 rounded-lg bg-black/30 ${cat.color}`}>{cat.icon}</div>
-                                                <h3 className="text-white font-bold text-sm line-clamp-1">{cat.title}</h3>
+                                                <div className={`p-2 rounded-lg bg-black/30 dark:bg-black/30 bg-gray-100 ${cat.color}`}>{cat.icon}</div>
+                                                <h3 className="text-white dark:text-white text-gray-900 font-bold text-sm line-clamp-1">{cat.title}</h3>
                                             </div>
                                             <p className="text-xs text-gray-500 mb-3">50 حقيبة تدريبية متخصصة</p>
-                                            <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                                            <div className="w-full bg-gray-800 dark:bg-gray-800 bg-gray-200 h-1.5 rounded-full overflow-hidden">
                                                 <div className="bg-purple-600 h-full w-[0%] group-hover:w-[100%] transition-all duration-700"></div>
                                             </div>
                                         </div>
@@ -383,15 +395,15 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         <div 
                                             key={i} 
                                             onClick={() => handleTopicClick(i + 1, selectedCategory.title)}
-                                            className="bg-[#1e293b] p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all cursor-pointer flex justify-between items-center group relative overflow-hidden"
+                                            className="bg-[#1e293b] dark:bg-[#1e293b] bg-white p-4 rounded-xl border border-white/5 dark:border-white/5 border-gray-200 hover:bg-white/5 dark:hover:bg-white/5 hover:bg-gray-50 transition-all cursor-pointer flex justify-between items-center group relative overflow-hidden"
                                         >
-                                            <div className="absolute -left-2 -bottom-4 text-6xl font-black text-white/5 z-0">{i+1}</div>
+                                            <div className="absolute -left-2 -bottom-4 text-6xl font-black text-white/5 dark:text-white/5 text-black/5 z-0">{i+1}</div>
                                             <div className="flex items-center gap-4 relative z-10">
-                                                <div className="w-10 h-10 rounded-full bg-black/30 flex items-center justify-center text-xs font-bold text-gray-400 group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
+                                                <div className="w-10 h-10 rounded-full bg-black/30 dark:bg-black/30 bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-400 group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
                                                     {i + 1}
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-white font-bold text-sm line-clamp-1">{selectedCategory.title} - حقيبة {i + 1}</h4>
+                                                    <h4 className="text-white dark:text-white text-gray-900 font-bold text-sm line-clamp-1">{selectedCategory.title} - حقيبة {i + 1}</h4>
                                                     <p className="text-[10px] text-gray-500 flex items-center gap-1">
                                                         <FileText className="w-3 h-3"/> 30 شابتر • 5000 كلمة
                                                     </p>
@@ -410,7 +422,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         <div className="space-y-8 animate-fade-in-up pb-20">
                             
                             {/* --- DIGITAL ID CARD (SOCIAL PROFILE STYLE) --- */}
-                            <div className="relative w-full rounded-2xl overflow-hidden bg-[#1e293b] border border-white/10 shadow-xl">
+                            <div className="relative w-full rounded-2xl overflow-hidden bg-[#1e293b] dark:bg-[#1e293b] bg-white border border-white/10 dark:border-white/10 border-gray-200 shadow-xl">
                                 
                                 {/* 1. Cover Image Header */}
                                 <div className="h-40 w-full relative bg-gradient-to-r from-blue-900 to-slate-900 overflow-hidden">
@@ -445,7 +457,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     <div className="flex justify-between items-end -mt-12 mb-4">
                                         {/* Avatar (Overlapping Cover) */}
                                         <div className="relative group cursor-pointer" onClick={() => setActiveSection('settings')}>
-                                            <div className="w-24 h-24 rounded-full border-4 border-[#1e293b] overflow-hidden bg-black shadow-lg">
+                                            <div className="w-24 h-24 rounded-full border-4 border-[#1e293b] dark:border-[#1e293b] border-white overflow-hidden bg-black shadow-lg">
                                                 <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover transition-transform group-hover:scale-105"/>
                                             </div>
                                             <div className="absolute bottom-1 right-1 bg-black/50 p-1 rounded-full border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -457,11 +469,11 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         <div className="flex gap-2 mb-2">
                                             <button 
                                                 onClick={() => setActiveSection('settings')} 
-                                                className="px-4 py-1.5 rounded-full border border-white/20 font-bold text-sm hover:bg-white/5 transition-colors text-white"
+                                                className="px-4 py-1.5 rounded-full border border-white/20 dark:border-white/20 border-gray-300 font-bold text-sm hover:bg-white/5 dark:hover:bg-white/5 hover:bg-gray-100 transition-colors text-white dark:text-white text-gray-800"
                                             >
                                                 تعديل الملف
                                             </button>
-                                            <button onClick={() => setActiveSection('settings')} className="p-2 rounded-full border border-white/20 hover:bg-white/5 text-white">
+                                            <button onClick={() => setActiveSection('settings')} className="p-2 rounded-full border border-white/20 dark:border-white/20 border-gray-300 hover:bg-white/5 dark:hover:bg-white/5 hover:bg-gray-100 text-white dark:text-white text-gray-800">
                                                 <Settings className="w-4 h-4"/>
                                             </button>
                                         </div>
@@ -469,19 +481,19 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                                     {/* User Info Block */}
                                     <div className="mb-4">
-                                        <h1 className="text-xl font-black text-white flex items-center gap-2">
+                                        <h1 className="text-xl font-black text-white dark:text-white text-gray-900 flex items-center gap-2">
                                             {user.name}
                                             {user.isIdentityVerified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-black"/>}
                                         </h1>
-                                        <p className="text-gray-500 text-sm font-mono dir-ltr text-right">@{user.trainingId}</p>
+                                        <p className="text-gray-500 text-sm font-mono dir-ltr text-right">@{user.username || user.trainingId}</p>
                                     </div>
 
                                     {/* Bio / Major */}
                                     <div className="mb-4">
-                                         <p className="text-gray-300 text-sm leading-relaxed mb-2">
+                                         <p className="text-gray-300 dark:text-gray-300 text-gray-600 text-sm leading-relaxed mb-2">
                                             {user.bio || 'طالب في أكاديمية ميلاف مراد الوطنية.'}
                                          </p>
-                                         <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-400">
+                                         <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-400 dark:text-gray-400 text-gray-500">
                                              <span className="flex items-center gap-1"><BriefcaseIcon className="w-3 h-3"/> {user.major || 'مسار عام'}</span>
                                              <span className="flex items-center gap-1"><MapPin className="w-3 h-3"/> {user.nationality || 'المملكة العربية السعودية'}</span>
                                              <span className="flex items-center gap-1"><Fingerprint className="w-3 h-3"/> {user.nationalId || '---'}</span>
@@ -490,9 +502,9 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     </div>
 
                                     {/* Vitals Stats */}
-                                    <div className="flex gap-6 border-t border-white/10 pt-4 mt-4">
+                                    <div className="flex gap-6 border-t border-white/10 dark:border-white/10 border-gray-200 pt-4 mt-4">
                                         <div className="flex items-center gap-1">
-                                            <span className="font-bold text-white">{calculateAge(user.birthDate || '')}</span>
+                                            <span className="font-bold text-white dark:text-white text-gray-800">{calculateAge(user.birthDate || '')}</span>
                                             <span className="text-xs text-gray-500">سنة (العمر)</span>
                                         </div>
                                         <div className="flex items-center gap-1">
@@ -500,7 +512,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                             <span className="text-xs text-gray-500">فصيلة الدم</span>
                                         </div>
                                         <div className="flex items-center gap-1">
-                                            <span className="font-bold text-white">{user.trainingId}</span>
+                                            <span className="font-bold text-white dark:text-white text-gray-800">{user.trainingId}</span>
                                             <span className="text-xs text-gray-500">الرقم الأكاديمي</span>
                                         </div>
                                     </div>
@@ -508,7 +520,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                 </div>
                             </div>
                             
-                            {/* --- NEW QUICK NAVIGATION BAR (BELOW CARD) --- */}
+                            {/* --- QUICK NAVIGATION BAR (BELOW CARD) --- */}
                             <div className="grid grid-cols-4 gap-2">
                                 <NavButton 
                                     label="معلوماتي" 
@@ -539,7 +551,31 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     active={false}
                                 />
                             </div>
-                            {/* --- END NAV BAR --- */}
+
+                            {/* --- NATIONAL ADDRESS (GOOGLE MAP) --- */}
+                            <div className="bg-[#1e293b] dark:bg-[#1e293b] bg-white rounded-2xl border border-white/10 dark:border-white/10 border-gray-200 p-6 shadow-sm">
+                                <h3 className="text-white dark:text-white text-gray-900 font-bold mb-4 flex items-center gap-2">
+                                    <MapPin className="w-5 h-5 text-red-500"/> العنوان الوطني
+                                </h3>
+                                <p className="text-xs text-gray-400 mb-4">{user.address || 'لم يتم تحديد العنوان. يرجى تحديث الملف الشخصي.'}</p>
+                                <div className="rounded-xl overflow-hidden border border-white/10 dark:border-white/10 border-gray-200 h-64 bg-gray-800 relative">
+                                    {user.address ? (
+                                        <iframe 
+                                            width="100%" 
+                                            height="100%" 
+                                            frameBorder="0" 
+                                            style={{border:0}}
+                                            src={`https://maps.google.com/maps?q=${encodeURIComponent(user.address)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                                            title="National Address Map"
+                                        ></iframe>
+                                    ) : (
+                                        <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                                            <MapPin className="w-10 h-10 mb-2 opacity-50"/>
+                                            <p className="text-sm">لا يوجد عنوان مسجل</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                             
                             <div className="w-full">
                                 <CommunityPulse />
@@ -549,47 +585,47 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
                                 <div className="xl:col-span-2 space-y-8">
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
+                                        <div className="bg-[#1e293b] dark:bg-[#1e293b] bg-white p-6 rounded-2xl border border-white/5 dark:border-white/5 border-gray-200 relative overflow-hidden group hover:border-emerald-500/30 transition-all shadow-sm">
                                             <div className="absolute top-0 right-0 p-4 opacity-10"><Wallet className="w-12 h-12 text-emerald-500"/></div>
                                             <div className="text-gray-400 text-xs font-bold uppercase mb-1">الرصيد</div>
-                                            <div className="text-2xl font-black text-white">{walletBalance} <span className="text-sm font-normal text-gray-500">SAR</span></div>
+                                            <div className="text-2xl font-black text-white dark:text-white text-gray-900">{walletBalance} <span className="text-sm font-normal text-gray-500">SAR</span></div>
                                         </div>
-                                        <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group hover:border-purple-500/30 transition-all">
+                                        <div className="bg-[#1e293b] dark:bg-[#1e293b] bg-white p-6 rounded-2xl border border-white/5 dark:border-white/5 border-gray-200 relative overflow-hidden group hover:border-purple-500/30 transition-all shadow-sm">
                                             <div className="absolute top-0 right-0 p-4 opacity-10"><GraduationCap className="w-12 h-12 text-purple-500"/></div>
                                             <div className="text-gray-400 text-xs font-bold uppercase mb-1">الشهادات</div>
-                                            <div className="text-2xl font-black text-white">{certsCount}</div>
+                                            <div className="text-2xl font-black text-white dark:text-white text-gray-900">{certsCount}</div>
                                         </div>
-                                        <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group cursor-pointer hover:bg-white/5" onClick={() => setShowExperienceModal(true)}>
+                                        <div className="bg-[#1e293b] dark:bg-[#1e293b] bg-white p-6 rounded-2xl border border-white/5 dark:border-white/5 border-gray-200 relative overflow-hidden group cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-gray-50 shadow-sm" onClick={() => setShowExperienceModal(true)}>
                                             <div className="absolute top-0 right-0 p-4 opacity-10"><Award className="w-12 h-12 text-amber-500"/></div>
                                             <div className="text-amber-400 text-xs font-bold uppercase mb-1">توثيق الخبرة</div>
-                                            <div className="text-sm font-bold text-white mt-2 flex items-center gap-1">ابدأ التوثيق <ArrowUpRight className="w-4 h-4"/></div>
+                                            <div className="text-sm font-bold text-white dark:text-white text-gray-900 mt-2 flex items-center gap-1">ابدأ التوثيق <ArrowUpRight className="w-4 h-4"/></div>
                                         </div>
-                                        <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group cursor-pointer hover:bg-white/5" onClick={() => setActiveSection('academy')}>
+                                        <div className="bg-[#1e293b] dark:bg-[#1e293b] bg-white p-6 rounded-2xl border border-white/5 dark:border-white/5 border-gray-200 relative overflow-hidden group cursor-pointer hover:bg-white/5 dark:hover:bg-white/5 hover:bg-gray-50 shadow-sm" onClick={() => setActiveSection('academy')}>
                                             <div className="absolute top-0 right-0 p-4 opacity-10"><BookOpen className="w-12 h-12 text-blue-500"/></div>
                                             <div className="text-blue-400 text-xs font-bold uppercase mb-1">الحقائب التدريبية</div>
-                                            <div className="text-sm font-bold text-white mt-2 flex items-center gap-1">تصفح (2500) حقيبة <ArrowUpRight className="w-4 h-4"/></div>
+                                            <div className="text-sm font-bold text-white dark:text-white text-gray-900 mt-2 flex items-center gap-1">تصفح (2500) حقيبة <ArrowUpRight className="w-4 h-4"/></div>
                                         </div>
                                     </div>
                                     
                                     <div className="mt-8">
-                                        <h3 className="text-white font-bold mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-gray-400"/> بطاقتي الرقمية (Classic)</h3>
+                                        <h3 className="text-white dark:text-white text-gray-900 font-bold mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-gray-400"/> بطاقتي الرقمية (Classic)</h3>
                                         <SmartIDCard user={user} />
                                     </div>
                                 </div>
 
                                 <div className="xl:col-span-1">
-                                    <div className="bg-[#1e293b] rounded-2xl border border-white/5 p-6 h-full">
+                                    <div className="bg-[#1e293b] dark:bg-[#1e293b] bg-white rounded-2xl border border-white/5 dark:border-white/5 border-gray-200 p-6 h-full shadow-sm">
                                         <div className="flex items-center gap-2 text-[10px] text-gray-500 mb-6">
                                             <span>القائمة الرئيسية</span>
                                             <ChevronLeft className="w-3 h-3"/>
                                             <span className="text-blue-400 font-bold">الضوابط والأدلة</span>
                                         </div>
-                                        <h3 className="text-white font-bold text-lg mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
+                                        <h3 className="text-white dark:text-white text-gray-900 font-bold text-lg mb-6 border-b border-white/10 dark:border-white/10 border-gray-200 pb-4 flex items-center gap-2">
                                             <Building2 className="w-5 h-5 text-blue-500"/> خدمات الشؤون الأكاديمية
                                         </h3>
                                         <div className="space-y-4">
                                             <div 
-                                                className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-blue-500/30"
+                                                className="bg-white/5 dark:bg-white/5 bg-gray-50 p-4 rounded-xl border border-white/5 dark:border-white/5 border-gray-200 hover:bg-white/10 dark:hover:bg-white/10 hover:bg-gray-100 transition-colors cursor-pointer group hover:border-blue-500/30"
                                                 onClick={() => setShowExamGuide(true)}
                                             >
                                                  <div className="flex gap-4">
@@ -597,33 +633,33 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                                          <FileSignature className="w-6 h-6"/>
                                                      </div>
                                                      <div>
-                                                         <h4 className="text-white font-bold text-sm mb-2 group-hover:text-blue-400 transition-colors">دليل الاختبارات</h4>
+                                                         <h4 className="text-white dark:text-white text-gray-900 font-bold text-sm mb-2 group-hover:text-blue-400 transition-colors">دليل الاختبارات</h4>
                                                          <p className="text-xs text-gray-400 leading-relaxed">
                                                              جداول الاختبارات، تعليمات دخول القاعات، الممنوعات أثناء الاختبار، وطريقة توزيع الدرجات.
                                                          </p>
                                                      </div>
                                                  </div>
                                             </div>
-                                            <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-amber-500/30">
+                                            <div className="bg-white/5 dark:bg-white/5 bg-gray-50 p-4 rounded-xl border border-white/5 dark:border-white/5 border-gray-200 hover:bg-white/10 dark:hover:bg-white/10 hover:bg-gray-100 transition-colors cursor-pointer group hover:border-amber-500/30">
                                                  <div className="flex gap-4">
                                                      <div className="p-3 bg-amber-600/20 rounded-lg text-amber-400 h-fit group-hover:scale-110 transition-transform">
                                                          <UserX className="w-6 h-6"/>
                                                      </div>
                                                      <div>
-                                                         <h4 className="text-white font-bold text-sm mb-2 group-hover:text-amber-400 transition-colors">ضوابط تقديم الأعذار</h4>
+                                                         <h4 className="text-white dark:text-white text-gray-900 font-bold text-sm mb-2 group-hover:text-amber-400 transition-colors">ضوابط تقديم الأعذار</h4>
                                                          <p className="text-xs text-gray-400 leading-relaxed">
                                                              شروط قبول الأعذار الطبية والقهرية، المستندات المطلوبة، والمهلة الزمنية للتقديم.
                                                          </p>
                                                      </div>
                                                  </div>
                                             </div>
-                                            <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-emerald-500/30">
+                                            <div className="bg-white/5 dark:bg-white/5 bg-gray-50 p-4 rounded-xl border border-white/5 dark:border-white/5 border-gray-200 hover:bg-white/10 dark:hover:bg-white/10 hover:bg-gray-100 transition-colors cursor-pointer group hover:border-emerald-500/30">
                                                  <div className="flex gap-4">
                                                      <div className="p-3 bg-emerald-600/20 rounded-lg text-emerald-400 h-fit group-hover:scale-110 transition-transform">
                                                          <GitMerge className="w-6 h-6"/>
                                                      </div>
                                                      <div>
-                                                         <h4 className="text-white font-bold text-sm mb-2 group-hover:text-emerald-400 transition-colors">الإجراءات الأكاديمية</h4>
+                                                         <h4 className="text-white dark:text-white text-gray-900 font-bold text-sm mb-2 group-hover:text-emerald-400 transition-colors">الإجراءات الأكاديمية</h4>
                                                          <p className="text-xs text-gray-400 leading-relaxed">
                                                              نظام الحرمان، حساب المعدل التراكمي، الانتقال بين المستويات، والحقوق والواجبات.
                                                          </p>
@@ -640,19 +676,19 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     {/* VIEW: DOCUMENTS */}
                     {activeSection === 'documents' && (
                         <div className="space-y-8 animate-fade-in-up pb-20">
-                            <h2 className="text-2xl font-bold text-white border-b border-white/10 pb-4 mb-6">مركز الوثائق والسجل الأكاديمي</h2>
+                            <h2 className="text-2xl font-bold text-white dark:text-white text-gray-900 border-b border-white/10 dark:border-white/10 border-gray-200 pb-4 mb-6">مركز الوثائق والسجل الأكاديمي</h2>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-blue-400"/> السجل الأكاديمي</h3>
+                                <div className="bg-[#1e293b] dark:bg-[#1e293b] bg-white p-6 rounded-2xl border border-white/5 dark:border-white/5 border-gray-200 shadow-sm">
+                                    <h3 className="text-white dark:text-white text-gray-900 font-bold mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-blue-400"/> السجل الأكاديمي</h3>
                                     <AcademicTranscript />
                                 </div>
                                 
                                 <div className="space-y-6">
-                                    <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 text-center">
-                                        <h3 className="text-white font-bold mb-4 flex items-center justify-center gap-2"><Award className="w-5 h-5 text-emerald-400"/> نموذج الشهادة المعتمد</h3>
+                                    <div className="bg-[#1e293b] dark:bg-[#1e293b] bg-white p-6 rounded-2xl border border-white/5 dark:border-white/5 border-gray-200 text-center shadow-sm">
+                                        <h3 className="text-white dark:text-white text-gray-900 font-bold mb-4 flex items-center justify-center gap-2"><Award className="w-5 h-5 text-emerald-400"/> نموذج الشهادة المعتمد</h3>
                                         <p className="text-xs text-gray-400 mb-6">شاهد نموذجاً حياً لشكل الشهادات التي تصدرها الأكاديمية.</p>
-                                        <button onClick={() => setShowCertPreview(true)} className="px-6 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-white text-sm transition-colors mb-2">
+                                        <button onClick={() => setShowCertPreview(true)} className="px-6 py-2 bg-white/5 hover:bg-white/10 dark:bg-white/5 dark:hover:bg-white/10 bg-gray-100 hover:bg-gray-200 border border-white/10 dark:border-white/10 border-gray-200 rounded-xl text-white dark:text-white text-gray-800 text-sm transition-colors mb-2">
                                             معاينة النموذج
                                         </button>
                                         <div className="mt-2">
@@ -662,16 +698,16 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         </div>
                                     </div>
 
-                                    <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
-                                        <h3 className="text-white font-bold mb-4">شهاداتي المكتسبة</h3>
+                                    <div className="bg-[#1e293b] dark:bg-[#1e293b] bg-white p-6 rounded-2xl border border-white/5 dark:border-white/5 border-gray-200 shadow-sm">
+                                        <h3 className="text-white dark:text-white text-gray-900 font-bold mb-4">شهاداتي المكتسبة</h3>
                                         {user.certificates && user.certificates.length > 0 ? (
                                             <div className="space-y-2">
                                                 {user.certificates.map(cert => (
-                                                    <div key={cert.id} className="flex justify-between items-center p-3 bg-black/20 rounded-lg">
+                                                    <div key={cert.id} className="flex justify-between items-center p-3 bg-black/20 dark:bg-black/20 bg-gray-50 rounded-lg">
                                                         <div className="flex items-center gap-3">
                                                             <div className="bg-emerald-500/20 p-2 rounded-lg"><Award className="w-4 h-4 text-emerald-400"/></div>
                                                             <div>
-                                                                <span className="text-sm text-gray-200 block font-bold">{cert.courseName}</span>
+                                                                <span className="text-sm text-gray-200 dark:text-gray-200 text-gray-800 block font-bold">{cert.courseName}</span>
                                                                 <span className="text-[10px] text-gray-500 block">{cert.id}</span>
                                                             </div>
                                                         </div>
@@ -684,16 +720,16 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         )}
                                     </div>
                                     
-                                    <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
-                                        <h3 className="text-white font-bold mb-4">الإفادات الإدارية</h3>
+                                    <div className="bg-[#1e293b] dark:bg-[#1e293b] bg-white p-6 rounded-2xl border border-white/5 dark:border-white/5 border-gray-200 shadow-sm">
+                                        <h3 className="text-white dark:text-white text-gray-900 font-bold mb-4">الإفادات الإدارية</h3>
                                         <div className="space-y-2">
-                                             <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg hover:bg-white/5 transition-colors">
-                                                <span className="text-sm text-gray-300">إفادة انتظام بالدراسة</span>
+                                             <div className="flex justify-between items-center p-3 bg-black/20 dark:bg-black/20 bg-gray-50 rounded-lg hover:bg-white/5 dark:hover:bg-white/5 hover:bg-gray-100 transition-colors">
+                                                <span className="text-sm text-gray-300 dark:text-gray-300 text-gray-700">إفادة انتظام بالدراسة</span>
                                                 <button onClick={() => setShowEnrollmentCert(true)} className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded text-white font-bold transition-all">طباعة الإفادة</button>
                                              </div>
-                                             <div className="flex justify-between items-center p-3 bg-black/20 rounded-lg opacity-60">
+                                             <div className="flex justify-between items-center p-3 bg-black/20 dark:bg-black/20 bg-gray-50 rounded-lg opacity-60">
                                                 <span className="text-sm text-gray-400">إفادة تخرج</span>
-                                                <button disabled className="text-xs bg-white/5 px-2 py-1 rounded text-gray-500">قريباً</button>
+                                                <button disabled className="text-xs bg-white/5 dark:bg-white/5 bg-gray-200 px-2 py-1 rounded text-gray-500">قريباً</button>
                                              </div>
                                         </div>
                                     </div>
@@ -705,7 +741,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     {/* VIEW: WALLET */}
                     {activeSection === 'wallet' && (
                         <div className="space-y-6 animate-fade-in-up pb-20">
-                             <h2 className="text-2xl font-bold text-white border-b border-white/10 pb-4 mb-6">المحفظة المالية</h2>
+                             <h2 className="text-2xl font-bold text-white dark:text-white text-gray-900 border-b border-white/10 dark:border-white/10 border-gray-200 pb-4 mb-6">المحفظة المالية</h2>
                              <div className="bg-gradient-to-r from-emerald-600 to-teal-800 p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
                                  <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet className="w-32 h-32"/></div>
                                  <div className="relative z-10">
@@ -720,13 +756,13 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     {/* VIEW: SETTINGS */}
                     {activeSection === 'settings' && (
                          <div className="space-y-8 animate-fade-in-up max-w-3xl mx-auto pb-20">
-                            <h2 className="text-2xl font-bold text-white mb-6 border-b border-white/10 pb-4">إعدادات الحساب والملف الشخصي</h2>
+                            <h2 className="text-2xl font-bold text-white dark:text-white text-gray-900 mb-6 border-b border-white/10 dark:border-white/10 border-gray-200 pb-4">إعدادات الحساب والملف الشخصي</h2>
 
                             <form onSubmit={handleSaveProfile} className="space-y-6">
                                 {/* Cover Image Upload */}
                                 <div className="flex flex-col gap-2 mb-4">
                                     <label className="block text-xs font-bold text-gray-400">صورة الغلاف (Header)</label>
-                                    <div className="relative h-32 w-full rounded-xl overflow-hidden bg-black/30 border border-white/10 group cursor-pointer" onClick={() => coverInputRef.current?.click()}>
+                                    <div className="relative h-32 w-full rounded-xl overflow-hidden bg-black/30 dark:bg-black/30 bg-gray-200 border border-white/10 dark:border-white/10 border-gray-300 group cursor-pointer" onClick={() => coverInputRef.current?.click()}>
                                         {user.coverImage ? (
                                             <img src={user.coverImage} className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
                                         ) : (
@@ -777,61 +813,75 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     <p className="text-xs text-gray-400">اضغط على الصورة للتغيير أو أيقونة الحذف للإزالة</p>
                                 </div>
 
-                                <div className="bg-[#1e293b] p-6 rounded-xl border border-white/5 mb-6">
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                                <div className="bg-[#1e293b] dark:bg-[#1e293b] bg-white p-6 rounded-xl border border-white/5 dark:border-white/5 border-gray-200 mb-6 shadow-sm">
+                                    <h3 className="text-white dark:text-white text-gray-900 font-bold mb-4 flex items-center gap-2">
                                         <User className="w-5 h-5 text-blue-400"/> البيانات الأساسية
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">الاسم الكامل</label>
-                                            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" />
+                                            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-[#0f172a] dark:bg-[#0f172a] bg-gray-50 border border-white/10 dark:border-white/10 border-gray-200 rounded-xl p-3 text-white dark:text-white text-gray-900 focus:border-blue-500 outline-none transition-colors" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">اسم المستخدم (Username)</label>
+                                            <div className="relative">
+                                                <input 
+                                                    type="text" 
+                                                    value={formData.username} 
+                                                    onChange={e => handleUsernameChange(e.target.value)} 
+                                                    className="w-full bg-[#0f172a] dark:bg-[#0f172a] bg-gray-50 border border-white/10 dark:border-white/10 border-gray-200 rounded-xl p-3 pl-10 text-white dark:text-white text-gray-900 focus:border-blue-500 outline-none transition-colors dir-ltr font-mono" 
+                                                    placeholder="username"
+                                                />
+                                                <AtSign className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
+                                            </div>
+                                            <p className="text-[9px] text-gray-500 mt-1">حروف إنجليزية وأرقام فقط، بدون مسافات.</p>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">المسمى الوظيفي</label>
-                                            <input type="text" value={formData.currentJobTitle} onChange={e => setFormData({...formData, currentJobTitle: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" placeholder="مثال: مطور برمجيات" />
+                                            <input type="text" value={formData.currentJobTitle} onChange={e => setFormData({...formData, currentJobTitle: e.target.value})} className="w-full bg-[#0f172a] dark:bg-[#0f172a] bg-gray-50 border border-white/10 dark:border-white/10 border-gray-200 rounded-xl p-3 text-white dark:text-white text-gray-900 focus:border-blue-500 outline-none transition-colors" placeholder="مثال: مطور برمجيات" />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">رقم الهاتف</label>
                                             <div className="relative">
-                                                <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-blue-500 outline-none transition-colors text-right" dir="ltr" />
+                                                <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-[#0f172a] dark:bg-[#0f172a] bg-gray-50 border border-white/10 dark:border-white/10 border-gray-200 rounded-xl p-3 pl-10 text-white dark:text-white text-gray-900 focus:border-blue-500 outline-none transition-colors text-right" dir="ltr" />
                                                 <Phone className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
                                             </div>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">العنوان</label>
                                             <div className="relative">
-                                                <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-blue-500 outline-none transition-colors" />
+                                                <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-[#0f172a] dark:bg-[#0f172a] bg-gray-50 border border-white/10 dark:border-white/10 border-gray-200 rounded-xl p-3 pl-10 text-white dark:text-white text-gray-900 focus:border-blue-500 outline-none transition-colors" />
                                                 <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
                                             </div>
                                         </div>
                                         <div className="md:col-span-2">
                                             <label className="block text-xs font-bold text-gray-400 mb-2">نبذة عنك</label>
-                                            <textarea value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors h-24 resize-none" placeholder="اكتب نبذة مختصرة..." />
+                                            <textarea value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full bg-[#0f172a] dark:bg-[#0f172a] bg-gray-50 border border-white/10 dark:border-white/10 border-gray-200 rounded-xl p-3 text-white dark:text-white text-gray-900 focus:border-blue-500 outline-none transition-colors h-24 resize-none" placeholder="اكتب نبذة مختصرة..." />
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Vital Information Section */}
-                                <div className="bg-[#1e293b] p-6 rounded-xl border border-white/5 mb-6">
-                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                                <div className="bg-[#1e293b] dark:bg-[#1e293b] bg-white p-6 rounded-xl border border-white/5 dark:border-white/5 border-gray-200 mb-6 shadow-sm">
+                                    <h3 className="text-white dark:text-white text-gray-900 font-bold mb-4 flex items-center gap-2">
                                         <ActivityDot/> المعلومات الحيوية والديموغرافية
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">رقم الهوية الوطنية / الإقامة</label>
-                                            <input type="text" value={formData.nationalId} onChange={e => setFormData({...formData, nationalId: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors font-mono" placeholder="10xxxxxxxxx"/>
+                                            <input type="text" value={formData.nationalId} onChange={e => setFormData({...formData, nationalId: e.target.value})} className="w-full bg-[#0f172a] dark:bg-[#0f172a] bg-gray-50 border border-white/10 dark:border-white/10 border-gray-200 rounded-xl p-3 text-white dark:text-white text-gray-900 focus:border-blue-500 outline-none transition-colors font-mono" placeholder="10xxxxxxxxx"/>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">الجنسية</label>
-                                            <input type="text" value={formData.nationality} onChange={e => setFormData({...formData, nationality: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"/>
+                                            <input type="text" value={formData.nationality} onChange={e => setFormData({...formData, nationality: e.target.value})} className="w-full bg-[#0f172a] dark:bg-[#0f172a] bg-gray-50 border border-white/10 dark:border-white/10 border-gray-200 rounded-xl p-3 text-white dark:text-white text-gray-900 focus:border-blue-500 outline-none transition-colors"/>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">تاريخ الميلاد</label>
-                                            <input type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"/>
+                                            <input type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className="w-full bg-[#0f172a] dark:bg-[#0f172a] bg-gray-50 border border-white/10 dark:border-white/10 border-gray-200 rounded-xl p-3 text-white dark:text-white text-gray-900 focus:border-blue-500 outline-none transition-colors"/>
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-gray-400 mb-2">فصيلة الدم</label>
-                                            <select value={formData.bloodType} onChange={e => setFormData({...formData, bloodType: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors">
+                                            <select value={formData.bloodType} onChange={e => setFormData({...formData, bloodType: e.target.value})} className="w-full bg-[#0f172a] dark:bg-[#0f172a] bg-gray-50 border border-white/10 dark:border-white/10 border-gray-200 rounded-xl p-3 text-white dark:text-white text-gray-900 focus:border-blue-500 outline-none transition-colors">
                                                 <option value="">اختر الفصيلة</option>
                                                 <option value="A+">A+</option>
                                                 <option value="A-">A-</option>
@@ -849,7 +899,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                                 type="text" 
                                                 value={formData.major} 
                                                 onChange={e => setFormData({...formData, major: e.target.value})} 
-                                                className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" 
+                                                className="w-full bg-[#0f172a] dark:bg-[#0f172a] bg-gray-50 border border-white/10 dark:border-white/10 border-gray-200 rounded-xl p-3 text-white dark:text-white text-gray-900 focus:border-blue-500 outline-none transition-colors" 
                                                 placeholder="مثال: علوم الحاسب، إدارة أعمال" 
                                             />
                                         </div>
@@ -858,13 +908,13 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                 
                                 <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex gap-3">
                                     <div className="min-w-fit mt-1"><AlertTriangle className="w-5 h-5 text-yellow-500"/></div>
-                                    <div className="text-xs text-yellow-200">
+                                    <div className="text-xs text-yellow-200 dark:text-yellow-200 text-yellow-800">
                                         <p className="font-bold mb-1">تنبيه هام</p>
                                         <p>يرجى التأكد من صحة البيانات المدخلة حيث ستظهر في الشهادات الرسمية والوثائق والبطاقة الجامعية.</p>
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end pt-6 border-t border-white/10">
+                                <div className="flex justify-end pt-6 border-t border-white/10 dark:border-white/10 border-gray-200">
                                     <button type="submit" disabled={isSaving} className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-all disabled:opacity-50">
                                         {isSaving ? <Loader2 className="w-5 h-5 animate-spin"/> : <Save className="w-5 h-5"/>}
                                         حفظ التعديلات

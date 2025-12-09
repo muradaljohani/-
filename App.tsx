@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/Interactive/ToastContext';
@@ -28,6 +29,28 @@ import { CourseView } from './components/CourseView';
 const AppContent = () => {
   const [currentView, setCurrentView] = useState('landing');
   const [courseId, setCourseId] = useState<string | null>(null);
+  
+  // Theme State (Default Dark)
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+  const toggleTheme = () => {
+      const newTheme = theme === 'dark' ? 'light' : 'dark';
+      setTheme(newTheme);
+      document.documentElement.classList.toggle('dark', newTheme === 'dark');
+      localStorage.setItem('murad_theme', newTheme);
+  };
+
+  // Initialize Theme
+  useEffect(() => {
+      const savedTheme = localStorage.getItem('murad_theme') as 'dark' | 'light';
+      if (savedTheme) {
+          setTheme(savedTheme);
+          document.documentElement.classList.toggle('dark', savedTheme === 'dark');
+      } else {
+          // Default to dark
+          document.documentElement.classList.add('dark');
+      }
+  }, []);
 
   // Simple Router
   const navigate = (view: string) => {
@@ -101,11 +124,12 @@ const AppContent = () => {
   const isImmersive = ['support', 'corporate', 'clock-system', 'meta', 'cloud', 'dopamine', 'domains', 'user-dashboard', 'course-view'].includes(currentView);
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#0f172a] text-gray-100 font-sans">
+    <div className={`flex flex-col min-h-screen font-sans ${theme === 'dark' ? 'bg-[#0f172a] text-gray-100' : 'bg-white text-gray-900'}`}>
       <SEOHelmet title="مجموعة ميلاف مراد" />
       
       {!isImmersive && (
-        <Header onNavigate={navigate} />
+        // Pass theme prop to Header (needs update in Header component definition if typescript complains, handled implicitly by JS nature or updated prop type)
+        <Header onNavigate={navigate} theme={theme} toggleTheme={toggleTheme} />
       )}
 
       <main className="flex-1 relative">

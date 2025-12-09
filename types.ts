@@ -939,6 +939,7 @@ export interface KYCData {
 export interface User {
   id: string;
   name: string;
+  username?: string; // NEW: Username handle (e.g. @murad)
   email?: string;
   passwordHash?: string; 
   phone?: string;
@@ -947,7 +948,7 @@ export interface User {
   role: UserRole;
   permissions?: string[]; 
   avatar?: string;
-  coverImage?: string; // ADDED: Profile Cover Image
+  coverImage?: string; 
   isLoggedIn: boolean;
   loginMethod: LoginProvider;
   verified: boolean; 
