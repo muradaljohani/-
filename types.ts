@@ -1,6 +1,4 @@
 
-
-
 export enum Role {
   USER = 'user',
   MODEL = 'model'
@@ -1008,6 +1006,7 @@ export interface User {
   isBiometricVerified?: boolean;
   kycData?: KYCData; 
   iban?: string; 
+  username?: string; // ADDED: Username handle
 
   bio?: string;
   education?: Education[];
