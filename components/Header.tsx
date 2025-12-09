@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Menu, LogIn, GraduationCap, ShoppingBag, Globe, FileText, Clock, Cloud, Server, Zap, Building2, LayoutGrid } from 'lucide-react';
+import { Menu, LogIn, GraduationCap, ShoppingBag, Globe, FileText, Clock, Cloud, Server, Zap, Building2, LayoutGrid, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { AuthModal } from './AuthModal';
 
@@ -9,7 +9,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
-  const { user, showLoginModal, setShowLoginModal } = useAuth();
+  const { user, showLoginModal, setShowLoginModal, logout } = useAuth();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
 
@@ -23,6 +23,11 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
 
   const handleNav = (path: string) => {
       onNavigate(path);
+      setMobileMenu(false);
+  };
+
+  const handleLogout = async () => {
+      await logout();
       setMobileMenu(false);
   };
 
@@ -123,6 +128,11 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate }) => {
             <button onClick={() => handleNav('haraj')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><Globe className="w-4 h-4 text-cyan-400"/> حراج ميلاف</button>
             <button onClick={() => handleNav('domains')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><Server className="w-4 h-4 text-pink-400"/> مراد دومين</button>
             <button onClick={() => handleNav('dopamine')} className="text-right px-4 py-3 text-white bg-white/5 rounded-lg flex items-center gap-3"><Zap className="w-4 h-4 text-yellow-400"/> مراد دوبامين</button>
+            {user && (
+                <button onClick={handleLogout} className="text-right px-4 py-3 text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center gap-3 mt-2">
+                    <LogOut className="w-4 h-4 rtl:rotate-180"/> تسجيل الخروج
+                </button>
+            )}
           </div>
       )}
     </header>
