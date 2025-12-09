@@ -245,8 +245,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
          throw new Error(`Provider ${providerName} not supported via Firebase.`);
       }
     } catch (error: any) {
+      // Handle Unauthorized Domain Error specifically
       if (error.code === 'auth/unauthorized-domain') {
-        console.warn(`[Auth] Domain not authorized. This is expected in preview environments. Falling back to Demo User.`);
+        console.warn(`[Auth] Domain not authorized in Firebase Console. This is expected in preview environments (localhost/stackblitz). Falling back to Demo User.`);
+        alert("⚠️ تنبيه: البيئة الحالية غير مصرح لها باستخدام تسجيل الدخول المباشر (Firebase Auth Domain). سيتم تسجيل الدخول كمستخدم تجريبي.");
       } else {
         console.error(`${providerName} Sign In Error:`, error);
       }
@@ -256,7 +258,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       const demoUser = createMockUser({
           id: `${providerName}_user_${Date.now()}`,
-          name: `مستخدم ${providerName.charAt(0).toUpperCase() + providerName.slice(1)}`,
+          name: `مستخدم ${providerName.charAt(0).toUpperCase() + providerName.slice(1)} (تجريبي)`,
           email: `user@${providerName}.com`,
           avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${providerName}`,
           loginMethod: providerName,

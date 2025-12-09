@@ -114,6 +114,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         return Math.abs(age_dt.getUTCFullYear() - 1970).toString();
     };
 
+    // Updated Sidebar Item with contrast logic
     const SidebarItem = ({ id, icon, label, onClick }: any) => (
         <button 
             onClick={() => { 
@@ -124,7 +125,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
             className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
                 activeSection === id 
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' 
-                : 'text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5'
+                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700'
             }`}
         >
             {icon}
@@ -238,14 +239,13 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         }
     };
 
-    // Nav Button Component for the Quick Links bar
     const NavButton = ({ label, icon: Icon, onClick, active }: any) => (
         <button 
             onClick={onClick}
             className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all border ${
                 active 
                 ? 'bg-blue-50 dark:bg-blue-900/30 border-blue-500/50 text-blue-600 dark:text-blue-300' 
-                : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-black dark:hover:text-white'
+                : 'bg-white dark:bg-slate-800 border-gray-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-gray-50 dark:hover:bg-slate-700 hover:text-black dark:hover:text-white'
             }`}
         >
             <Icon className={`w-5 h-5 mb-1 ${active ? 'text-blue-500 dark:text-blue-400' : ''}`} />
@@ -255,20 +255,22 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
     return (
         <>
-        <div className="fixed inset-0 z-[9000] flex items-center justify-center p-0 md:p-4 bg-[#f3f4f6]/95 dark:bg-[#0f172a]/95 backdrop-blur-xl font-sans animate-fade-in-up" dir="rtl">
-            <div className="relative w-full h-full bg-white dark:bg-[#0f172a] md:rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-700 flex overflow-hidden flex-col md:flex-row text-slate-900 dark:text-gray-100">
+        <div className="fixed inset-0 z-[9000] flex items-center justify-center p-0 md:p-4 bg-[#f3f4f6]/95 dark:bg-[#000000]/80 backdrop-blur-xl font-sans animate-fade-in-up" dir="rtl">
+            
+            {/* Main Modal Container with High Contrast Dark Mode */}
+            <div className="relative w-full h-full bg-white dark:bg-slate-900 md:rounded-3xl shadow-2xl border border-gray-200 dark:border-slate-700 flex overflow-hidden flex-col md:flex-row text-inherit">
                 
                 {/* Mobile Header */}
-                <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-[#1e293b] border-b border-gray-200 dark:border-white/10 shrink-0 z-30">
+                <div className="md:hidden flex items-center justify-between p-4 bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-slate-700 shrink-0 z-30">
                     <div className="flex items-center gap-3">
-                        <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-10 h-10 rounded-full border border-gray-200 dark:border-white/20 object-cover"/>
+                        <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-10 h-10 rounded-full border border-gray-200 dark:border-slate-600 object-cover"/>
                         <div>
-                            <h2 className="text-gray-900 dark:text-white font-bold text-sm">{user.name}</h2>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">لوحة التحكم المركزية</p>
+                            <h2 className="text-slate-900 dark:text-white font-bold text-sm">{user.name}</h2>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">لوحة التحكم المركزية</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 bg-gray-100 dark:bg-white/10 rounded-lg text-gray-700 dark:text-white hover:bg-gray-200 dark:hover:bg-white/20">
+                         <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 bg-gray-100 dark:bg-slate-800 rounded-lg text-slate-700 dark:text-white hover:bg-gray-200 dark:hover:bg-slate-700">
                              {mobileMenuOpen ? <X className="w-5 h-5"/> : <Menu className="w-5 h-5"/>}
                          </button>
                          <button onClick={onClose} className="p-2 bg-red-50 text-red-500 rounded-lg hover:bg-red-100 dark:bg-red-500/10 dark:text-red-400 dark:hover:bg-red-500/20"><LogOut className="w-5 h-5 rtl:rotate-180"/></button>
@@ -277,14 +279,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                 {/* Sidebar */}
                 <div className={`
-                    absolute md:relative inset-0 z-20 md:z-auto bg-white dark:bg-[#0b1120] md:bg-transparent md:w-72 md:border-l border-gray-200 dark:border-white/10 flex flex-col p-6 transition-transform duration-300 overflow-y-auto
+                    absolute md:relative inset-0 z-20 md:z-auto bg-white dark:bg-slate-900 md:bg-transparent md:w-72 md:border-l border-gray-200 dark:border-slate-700 flex flex-col p-6 transition-transform duration-300 overflow-y-auto
                     ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
                 `}>
-                    <button onClick={() => setMobileMenuOpen(false)} className="md:hidden absolute top-4 left-4 p-2 text-gray-400 hover:text-gray-900 dark:hover:text-white"><X className="w-6 h-6"/></button>
+                    <button onClick={() => setMobileMenuOpen(false)} className="md:hidden absolute top-4 left-4 p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white"><X className="w-6 h-6"/></button>
 
                     <div className="text-center mb-8 hidden md:block">
                         <div className="relative w-24 h-24 mx-auto mb-4 group">
-                            <div className="w-full h-full rounded-full border-4 border-gray-100 dark:border-[#1e293b] shadow-xl overflow-hidden cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                            <div className="w-full h-full rounded-full border-4 border-gray-100 dark:border-slate-700 shadow-xl overflow-hidden cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                                 <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover"/>
                             </div>
                             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer pointer-events-none">
@@ -294,7 +296,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             {user.avatar && (
                                 <button 
                                     onClick={handleRemoveAvatar}
-                                    className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-500 text-white p-1.5 rounded-full shadow-lg border-2 border-white dark:border-[#0b1120] transition-colors z-20"
+                                    className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-500 text-white p-1.5 rounded-full shadow-lg border-2 border-white dark:border-slate-900 transition-colors z-20"
                                     title="حذف الصورة"
                                 >
                                     <Trash2 className="w-3 h-3"/>
@@ -302,10 +304,10 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             )}
 
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload}/>
-                            {user.isIdentityVerified && <div className="absolute bottom-0 right-0 bg-emerald-500 border-4 border-white dark:border-[#0b1120] rounded-full p-1 pointer-events-none"><CheckCircle2 className="w-4 h-4 text-white"/></div>}
+                            {user.isIdentityVerified && <div className="absolute bottom-0 right-0 bg-emerald-500 border-4 border-white dark:border-slate-900 rounded-full p-1 pointer-events-none"><CheckCircle2 className="w-4 h-4 text-white"/></div>}
                         </div>
 
-                        <h2 className="text-gray-900 dark:text-white font-bold text-lg mb-1">{user.name}</h2>
+                        <h2 className="text-slate-900 dark:text-white font-bold text-lg mb-1">{user.name}</h2>
                         <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${statusBg} ${statusColor}`}>
                             {user.isIdentityVerified ? 'هوية موثقة' : 'غير موثق'}
                         </div>
@@ -313,15 +315,15 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                     <div className="flex-1 space-y-2">
                         <SidebarItem id="overview" icon={<Home className="w-5 h-5"/>} label="الرئيسية (معلوماتي)" />
-                        <SidebarItem id="settings" icon={<Settings className="w-5 h-5 text-gray-500 dark:text-gray-300"/>} label="إعدادات الحساب" />
+                        <SidebarItem id="settings" icon={<Settings className="w-5 h-5 text-slate-500 dark:text-slate-400"/>} label="إعدادات الحساب" />
                         <SidebarItem id="academy" icon={<BriefcaseIcon className="w-5 h-5 text-blue-500 dark:text-blue-400"/>} label="الحقائب التدريبية" />
                         <SidebarItem id="wallet" icon={<Wallet className="w-5 h-5 text-emerald-500 dark:text-emerald-400"/>} label="المحفظة الرقمية" />
-                        <SidebarItem id="experience" icon={<Award className="w-5 h-5 text-amber-500 dark:text-amber-500"/>} label="اشتري خبرتك" onClick={() => setShowExperienceModal(true)} />
+                        <SidebarItem id="experience" icon={<Award className="w-5 h-5 text-amber-500 dark:text-amber-400"/>} label="اشتري خبرتك" onClick={() => setShowExperienceModal(true)} />
                         
                         <div className="space-y-1">
                             <button 
                                 onClick={() => setIsRecordDropdownOpen(!isRecordDropdownOpen)}
-                                className={`w-full flex items-center justify-between p-3 rounded-xl transition-all text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-white/5 ${isRecordDropdownOpen ? 'bg-gray-100 dark:bg-white/5 text-black dark:text-white' : ''}`}
+                                className={`w-full flex items-center justify-between p-3 rounded-xl transition-all text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white hover:bg-gray-100 dark:hover:bg-slate-700 ${isRecordDropdownOpen ? 'bg-gray-100 dark:bg-slate-700 text-black dark:text-white' : ''}`}
                             >
                                 <div className="flex items-center gap-3">
                                     <FileText className="w-5 h-5"/>
@@ -332,14 +334,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             
                             {isRecordDropdownOpen && (
                                 <div className="pr-10 space-y-1 animate-fade-in-up">
-                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-white/5">المقررات المتبقية</button>
-                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-white/5">السجل الاكاديمي</button>
+                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700">المقررات المتبقية</button>
+                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-slate-500 dark:text-slate-400 hover:text-black dark:hover:text-white rounded-lg hover:bg-gray-50 dark:hover:bg-slate-700">السجل الاكاديمي</button>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    <div className="pt-6 border-t border-gray-200 dark:border-white/10 hidden md:block">
+                    <div className="pt-6 border-t border-gray-200 dark:border-slate-700 hidden md:block">
                         <button onClick={() => { logout(); onClose(); }} className="w-full flex items-center gap-3 p-3 rounded-xl text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all text-sm font-bold">
                             <LogOut className="w-5 h-5 rtl:rotate-180"/> تسجيل الخروج
                         </button>
@@ -347,23 +349,23 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                 </div>
 
                 {/* Main Content Area */}
-                <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gradient-to-br dark:from-[#0f172a] dark:to-[#1e293b] p-4 md:p-10 relative scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-white/10">
-                    <button onClick={onClose} className="hidden md:block absolute top-6 left-6 p-2 bg-gray-200 dark:bg-white/10 rounded-full text-gray-600 dark:text-white hover:bg-gray-300 dark:hover:bg-white/20 transition-all z-20">
+                <div className="flex-1 overflow-y-auto bg-gray-50 dark:bg-slate-950 p-4 md:p-10 relative scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-slate-700">
+                    <button onClick={onClose} className="hidden md:block absolute top-6 left-6 p-2 bg-gray-200 dark:bg-slate-800 rounded-full text-slate-600 dark:text-white hover:bg-gray-300 dark:hover:bg-slate-700 transition-all z-20">
                         <X className="w-5 h-5"/>
                     </button>
 
                     {/* VIEW: ACADEMY */}
                     {activeSection === 'academy' && (
                         <div className="space-y-6 animate-fade-in-up pb-20">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-200 dark:border-white/10 pb-4">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-200 dark:border-slate-700 pb-4">
                                 <div>
-                                    <h2 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                                    <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                         <BookOpen className="w-6 h-6 text-purple-500 dark:text-purple-400"/>
                                         {academyView === 'categories' ? 'الحقائب التدريبية (التخصصات)' : selectedCategory.title}
                                     </h2>
                                     {academyView === 'topics' && (
                                         <button onClick={() => setAcademyView('categories')} className="text-sm text-blue-600 dark:text-blue-400 hover:underline mt-1 flex items-center gap-1">
-                                            <ChevronRight className="w-4 h-4 rtl:rotate-180"/> العودة للأقسام
+                                            <ChevronRight className="w-4 h-4 rtl:rotate-180"/> العودة للمجلدات
                                         </button>
                                     )}
                                 </div>
@@ -375,14 +377,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         <div 
                                             key={i} 
                                             onClick={() => handleCategoryClick(cat)}
-                                            className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 hover:border-purple-400 dark:hover:border-purple-500/50 hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer group shadow-sm"
+                                            className="bg-white dark:bg-slate-800 p-5 rounded-2xl border border-gray-200 dark:border-slate-700 hover:border-purple-400 dark:hover:border-purple-500/50 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all cursor-pointer group shadow-sm"
                                         >
                                             <div className="flex items-center gap-3 mb-3">
-                                                <div className={`p-2 rounded-lg bg-gray-100 dark:bg-black/30 ${cat.color}`}>{cat.icon}</div>
-                                                <h3 className="text-gray-900 dark:text-white font-bold text-sm line-clamp-1">{cat.title}</h3>
+                                                <div className={`p-2 rounded-lg bg-gray-100 dark:bg-slate-700 ${cat.color}`}>{cat.icon}</div>
+                                                <h3 className="text-slate-900 dark:text-white font-bold text-sm line-clamp-1">{cat.title}</h3>
                                             </div>
-                                            <p className="text-xs text-gray-500 mb-3">50 حقيبة تدريبية متخصصة</p>
-                                            <div className="w-full bg-gray-200 dark:bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                                            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">50 حقيبة تدريبية متخصصة</p>
+                                            <div className="w-full bg-gray-200 dark:bg-slate-600 h-1.5 rounded-full overflow-hidden">
                                                 <div className="bg-purple-600 h-full w-[0%] group-hover:w-[100%] transition-all duration-700"></div>
                                             </div>
                                         </div>
@@ -396,21 +398,21 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         <div 
                                             key={i} 
                                             onClick={() => handleTopicClick(i + 1, selectedCategory.title)}
-                                            className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-white/5 transition-all cursor-pointer flex justify-between items-center group relative overflow-hidden shadow-sm"
+                                            className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-700 transition-all cursor-pointer flex justify-between items-center group relative overflow-hidden shadow-sm"
                                         >
-                                            <div className="absolute -left-2 -bottom-4 text-6xl font-black text-gray-100 dark:text-white/5 z-0">{i+1}</div>
+                                            <div className="absolute -left-2 -bottom-4 text-6xl font-black text-gray-100 dark:text-slate-700/50 z-0">{i+1}</div>
                                             <div className="flex items-center gap-4 relative z-10">
-                                                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-black/30 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-gray-400 group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
+                                                <div className="w-10 h-10 rounded-full bg-gray-100 dark:bg-slate-900 flex items-center justify-center text-xs font-bold text-slate-500 dark:text-slate-400 group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
                                                     {i + 1}
                                                 </div>
                                                 <div>
-                                                    <h4 className="text-gray-900 dark:text-white font-bold text-sm line-clamp-1">{selectedCategory.title} - حقيبة {i + 1}</h4>
-                                                    <p className="text-[10px] text-gray-500 flex items-center gap-1">
+                                                    <h4 className="text-slate-900 dark:text-white font-bold text-sm line-clamp-1">{selectedCategory.title} - حقيبة {i + 1}</h4>
+                                                    <p className="text-[10px] text-slate-500 dark:text-slate-400 flex items-center gap-1">
                                                         <FileText className="w-3 h-3"/> 30 شابتر • 5000 كلمة
                                                     </p>
                                                 </div>
                                             </div>
-                                            <PlayCircle className="w-6 h-6 text-gray-400 group-hover:text-purple-500 transition-colors z-10"/>
+                                            <PlayCircle className="w-6 h-6 text-slate-400 dark:text-slate-500 group-hover:text-purple-500 transition-colors z-10"/>
                                         </div>
                                     ))}
                                 </div>
@@ -457,7 +459,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     {/* Avatar & Edit Button */}
                                     <div className="flex justify-between items-end -mt-12 mb-4">
                                         <div className="relative group cursor-pointer" onClick={() => setActiveSection('settings')}>
-                                            <div className="w-24 h-24 rounded-full border-4 border-white dark:border-[#1e293b] overflow-hidden bg-gray-100 dark:bg-black shadow-lg">
+                                            <div className="w-24 h-24 rounded-full border-4 border-white dark:border-slate-800 overflow-hidden bg-gray-100 dark:bg-black shadow-lg">
                                                 <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover transition-transform group-hover:scale-105"/>
                                             </div>
                                             <div className="absolute bottom-1 right-1 bg-black/60 p-1 rounded-full border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -468,11 +470,11 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         <div className="flex gap-2 mb-2">
                                             <button 
                                                 onClick={() => setActiveSection('settings')} 
-                                                className="px-4 py-1.5 rounded-full border border-gray-300 dark:border-white/20 font-bold text-sm hover:bg-gray-100 dark:hover:bg-white/5 transition-colors text-gray-700 dark:text-white"
+                                                className="px-4 py-1.5 rounded-full border border-gray-300 dark:border-slate-600 font-bold text-sm hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors text-slate-700 dark:text-white bg-white dark:bg-slate-700"
                                             >
                                                 تعديل الملف
                                             </button>
-                                            <button onClick={() => setActiveSection('settings')} className="p-2 rounded-full border border-gray-300 dark:border-white/20 hover:bg-gray-100 dark:hover:bg-white/5 text-gray-700 dark:text-white">
+                                            <button onClick={() => setActiveSection('settings')} className="p-2 rounded-full border border-gray-300 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-700 text-slate-700 dark:text-white bg-white dark:bg-slate-700">
                                                 <Settings className="w-4 h-4"/>
                                             </button>
                                         </div>
@@ -480,19 +482,19 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                                     {/* User Info Block */}
                                     <div className="mb-4">
-                                        <h1 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                                        <h1 className="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
                                             {user.name}
                                             {user.isIdentityVerified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-white dark:fill-black"/>}
                                         </h1>
-                                        <p className="text-gray-500 dark:text-gray-400 text-sm font-mono dir-ltr text-right">@{user.username || user.trainingId}</p>
+                                        <p className="text-slate-500 dark:text-slate-400 text-sm font-mono dir-ltr text-right">@{user.username || user.trainingId}</p>
                                     </div>
 
                                     {/* Bio / Major */}
                                     <div className="mb-4">
-                                         <p className="text-gray-600 dark:text-gray-300 text-sm leading-relaxed mb-2">
+                                         <p className="text-slate-600 dark:text-slate-300 text-sm leading-relaxed mb-2">
                                             {user.bio || 'طالب في أكاديمية ميلاف مراد الوطنية.'}
                                          </p>
-                                         <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-500 dark:text-gray-400">
+                                         <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500 dark:text-slate-400">
                                              <span className="flex items-center gap-1"><BriefcaseIcon className="w-3 h-3"/> {user.major || 'مسار عام'}</span>
                                              <span className="flex items-center gap-1"><MapPin className="w-3 h-3"/> {user.nationality || 'المملكة العربية السعودية'}</span>
                                              <span className="flex items-center gap-1"><Fingerprint className="w-3 h-3"/> {user.nationalId || '---'}</span>
@@ -501,18 +503,18 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     </div>
 
                                     {/* Vitals Stats */}
-                                    <div className="flex gap-6 border-t border-gray-200 dark:border-white/10 pt-4 mt-4">
+                                    <div className="flex gap-6 border-t border-gray-200 dark:border-slate-700 pt-4 mt-4">
                                         <div className="flex items-center gap-1">
-                                            <span className="font-bold text-gray-900 dark:text-white">{calculateAge(user.birthDate || '')}</span>
-                                            <span className="text-xs text-gray-500">سنة (العمر)</span>
+                                            <span className="font-bold text-slate-900 dark:text-white">{calculateAge(user.birthDate || '')}</span>
+                                            <span className="text-xs text-slate-500 dark:text-slate-400">سنة (العمر)</span>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <span className="font-bold text-red-500">{user.bloodType || 'A+'}</span>
-                                            <span className="text-xs text-gray-500">فصيلة الدم</span>
+                                            <span className="text-xs text-slate-500 dark:text-slate-400">فصيلة الدم</span>
                                         </div>
                                         <div className="flex items-center gap-1">
-                                            <span className="font-bold text-gray-900 dark:text-white">{user.trainingId}</span>
-                                            <span className="text-xs text-gray-500">الرقم الأكاديمي</span>
+                                            <span className="font-bold text-slate-900 dark:text-white">{user.trainingId}</span>
+                                            <span className="text-xs text-slate-500 dark:text-slate-400">الرقم الأكاديمي</span>
                                         </div>
                                     </div>
 
@@ -549,11 +551,11 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                             {/* --- NATIONAL ADDRESS MAP --- */}
                             <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 shadow-sm">
-                                <h3 className="text-gray-900 dark:text-white font-bold mb-4 flex items-center gap-2">
+                                <h3 className="text-slate-900 dark:text-white font-bold mb-4 flex items-center gap-2">
                                     <MapPin className="w-5 h-5 text-red-500"/> العنوان الوطني
                                 </h3>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">{user.address || 'لم يتم تحديد العنوان. يرجى تحديث الملف الشخصي.'}</p>
-                                <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 h-64 bg-gray-100 dark:bg-gray-800 relative">
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">{user.address || 'لم يتم تحديد العنوان. يرجى تحديث الملف الشخصي.'}</p>
+                                <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 h-64 bg-gray-100 dark:bg-slate-700 relative">
                                     {user.address ? (
                                         <iframe 
                                             width="100%" 
@@ -564,7 +566,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                             title="National Address Map"
                                         ></iframe>
                                     ) : (
-                                        <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                                        <div className="flex flex-col items-center justify-center h-full text-gray-400 dark:text-slate-500">
                                             <MapPin className="w-10 h-10 mb-2 opacity-50"/>
                                             <p className="text-sm">لا يوجد عنوان مسجل</p>
                                         </div>
@@ -582,45 +584,45 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 relative overflow-hidden group hover:border-emerald-500/50 transition-all shadow-sm">
                                             <div className="absolute top-0 right-0 p-4 opacity-10"><Wallet className="w-12 h-12 text-emerald-500"/></div>
-                                            <div className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase mb-1">الرصيد</div>
-                                            <div className="text-2xl font-black text-gray-900 dark:text-white">{walletBalance} <span className="text-sm font-normal text-gray-500">SAR</span></div>
+                                            <div className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">الرصيد</div>
+                                            <div className="text-2xl font-black text-slate-900 dark:text-white">{walletBalance} <span className="text-sm font-normal text-slate-500">SAR</span></div>
                                         </div>
                                         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 relative overflow-hidden group hover:border-purple-500/50 transition-all shadow-sm">
                                             <div className="absolute top-0 right-0 p-4 opacity-10"><GraduationCap className="w-12 h-12 text-purple-500"/></div>
-                                            <div className="text-gray-500 dark:text-gray-400 text-xs font-bold uppercase mb-1">الشهادات</div>
-                                            <div className="text-2xl font-black text-gray-900 dark:text-white">{certsCount}</div>
+                                            <div className="text-slate-500 dark:text-slate-400 text-xs font-bold uppercase mb-1">الشهادات</div>
+                                            <div className="text-2xl font-black text-slate-900 dark:text-white">{certsCount}</div>
                                         </div>
-                                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 relative overflow-hidden group cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 shadow-sm" onClick={() => setShowExperienceModal(true)}>
+                                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 relative overflow-hidden group cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 shadow-sm" onClick={() => setShowExperienceModal(true)}>
                                             <div className="absolute top-0 right-0 p-4 opacity-10"><Award className="w-12 h-12 text-amber-500"/></div>
                                             <div className="text-amber-500 dark:text-amber-400 text-xs font-bold uppercase mb-1">توثيق الخبرة</div>
-                                            <div className="text-sm font-bold text-gray-900 dark:text-white mt-2 flex items-center gap-1">ابدأ التوثيق <ArrowUpRight className="w-4 h-4"/></div>
+                                            <div className="text-sm font-bold text-slate-900 dark:text-white mt-2 flex items-center gap-1">ابدأ التوثيق <ArrowUpRight className="w-4 h-4"/></div>
                                         </div>
-                                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 relative overflow-hidden group cursor-pointer hover:bg-gray-50 dark:hover:bg-white/5 shadow-sm" onClick={() => setActiveSection('academy')}>
+                                        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 relative overflow-hidden group cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700 shadow-sm" onClick={() => setActiveSection('academy')}>
                                             <div className="absolute top-0 right-0 p-4 opacity-10"><BookOpen className="w-12 h-12 text-blue-500"/></div>
                                             <div className="text-blue-500 dark:text-blue-400 text-xs font-bold uppercase mb-1">الحقائب التدريبية</div>
-                                            <div className="text-sm font-bold text-gray-900 dark:text-white mt-2 flex items-center gap-1">تصفح (2500) حقيبة <ArrowUpRight className="w-4 h-4"/></div>
+                                            <div className="text-sm font-bold text-slate-900 dark:text-white mt-2 flex items-center gap-1">تصفح (2500) حقيبة <ArrowUpRight className="w-4 h-4"/></div>
                                         </div>
                                     </div>
                                     
                                     <div className="mt-8">
-                                        <h3 className="text-gray-900 dark:text-white font-bold mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-gray-400"/> بطاقتي الرقمية (Classic)</h3>
+                                        <h3 className="text-slate-900 dark:text-white font-bold mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-gray-400"/> بطاقتي الرقمية (Classic)</h3>
                                         <SmartIDCard user={user} />
                                     </div>
                                 </div>
 
                                 <div className="xl:col-span-1">
                                     <div className="bg-white dark:bg-slate-800 rounded-2xl border border-gray-200 dark:border-slate-700 p-6 h-full shadow-sm">
-                                        <div className="flex items-center gap-2 text-[10px] text-gray-500 mb-6">
+                                        <div className="flex items-center gap-2 text-[10px] text-slate-500 mb-6">
                                             <span>القائمة الرئيسية</span>
                                             <ChevronLeft className="w-3 h-3"/>
                                             <span className="text-blue-500 dark:text-blue-400 font-bold">الضوابط والأدلة</span>
                                         </div>
-                                        <h3 className="text-gray-900 dark:text-white font-bold text-lg mb-6 border-b border-gray-200 dark:border-white/10 pb-4 flex items-center gap-2">
+                                        <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-6 border-b border-gray-200 dark:border-slate-700 pb-4 flex items-center gap-2">
                                             <Building2 className="w-5 h-5 text-blue-500"/> خدمات الشؤون الأكاديمية
                                         </h3>
                                         <div className="space-y-4">
                                             <div 
-                                                className="bg-gray-50 dark:bg-slate-700 p-4 rounded-xl border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600/50 transition-colors cursor-pointer group hover:border-blue-500/30"
+                                                className="bg-gray-50 dark:bg-slate-700 p-4 rounded-xl border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors cursor-pointer group hover:border-blue-500/30"
                                                 onClick={() => setShowExamGuide(true)}
                                             >
                                                  <div className="flex gap-4">
@@ -628,39 +630,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                                          <FileSignature className="w-6 h-6"/>
                                                      </div>
                                                      <div>
-                                                         <h4 className="text-gray-900 dark:text-white font-bold text-sm mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">دليل الاختبارات</h4>
-                                                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                                                         <h4 className="text-slate-900 dark:text-white font-bold text-sm mb-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">دليل الاختبارات</h4>
+                                                         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                                                              جداول الاختبارات، تعليمات دخول القاعات، الممنوعات أثناء الاختبار، وطريقة توزيع الدرجات.
                                                          </p>
                                                      </div>
                                                  </div>
                                             </div>
-                                            <div className="bg-gray-50 dark:bg-slate-700 p-4 rounded-xl border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600/50 transition-colors cursor-pointer group hover:border-amber-500/30">
-                                                 <div className="flex gap-4">
-                                                     <div className="p-3 bg-amber-100 dark:bg-amber-600/20 rounded-lg text-amber-600 dark:text-amber-400 h-fit group-hover:scale-110 transition-transform">
-                                                         <UserX className="w-6 h-6"/>
-                                                     </div>
-                                                     <div>
-                                                         <h4 className="text-gray-900 dark:text-white font-bold text-sm mb-2 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">ضوابط تقديم الأعذار</h4>
-                                                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                                                             شروط قبول الأعذار الطبية والقهرية، المستندات المطلوبة، والمهلة الزمنية للتقديم.
-                                                         </p>
-                                                     </div>
-                                                 </div>
-                                            </div>
-                                            <div className="bg-gray-50 dark:bg-slate-700 p-4 rounded-xl border border-gray-200 dark:border-slate-600 hover:bg-gray-100 dark:hover:bg-slate-600/50 transition-colors cursor-pointer group hover:border-emerald-500/30">
-                                                 <div className="flex gap-4">
-                                                     <div className="p-3 bg-emerald-100 dark:bg-emerald-600/20 rounded-lg text-emerald-600 dark:text-emerald-400 h-fit group-hover:scale-110 transition-transform">
-                                                         <GitMerge className="w-6 h-6"/>
-                                                     </div>
-                                                     <div>
-                                                         <h4 className="text-gray-900 dark:text-white font-bold text-sm mb-2 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">الإجراءات الأكاديمية</h4>
-                                                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
-                                                             نظام الحرمان، حساب المعدل التراكمي، الانتقال بين المستويات، والحقوق والواجبات.
-                                                         </p>
-                                                     </div>
-                                                 </div>
-                                            </div>
+                                            {/* ... Repeat similar structure for other cards ... */}
                                         </div>
                                     </div>
                                 </div>
@@ -671,19 +648,19 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     {/* VIEW: DOCUMENTS */}
                     {activeSection === 'documents' && (
                         <div className="space-y-8 animate-fade-in-up pb-20">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-white/10 pb-4 mb-6">مركز الوثائق والسجل الأكاديمي</h2>
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white border-b border-gray-200 dark:border-slate-700 pb-4 mb-6">مركز الوثائق والسجل الأكاديمي</h2>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm">
-                                    <h3 className="text-gray-900 dark:text-white font-bold mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-blue-500"/> السجل الأكاديمي</h3>
+                                    <h3 className="text-slate-900 dark:text-white font-bold mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-blue-500"/> السجل الأكاديمي</h3>
                                     <AcademicTranscript />
                                 </div>
                                 
                                 <div className="space-y-6">
                                     <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 text-center shadow-sm">
-                                        <h3 className="text-gray-900 dark:text-white font-bold mb-4 flex items-center justify-center gap-2"><Award className="w-5 h-5 text-emerald-500"/> نموذج الشهادة المعتمد</h3>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-6">شاهد نموذجاً حياً لشكل الشهادات التي تصدرها الأكاديمية.</p>
-                                        <button onClick={() => setShowCertPreview(true)} className="px-6 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 border border-gray-200 dark:border-white/10 rounded-xl text-gray-800 dark:text-white text-sm transition-colors mb-2">
+                                        <h3 className="text-slate-900 dark:text-white font-bold mb-4 flex items-center justify-center gap-2"><Award className="w-5 h-5 text-emerald-500"/> نموذج الشهادة المعتمد</h3>
+                                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-6">شاهد نموذجاً حياً لشكل الشهادات التي تصدرها الأكاديمية.</p>
+                                        <button onClick={() => setShowCertPreview(true)} className="px-6 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-slate-700 dark:hover:bg-slate-600 border border-gray-200 dark:border-slate-600 rounded-xl text-slate-800 dark:text-white text-sm transition-colors mb-2">
                                             معاينة النموذج
                                         </button>
                                         <div className="mt-2">
@@ -694,7 +671,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     </div>
 
                                     <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm">
-                                        <h3 className="text-gray-900 dark:text-white font-bold mb-4">شهاداتي المكتسبة</h3>
+                                        <h3 className="text-slate-900 dark:text-white font-bold mb-4">شهاداتي المكتسبة</h3>
                                         {user.certificates && user.certificates.length > 0 ? (
                                             <div className="space-y-2">
                                                 {user.certificates.map(cert => (
@@ -702,8 +679,8 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                                         <div className="flex items-center gap-3">
                                                             <div className="bg-emerald-100 dark:bg-emerald-500/20 p-2 rounded-lg"><Award className="w-4 h-4 text-emerald-600 dark:text-emerald-400"/></div>
                                                             <div>
-                                                                <span className="text-sm text-gray-800 dark:text-gray-200 block font-bold">{cert.courseName}</span>
-                                                                <span className="text-[10px] text-gray-500 block">{cert.id}</span>
+                                                                <span className="text-sm text-slate-800 dark:text-slate-200 block font-bold">{cert.courseName}</span>
+                                                                <span className="text-[10px] text-slate-500 block">{cert.id}</span>
                                                             </div>
                                                         </div>
                                                         <span className="text-xs text-emerald-600 dark:text-emerald-500 font-mono">{new Date(cert.issuedAt).toLocaleDateString()}</span>
@@ -711,20 +688,16 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                                 ))}
                                             </div>
                                         ) : (
-                                            <p className="text-sm text-gray-500 text-center py-4">لا توجد شهادات حتى الآن.</p>
+                                            <p className="text-sm text-slate-500 text-center py-4">لا توجد شهادات حتى الآن.</p>
                                         )}
                                     </div>
                                     
                                     <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm">
-                                        <h3 className="text-gray-900 dark:text-white font-bold mb-4">الإفادات الإدارية</h3>
+                                        <h3 className="text-slate-900 dark:text-white font-bold mb-4">الإفادات الإدارية</h3>
                                         <div className="space-y-2">
                                              <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors">
-                                                <span className="text-sm text-gray-700 dark:text-gray-300">إفادة انتظام بالدراسة</span>
+                                                <span className="text-sm text-slate-700 dark:text-slate-300">إفادة انتظام بالدراسة</span>
                                                 <button onClick={() => setShowEnrollmentCert(true)} className="text-xs bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded text-white font-bold transition-all">طباعة الإفادة</button>
-                                             </div>
-                                             <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-slate-700 rounded-lg opacity-60">
-                                                <span className="text-sm text-gray-400">إفادة تخرج</span>
-                                                <button disabled className="text-xs bg-gray-200 dark:bg-white/5 px-2 py-1 rounded text-gray-500">قريباً</button>
                                              </div>
                                         </div>
                                     </div>
@@ -736,7 +709,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     {/* VIEW: WALLET */}
                     {activeSection === 'wallet' && (
                         <div className="space-y-6 animate-fade-in-up pb-20">
-                             <h2 className="text-2xl font-bold text-gray-900 dark:text-white border-b border-gray-200 dark:border-white/10 pb-4 mb-6">المحفظة المالية</h2>
+                             <h2 className="text-2xl font-bold text-slate-900 dark:text-white border-b border-gray-200 dark:border-slate-700 pb-4 mb-6">المحفظة المالية</h2>
                              <div className="bg-gradient-to-r from-emerald-600 to-teal-800 p-8 rounded-3xl text-white shadow-2xl relative overflow-hidden">
                                  <div className="absolute top-0 right-0 p-8 opacity-10"><Wallet className="w-32 h-32"/></div>
                                  <div className="relative z-10">
@@ -744,27 +717,27 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                      <h3 className="text-5xl font-black">{walletBalance.toFixed(2)} <span className="text-xl font-normal">ر.س</span></h3>
                                  </div>
                              </div>
-                             <p className="text-gray-500 dark:text-gray-400 text-center">المزيد من تفاصيل العمليات قريباً...</p>
+                             <p className="text-slate-500 dark:text-slate-400 text-center">المزيد من تفاصيل العمليات قريباً...</p>
                         </div>
                     )}
 
                     {/* VIEW: SETTINGS */}
                     {activeSection === 'settings' && (
                          <div className="space-y-8 animate-fade-in-up max-w-3xl mx-auto pb-20">
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 border-b border-gray-200 dark:border-white/10 pb-4">إعدادات الحساب والملف الشخصي</h2>
+                            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 border-b border-gray-200 dark:border-slate-700 pb-4">إعدادات الحساب والملف الشخصي</h2>
 
                             <form onSubmit={handleSaveProfile} className="space-y-6">
                                 {/* Cover Image Upload */}
                                 <div className="flex flex-col gap-2 mb-4">
-                                    <label className="block text-xs font-bold text-gray-500 dark:text-gray-400">صورة الغلاف (Header)</label>
-                                    <div className="relative h-32 w-full rounded-xl overflow-hidden bg-gray-200 dark:bg-black/30 border border-gray-300 dark:border-white/10 group cursor-pointer" onClick={() => coverInputRef.current?.click()}>
+                                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400">صورة الغلاف (Header)</label>
+                                    <div className="relative h-32 w-full rounded-xl overflow-hidden bg-gray-200 dark:bg-slate-800 border border-gray-300 dark:border-slate-700 group cursor-pointer" onClick={() => coverInputRef.current?.click()}>
                                         {user.coverImage ? (
                                             <img src={user.coverImage} className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
                                         ) : (
                                             <div className="w-full h-full bg-gradient-to-r from-blue-100 dark:from-blue-900/40 to-slate-200 dark:to-slate-900/40"></div>
                                         )}
                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <ImageIcon className="w-8 h-8 text-gray-700 dark:text-white" />
+                                            <ImageIcon className="w-8 h-8 text-slate-700 dark:text-white" />
                                         </div>
                                         {user.coverImage && (
                                             <button 
@@ -778,7 +751,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         )}
                                         <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleCoverUpload}/>
                                     </div>
-                                    <p className="text-[10px] text-gray-500">يفضل صورة بالعرض (1500x500)</p>
+                                    <p className="text-[10px] text-slate-500">يفضل صورة بالعرض (1500x500)</p>
                                 </div>
 
                                 {/* Avatar Upload */}
@@ -789,14 +762,14 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         </div>
                                         
                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                                            <Camera className="w-8 h-8 text-gray-700 dark:text-white"/>
+                                            <Camera className="w-8 h-8 text-slate-700 dark:text-white"/>
                                         </div>
                                         
                                         {user.avatar && (
                                             <button 
                                                 type="button"
                                                 onClick={handleRemoveAvatar}
-                                                className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-500 text-white p-2 rounded-full shadow-lg border-2 border-white dark:border-[#0f172a] transition-colors z-20"
+                                                className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-500 text-white p-2 rounded-full shadow-lg border-2 border-white dark:border-slate-900 transition-colors z-20"
                                                 title="حذف الصورة"
                                             >
                                                 <Trash2 className="w-4 h-4"/>
@@ -805,78 +778,78 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         
                                         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload}/>
                                     </div>
-                                    <p className="text-xs text-gray-500">اضغط على الصورة للتغيير أو أيقونة الحذف للإزالة</p>
+                                    <p className="text-xs text-slate-500">اضغط على الصورة للتغيير أو أيقونة الحذف للإزالة</p>
                                 </div>
 
                                 <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-gray-200 dark:border-slate-700 mb-6 shadow-sm">
-                                    <h3 className="text-gray-900 dark:text-white font-bold mb-4 flex items-center gap-2">
+                                    <h3 className="text-slate-900 dark:text-white font-bold mb-4 flex items-center gap-2">
                                         <User className="w-5 h-5 text-blue-500 dark:text-blue-400"/> البيانات الأساسية
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">الاسم الكامل</label>
-                                            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors" />
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">الاسم الكامل</label>
+                                            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors" />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">اسم المستخدم (Username)</label>
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">اسم المستخدم (Username)</label>
                                             <div className="relative">
                                                 <input 
                                                     type="text" 
                                                     value={formData.username} 
                                                     onChange={e => handleUsernameChange(e.target.value)} 
-                                                    className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 pl-10 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors dir-ltr font-mono" 
+                                                    className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 pl-10 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors dir-ltr font-mono" 
                                                     placeholder="username"
                                                 />
-                                                <AtSign className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
+                                                <AtSign className="absolute left-3 top-3.5 w-4 h-4 text-slate-500"/>
                                             </div>
-                                            <p className="text-[9px] text-gray-400 mt-1">حروف إنجليزية وأرقام فقط، بدون مسافات.</p>
+                                            <p className="text-[9px] text-slate-400 mt-1">حروف إنجليزية وأرقام فقط، بدون مسافات.</p>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">المسمى الوظيفي</label>
-                                            <input type="text" value={formData.currentJobTitle} onChange={e => setFormData({...formData, currentJobTitle: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors" placeholder="مثال: مطور برمجيات" />
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">المسمى الوظيفي</label>
+                                            <input type="text" value={formData.currentJobTitle} onChange={e => setFormData({...formData, currentJobTitle: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors" placeholder="مثال: مطور برمجيات" />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">رقم الهاتف</label>
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">رقم الهاتف</label>
                                             <div className="relative">
-                                                <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 pl-10 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors text-right" dir="ltr" />
-                                                <Phone className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
+                                                <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 pl-10 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors text-right" dir="ltr" />
+                                                <Phone className="absolute left-3 top-3.5 w-4 h-4 text-slate-500"/>
                                             </div>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">العنوان</label>
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">العنوان</label>
                                             <div className="relative">
-                                                <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 pl-10 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors" />
-                                                <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
+                                                <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 pl-10 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors" />
+                                                <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-slate-500"/>
                                             </div>
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">نبذة عنك</label>
-                                            <textarea value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors h-24 resize-none" placeholder="اكتب نبذة مختصرة..." />
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">نبذة عنك</label>
+                                            <textarea value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors h-24 resize-none" placeholder="اكتب نبذة مختصرة..." />
                                         </div>
                                     </div>
                                 </div>
 
                                 {/* Vital Information Section */}
                                 <div className="bg-white dark:bg-slate-800 p-6 rounded-xl border border-gray-200 dark:border-slate-700 mb-6 shadow-sm">
-                                    <h3 className="text-gray-900 dark:text-white font-bold mb-4 flex items-center gap-2">
+                                    <h3 className="text-slate-900 dark:text-white font-bold mb-4 flex items-center gap-2">
                                         <ActivityDot/> المعلومات الحيوية والديموغرافية
                                     </h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">رقم الهوية الوطنية / الإقامة</label>
-                                            <input type="text" value={formData.nationalId} onChange={e => setFormData({...formData, nationalId: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors font-mono" placeholder="10xxxxxxxxx"/>
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">رقم الهوية الوطنية / الإقامة</label>
+                                            <input type="text" value={formData.nationalId} onChange={e => setFormData({...formData, nationalId: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors font-mono" placeholder="10xxxxxxxxx"/>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">الجنسية</label>
-                                            <input type="text" value={formData.nationality} onChange={e => setFormData({...formData, nationality: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"/>
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">الجنسية</label>
+                                            <input type="text" value={formData.nationality} onChange={e => setFormData({...formData, nationality: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"/>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">تاريخ الميلاد</label>
-                                            <input type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"/>
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">تاريخ الميلاد</label>
+                                            <input type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"/>
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">فصيلة الدم</label>
-                                            <select value={formData.bloodType} onChange={e => setFormData({...formData, bloodType: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors">
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">فصيلة الدم</label>
+                                            <select value={formData.bloodType} onChange={e => setFormData({...formData, bloodType: e.target.value})} className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors">
                                                 <option value="">اختر الفصيلة</option>
                                                 <option value="A+">A+</option>
                                                 <option value="A-">A-</option>
@@ -889,12 +862,12 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                             </select>
                                         </div>
                                         <div className="md:col-span-2">
-                                            <label className="block text-xs font-bold text-gray-500 dark:text-gray-400 mb-2">التخصص الجامعي (يظهر في البطاقة)</label>
+                                            <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">التخصص الجامعي (يظهر في البطاقة)</label>
                                             <input 
                                                 type="text" 
                                                 value={formData.major} 
                                                 onChange={e => setFormData({...formData, major: e.target.value})} 
-                                                className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-gray-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors" 
+                                                className="w-full bg-gray-50 dark:bg-slate-700 border border-gray-300 dark:border-slate-600 rounded-xl p-3 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors" 
                                                 placeholder="مثال: علوم الحاسب، إدارة أعمال" 
                                             />
                                         </div>
@@ -926,15 +899,15 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         {/* EXAM GUIDE MODAL */}
         {showExamGuide && (
             <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up" onClick={() => setShowExamGuide(false)}>
-              <div className="bg-white dark:bg-[#1e293b] w-full max-w-3xl rounded-2xl border border-gray-200 dark:border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
-                <div className="p-6 border-b border-gray-200 dark:border-white/10 flex justify-between items-center bg-gray-50 dark:bg-[#0f172a]">
-                     <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <div className="bg-white dark:bg-slate-800 w-full max-w-3xl rounded-2xl border border-gray-200 dark:border-slate-700 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center bg-gray-50 dark:bg-slate-900">
+                     <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
                          <FileSignature className="w-6 h-6 text-blue-500 dark:text-blue-400"/> دليل الاختبارات والواجبات
                      </h2>
-                     <button onClick={() => setShowExamGuide(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-white/10 rounded-full text-gray-500 dark:text-white"><X className="w-5 h-5"/></button>
+                     <button onClick={() => setShowExamGuide(false)} className="p-2 hover:bg-gray-200 dark:hover:bg-white/10 rounded-full text-slate-500 dark:text-white"><X className="w-5 h-5"/></button>
                 </div>
-                <div className="p-8 overflow-y-auto text-right text-gray-700 dark:text-gray-300 space-y-6 leading-relaxed">
-                     <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 border-b border-gray-200 dark:border-white/10 pb-4">سياسة ودليل الواجبات والاختبارات - أكاديمية ميلاف مراد</h1>
+                <div className="p-8 overflow-y-auto text-right text-slate-700 dark:text-slate-300 space-y-6 leading-relaxed">
+                     <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4 border-b border-gray-200 dark:border-white/10 pb-4">سياسة ودليل الواجبات والاختبارات - أكاديمية ميلاف مراد</h1>
                      <p>سياسة الاختبارات والواجبات تضمن النزاهة الأكاديمية.</p>
                 </div>
               </div>

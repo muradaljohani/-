@@ -35,6 +35,7 @@ const AppContent = () => {
   const toggleTheme = () => {
       const newTheme = theme === 'dark' ? 'light' : 'dark';
       setTheme(newTheme);
+      // Toggle class on HTML element for global Tailwind Dark Mode
       document.documentElement.classList.toggle('dark', newTheme === 'dark');
       localStorage.setItem('murad_theme', newTheme);
   };
@@ -48,6 +49,7 @@ const AppContent = () => {
       } else {
           // Default to dark
           document.documentElement.classList.add('dark');
+          setTheme('dark');
       }
   }, []);
 
@@ -123,7 +125,10 @@ const AppContent = () => {
   const isImmersive = ['support', 'corporate', 'clock-system', 'meta', 'cloud', 'dopamine', 'domains', 'user-dashboard', 'course-view'].includes(currentView);
 
   return (
-    <div className="flex flex-col min-h-screen font-sans transition-colors duration-300 bg-white dark:bg-[#0f172a] text-slate-900 dark:text-gray-100">
+    // STRICT COLOR LOGIC: 
+    // Light Mode: bg-white, text-slate-900 (Dark Gray/Black)
+    // Dark Mode: bg-[#0f172a] (Dark Blue/Black), text-white
+    <div className="flex flex-col min-h-screen font-sans transition-colors duration-300 bg-white text-slate-900 dark:bg-[#0f172a] dark:text-white">
       <SEOHelmet title="مجموعة ميلاف مراد" />
       
       {!isImmersive && (

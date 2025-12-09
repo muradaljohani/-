@@ -40,22 +40,58 @@
 
     <!-- CRITICAL CSS -->
     <style>
-    :root { --sat: env(safe-area-inset-top); --sab: env(safe-area-inset-bottom); }
+    :root { 
+        --sat: env(safe-area-inset-top); 
+        --sab: env(safe-area-inset-bottom); 
+    }
+    
+    /* Global Reset for Dark Mode Compatibility */
     body { 
         font-family: 'Tajawal', sans-serif !important; 
         overscroll-behavior-y: none; 
         -webkit-tap-highlight-color: transparent; 
         text-align: right; 
-        background-color: #0f172a; 
-        color: #f3f4f6; 
+        background-color: #ffffff;
+        color: #0f172a;
+        transition: background-color 0.3s ease, color 0.3s ease;
     }
+
+    /* Dark Mode Global Overrides (Twitter Dim Palette) */
+    html.dark body {
+        background-color: #15202b !important; /* Twitter Dim BG */
+        color: #f7f9f9 !important; /* Twitter Dim Text */
+    }
+
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.5); border-radius: 10px; }
+    
+    html.dark ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); }
+
     #root { min-height: 100vh; display: flex; flex-direction: column; }
     </style>
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              // Twitter-like Dark Palette
+              dark: {
+                bg: '#15202b',
+                card: '#1e2732',
+                border: '#38444d',
+                input: '#273340',
+                text: '#f7f9f9',
+                muted: '#8b98a5'
+              }
+            }
+          }
+        }
+      }
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800;900&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     
     <!-- MASTER STRUCTURED DATA (Organization Graph) -->
