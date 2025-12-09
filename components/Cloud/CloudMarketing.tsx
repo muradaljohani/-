@@ -42,7 +42,7 @@ export const CloudMarketing: React.FC<Props> = ({ onNavigate }) => {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     
     const messagesEndRef = useRef<HTMLDivElement>(null);
-    const inputRef = useRef<HTMLTextAreaElement>(null); // Fixed type here
+    const inputRef = useRef<HTMLTextAreaElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
 
     // --- AUTO-SCROLL ---

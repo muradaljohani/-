@@ -309,13 +309,8 @@ export const MuradGroupPortal: React.FC<Props> = ({ onNavigate }) => {
                     <div className="bg-[#0f172a] p-12 md:w-2/5 text-white flex flex-col justify-center relative overflow-hidden">
                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                          <div className="relative z-10">
-                             <div className="w-32 h-32 bg-white/10 rounded-2xl flex items-center justify-center mb-8 border border-white/20 overflow-hidden shadow-2xl mx-auto md:mx-0">
-                                 <img 
-                                    src="/murad-car-selfie.jpg" 
-                                    alt="م. مراد الجهني" 
-                                    className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
-                                    onError={(e) => e.currentTarget.src = "https://api.dicebear.com/7.x/initials/svg?seed=Murad"} 
-                                 />
+                             <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mb-8 border border-white/20">
+                                 <span className="font-black text-4xl">M</span>
                              </div>
                              <h2 className="text-3xl font-bold mb-2">كلمة المؤسس</h2>
                              <p className="text-slate-400 text-sm mb-8">الرؤية، الرسالة، والمستقبل.</p>

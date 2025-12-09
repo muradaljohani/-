@@ -3,58 +3,14 @@ import React, { useState } from 'react';
 import { 
     Home, Search, Bell, Mail, User, MoreHorizontal, 
     Image as ImageIcon, Smile, Send, Heart, MessageCircle, 
-    Repeat, Share2, ArrowLeft, MoreVertical, Plus, CheckCircle2, Pin
+    Repeat, Share2, ArrowLeft, MoreVertical, Plus, CheckCircle2, Pin 
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { posts } from '../../dummyData';
 
 interface Props {
     onBack: () => void;
 }
-
-// --- HELPER: Number Formatting ---
-const formatNumber = (num: number) => {
-    if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-    return num.toString();
-};
-
-// --- MOCK DATA ---
-const POSTS = [
-    {
-        id: 'post-0',
-        user: {
-            name: 'Murad Al-Juhani',
-            handle: '@IpMurad',
-            avatar: '/murad-car-selfie.jpg',
-            verified: true
-        },
-        time: 'Just now',
-        content: 'مرحبا بكم في مجتمع ميلاف .........................اول منشور .. ياسلام اخير صرت انافس ايلون ماسك ...',
-        image: '/murad-car-selfie.jpg',
-        likes: 50000,
-        comments: 12500, // Replaces replies
-        reposts: 5000000, // Replaces retweets
-        isPinned: true
-    },
-    {
-        id: 2,
-        user: { name: 'Sarah Tech', handle: '@sarah_dev', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah', verified: false },
-        time: '5h',
-        content: 'مين جرب خدمة الذكاء الاصطناعي الجديدة في المنصة؟ بصراحة النتائج مبهرة جداً في تحليل البيانات.',
-        likes: 85,
-        comments: 20,
-        reposts: 5
-    },
-    {
-        id: 3,
-        user: { name: 'Khaled Design', handle: '@k_art', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Khaled', verified: false },
-        time: '1d',
-        content: 'نصيحة للمصممين: دائماً وثق أعمالك في معرض الأعمال، هذا يزيد من فرص حصولك على مشاريع.',
-        likes: 240,
-        comments: 32,
-        reposts: 40
-    }
-];
 
 const CHATS = [
     { id: 1, name: 'فريق التطوير', msg: 'هل تم تحديث السيرفر؟', time: '10:30 AM', unread: 2, avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Dev' },
@@ -79,61 +35,60 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
         </button>
     );
 
-    const PostCard = ({ post }: any) => (
-        <div className="p-4 border-b border-slate-800 hover:bg-slate-900/30 transition-colors cursor-pointer">
-            {post.isPinned && (
-                <div className="flex items-center gap-2 text-slate-500 text-xs font-bold mb-2 mr-12">
-                    <Pin className="w-3 h-3 fill-current rotate-45" />
-                    <span>Pinned Post</span>
-                </div>
-            )}
-            <div className="flex gap-3">
-                <img 
-                    src={post.user.avatar} 
-                    className="w-10 h-10 rounded-full bg-slate-800 object-cover border border-slate-700" 
-                    alt={post.user.name} 
-                    onError={(e) => {
-                        e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${post.user.name}`;
-                    }}
-                />
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1 mb-0.5">
-                        <span className="font-bold text-white hover:underline truncate flex items-center gap-1">
-                            {post.user.name}
-                            {post.user.verified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-white" />}
-                        </span>
-                        <span className="text-slate-500 text-sm truncate">{post.user.handle}</span>
-                        <span className="text-slate-500 text-sm">· {post.time}</span>
+    const PostCard = ({ post }: any) => {
+        // Format large numbers
+        const formatNumber = (num: number) => {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        };
+
+        return (
+            <div className={`p-4 border-b border-slate-800 hover:bg-slate-900/30 transition-colors cursor-pointer ${post.isPinned ? 'bg-slate-900/10' : ''}`}>
+                {post.isPinned && (
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-2 mr-12">
+                        <Pin className="w-3 h-3 fill-current" /> <span>منشور مثبت</span>
                     </div>
-                    <p className="text-slate-200 text-sm md:text-base whitespace-pre-line mb-3 leading-relaxed">
-                        {post.content}
-                    </p>
-                    {post.image && (
-                        <div className="mb-3 rounded-xl overflow-hidden border border-slate-800">
-                            <img src={post.image} className="w-full h-auto object-cover max-h-[400px]" alt="Post content" />
+                )}
+                <div className="flex gap-3">
+                    <img src={post.user.avatar} className="w-10 h-10 rounded-full bg-slate-800 object-cover" alt={post.user.name} />
+                    <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1 mb-0.5">
+                            <span className="font-bold text-white hover:underline truncate">{post.user.name}</span>
+                            {post.user.verified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-white" />}
+                            <span className="text-slate-500 text-sm truncate ltr ml-1" dir="ltr">{post.user.handle}</span>
+                            <span className="text-slate-500 text-sm">· {post.timestamp}</span>
                         </div>
-                    )}
-                    <div className="flex justify-between text-slate-500 max-w-md">
-                        <button className="flex items-center gap-2 hover:text-blue-400 transition-colors group">
-                            <div className="p-2 rounded-full group-hover:bg-blue-500/10"><MessageCircle className="w-4 h-4"/></div>
-                            <span className="text-xs">{formatNumber(post.comments)}</span>
-                        </button>
-                        <button className="flex items-center gap-2 hover:text-green-400 transition-colors group">
-                            <div className="p-2 rounded-full group-hover:bg-green-500/10"><Repeat className="w-4 h-4"/></div>
-                            <span className="text-xs">{formatNumber(post.reposts)}</span>
-                        </button>
-                        <button className="flex items-center gap-2 hover:text-pink-400 transition-colors group">
-                            <div className="p-2 rounded-full group-hover:bg-pink-500/10"><Heart className="w-4 h-4"/></div>
-                            <span className="text-xs">{formatNumber(post.likes)}</span>
-                        </button>
-                        <button className="flex items-center gap-2 hover:text-blue-400 transition-colors group">
-                            <div className="p-2 rounded-full group-hover:bg-blue-500/10"><Share2 className="w-4 h-4"/></div>
-                        </button>
+                        <p className="text-slate-200 text-sm md:text-base whitespace-pre-wrap mb-3 leading-relaxed">
+                            {post.content}
+                        </p>
+                        {post.image && (
+                            <div className="mb-3 rounded-xl overflow-hidden border border-slate-800">
+                                <img src={post.image} className="w-full h-auto object-cover max-h-[400px]" alt="Post content" />
+                            </div>
+                        )}
+                        <div className="flex justify-between text-slate-500 max-w-md">
+                            <button className="flex items-center gap-2 hover:text-blue-400 transition-colors group">
+                                <div className="p-2 rounded-full group-hover:bg-blue-500/10"><MessageCircle className="w-4 h-4"/></div>
+                                <span className="text-xs">{formatNumber(post.replies)}</span>
+                            </button>
+                            <button className="flex items-center gap-2 hover:text-green-400 transition-colors group">
+                                <div className="p-2 rounded-full group-hover:bg-green-500/10"><Repeat className="w-4 h-4"/></div>
+                                <span className="text-xs">{formatNumber(post.retweets)}</span>
+                            </button>
+                            <button className="flex items-center gap-2 hover:text-pink-400 transition-colors group">
+                                <div className="p-2 rounded-full group-hover:bg-pink-500/10"><Heart className="w-4 h-4"/></div>
+                                <span className="text-xs">{formatNumber(post.likes)}</span>
+                            </button>
+                            <button className="flex items-center gap-2 hover:text-blue-400 transition-colors group">
+                                <div className="p-2 rounded-full group-hover:bg-blue-500/10"><Share2 className="w-4 h-4"/></div>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const FeedView = () => (
         <div className="flex-1 min-h-screen border-x border-slate-800 max-w-[600px] w-full">
@@ -169,7 +124,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
 
             {/* Posts */}
             <div>
-                {POSTS.map(post => <PostCard key={post.id} post={post} />)}
+                {posts.map(post => <PostCard key={post.id} post={post} />)}
             </div>
         </div>
     );
