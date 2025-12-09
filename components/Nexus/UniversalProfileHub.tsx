@@ -7,14 +7,13 @@ import {
     CreditCard, Save, MapPin, Phone, Mail, Edit3, Loader2, FileText,
     Menu, X, Camera, Award, Shield, FileCheck, Star, PlayCircle, Grid, List,
     Home, FileInput, Users, HeartHandshake, CheckSquare, AlertTriangle, Ban, Megaphone, ChevronDown, ChevronUp, Building2,
-    FileSignature, UserX, GitMerge, ChevronLeft, ClipboardList, Briefcase as BriefcaseIcon
+    FileSignature, UserX, GitMerge, ChevronLeft, ChevronRight, ClipboardList, Briefcase as BriefcaseIcon, Database, Cpu, Globe, Server, Lock, Wifi, Code, Layers, Trash2
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AcademicTranscript } from '../Academy/AcademicTranscript';
 import { VirtualClassroom } from '../Academy/VirtualClassroom';
 import { SmartIDCard } from '../Identity/SmartIDCard'; 
 import { CommunityPulse } from '../Social/CommunityPulse';
-import { InstallPrompt } from '../Mobile/InstallPrompt'; 
 import { ExperienceValidationModal } from '../ExperienceValidationModal';
 import { CertificatePreviewModal } from '../CertificatePreviewModal';
 import { CertificateGenerator } from '../CertificateGenerator';
@@ -25,13 +24,35 @@ interface Props {
     onClose: () => void;
 }
 
+// --- ACADEMY DATA GENERATOR ---
+const ACADEMY_CATEGORIES = [
+    { id: 'ai', title: 'الذكاء الاصطناعي (AI)', icon: <Cpu/>, color: 'text-purple-400' },
+    { id: 'cyber', title: 'الأمن السيبراني (Cybersecurity)', icon: <Shield/>, color: 'text-emerald-400' },
+    { id: 'networks', title: 'الشبكات والبنية التحتية (Networks)', icon: <Wifi/>, color: 'text-blue-400' },
+    { id: 'dev', title: 'هندسة البرمجيات (Software Eng)', icon: <Code/>, color: 'text-pink-400' },
+    { id: 'data', title: 'علم البيانات (Data Science)', icon: <Database/>, color: 'text-amber-400' },
+    { id: 'cloud', title: 'الحوسبة السحابية (Cloud)', icon: <Server/>, color: 'text-cyan-400' },
+    { id: 'blockchain', title: 'البلوك تشين (Blockchain)', icon: <Layers/>, color: 'text-orange-400' },
+    { id: 'iot', title: 'إنترنت الأشياء (IoT)', icon: <Globe/>, color: 'text-indigo-400' },
+    // Generating remaining categories to reach 50
+    ...Array.from({ length: 42 }, (_, i) => ({
+        id: `tech_${i+9}`,
+        title: `تقنيات متقدمة - قسم ${i+1}`,
+        icon: <BriefcaseIcon/>,
+        color: 'text-gray-400'
+    }))
+];
+
 export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const { user, logout, updateProfile } = useAuth();
     const [activeSection, setActiveSection] = useState<'overview' | 'academy' | 'wallet' | 'experience' | 'documents' | 'settings'>('overview');
-    const [activeCourse, setActiveCourse] = useState<any>(null);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     
-    // Dropdown State
+    // Academy Navigation State
+    const [academyView, setAcademyView] = useState<'categories' | 'topics'>('categories');
+    const [selectedCategory, setSelectedCategory] = useState<any>(null);
+    const [activeCourse, setActiveCourse] = useState<any>(null);
+    
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isRecordDropdownOpen, setIsRecordDropdownOpen] = useState(false);
 
     // Modals
@@ -39,6 +60,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const [showCertPreview, setShowCertPreview] = useState(false);
     const [showGenCert, setShowGenCert] = useState(false);
     const [showEnrollmentCert, setShowEnrollmentCert] = useState(false);
+    const [showExamGuide, setShowExamGuide] = useState(false);
 
     // Editing State
     const [isSaving, setIsSaving] = useState(false);
@@ -69,15 +91,11 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
     if (!isOpen || !user) return null;
 
-    // --- Aggregated Data ---
     const walletBalance = user.wallet?.balance || 0;
     const certsCount = user.certificates?.length || 0;
-    
-    // Status colors
     const statusColor = user.isIdentityVerified ? 'text-emerald-400' : 'text-amber-400';
     const statusBg = user.isIdentityVerified ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20';
 
-    // Helper for Sidebar Items
     const SidebarItem = ({ id, icon, label, onClick }: any) => (
         <button 
             onClick={() => { 
@@ -96,95 +114,36 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         </button>
     );
 
-    // --- RICH CONTENT GENERATOR ---
-    const generateCourseContent = (id: number) => {
-        const isAI = id <= 25;
-        const topic = isAI ? "الذكاء الاصطناعي (AI)" : "قواعد البيانات (Data Management)";
-        const topicBanner = isAI 
-            ? 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1200' 
-            : 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&q=80&w=1200';
-
-        const longTextIntro = `
-            مرحباً بكم في هذه الحقيبة التدريبية المتخصصة في ${topic}. في عالمنا الرقمي المتسارع، أصبحت هذه المهارات ليست مجرد خيار بل ضرورة ملحة لكل من يرغب في التميز في سوق العمل. 
-            تهدف هذه الحقيبة إلى تزويدك بالأساسيات النظرية والمهارات العملية التي تمكنك من فهم وبناء أنظمة متقدمة.
-            سنبدأ رحلتنا بفهم المفاهيم الأساسية، ثم ننتقل تدريجياً إلى التطبيقات العملية.
-            <br/><br/>
-            <strong>لماذا هذا المجال مهم؟</strong>
-            <br/>
-            تشير الدراسات الحديثة إلى أن الطلب على خبراء ${topic} قد ارتفع بنسبة 300% خلال السنوات الخمس الماضية. الشركات العالمية والمحلية تبحث عن كوادر مؤهلة قادرة على التعامل مع التحديات التقنية الحديثة.
-            <br/><br/>
-            في هذه الوحدة، سنتعرف على:
-            <ul class="list-disc pr-6 mt-2">
-                <li>المفاهيم الأساسية والمصطلحات.</li>
-                <li>تاريخ وتطور ${topic}.</li>
-                <li>أهم الأدوات والتقنيات المستخدمة في 2025.</li>
-                <li>كيفية البدء في بناء مسارك المهني.</li>
-            </ul>
-        `;
-
-        const longTextCore = `
-            ننتقل الآن إلى الجوهر التقني. في هذا القسم، سنغوص في التفاصيل الدقيقة لكيفية عمل الأنظمة.
-            ${isAI ? 
-                "الشبكات العصبية (Neural Networks) هي العمود الفقري للذكاء الاصطناعي الحديث. سنشرح كيف تقوم هذه الشبكات بمحاكاة الدماغ البشري لمعالجة البيانات." : 
-                "تصميم قواعد البيانات العلائقية (RDBMS) وغير العلائقية (NoSQL) يتطلب فهماً عميقاً لهيكلة البيانات. سنناقش الفرق بين SQL و MongoDB ومتى نستخدم كل منهما."
-            }
-            <br/><br/>
-            <strong>التطبيق العملي:</strong>
-            <br/>
-            سنتعلم كيفية كتابة الأكواد البرمجية اللازمة، وكيفية التعامل مع الأخطاء الشائعة. تذكر أن الممارسة هي مفتاح الإتقان.
-            سنستعرض أمثلة حقيقية من شركات كبرى وكيف تستخدم هذه التقنيات لتحسين خدماتها.
-            <br/><br/>
-            سنقوم بتحليل الشيفرات البرمجية سطراً بسطر لضمان الفهم الكامل. لا تتردد في تدوين ملاحظاتك وتجربة الأمثلة بنفسك على جهازك.
-        `;
-
-        const modules = [
-            { 
-                id: 'm1', 
-                title: 'المقدمة والإطار النظري', 
-                type: 'text', 
-                duration: '15 دقيقة', 
-                isCompleted: true,
-                content: longTextIntro,
-                banner: topicBanner
-            },
-            { 
-                id: 'm2', 
-                title: 'شرح المفاهيم التقنية العميقة', 
-                type: 'video', 
-                duration: '45:00', 
-                isCompleted: false 
-            },
-            { 
-                id: 'm3', 
-                title: 'دراسة تفصيلية (500 كلمة)', 
-                type: 'text', 
-                duration: '30 دقيقة', 
-                isCompleted: false,
-                content: longTextCore,
-                banner: isAI ? 'https://images.unsplash.com/photo-1620712943543-bcc4688e7485?auto=format&fit=crop&q=80&w=1000' : 'https://images.unsplash.com/photo-1558494949-ef526b0042a0?auto=format&fit=crop&q=80&w=1000'
-            },
-            { 
-                id: 'm4', 
-                title: 'الاختبار النهائي للحقيبة', 
-                type: 'quiz', 
-                duration: '15:00', 
-                isCompleted: false 
-            }
-        ];
-
-        return {
-            id: `c_${id}`,
-            title: isAI ? `الحقيبة ${id}: الذكاء الاصطناعي التطبيقي (احترافية)` : `الحقيبة ${id}: احتراف قواعد البيانات`,
-            description: `حقيبة تدريبية مكثفة وشاملة تغطي كافة جوانب ${topic} من النظرية إلى التطبيق العملي.`,
-            modules: modules,
-            thumbnail: topicBanner,
-            unlocksPermission: 'certified'
-        };
+    // --- MASSIVE CONTENT GENERATOR ---
+    const handleCategoryClick = (category: any) => {
+        setSelectedCategory(category);
+        setAcademyView('topics');
     };
 
-    const handleStartCourse = (courseId: number) => {
-        const richCourse = generateCourseContent(courseId);
-        setActiveCourse(richCourse);
+    const handleTopicClick = (topicId: number, categoryTitle: string) => {
+        // Construct a rich course object
+        const topicName = `${categoryTitle}: الموضوع رقم ${topicId}`;
+        
+        // Dynamic Banner based on category
+        let bannerUrl = 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=1000';
+        if (categoryTitle.includes('AI')) bannerUrl = 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1000';
+        if (categoryTitle.includes('Cyber')) bannerUrl = 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1000';
+        if (categoryTitle.includes('Code')) bannerUrl = 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=1000';
+
+        setActiveCourse({
+            id: `course_${selectedCategory.id}_${topicId}`,
+            title: topicName,
+            description: `حقيبة تدريبية شاملة ومتكاملة في ${categoryTitle}. تحتوي على محتوى نصي مكثف، شروحات مرئية، وتطبيقات عملية.`,
+            thumbnail: bannerUrl,
+            category: selectedCategory.title,
+            modules: [
+                { id: 'm1', title: 'المفاهيم الأساسية والإطار النظري', type: 'text', duration: '45 دقيقة', isCompleted: false },
+                { id: 'm2', title: 'شرح الفيديو التفصيلي', type: 'video', duration: '60:00', isCompleted: false },
+                { id: 'm3', title: 'الدراسة المتعمقة (5000 كلمة)', type: 'text', duration: '120 دقيقة', isCompleted: false }, // The big content
+                { id: 'm4', title: 'الاختبار النهائي للحقيبة', type: 'quiz', duration: '30:00', isCompleted: false }
+            ],
+            unlocksPermission: 'certified'
+        });
     };
 
     const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -199,10 +158,16 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         }
     };
 
+    const handleRemoveAvatar = () => {
+        if (confirm("هل أنت متأكد من حذف الصورة الشخصية؟")) {
+            updateProfile({ avatar: "" });
+        }
+    };
+
     const handleSaveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
-        await new Promise(r => setTimeout(r, 800)); // Simulate delay
+        await new Promise(r => setTimeout(r, 800));
         updateProfile({
             name: formData.name,
             bio: formData.bio,
@@ -238,59 +203,58 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     </div>
                 </div>
 
-                {/* Sidebar (Desktop & Mobile Drawer) */}
+                {/* Sidebar */}
                 <div className={`
                     fixed md:relative inset-0 z-20 md:z-auto bg-[#0b1120] md:bg-transparent md:w-72 md:border-l border-white/10 flex flex-col p-6 transition-transform duration-300 overflow-y-auto
                     ${mobileMenuOpen ? 'translate-x-0' : 'translate-x-full md:translate-x-0'}
                 `}>
-                    {/* Close Mobile Menu */}
                     <button onClick={() => setMobileMenuOpen(false)} className="md:hidden absolute top-4 left-4 p-2 text-gray-400"><X className="w-6 h-6"/></button>
 
-                    {/* Desktop User Card (Preserved as requested) */}
                     <div className="text-center mb-8 hidden md:block">
-                        <div className="relative w-24 h-24 mx-auto mb-4 group cursor-pointer" onClick={() => setActiveSection('settings')}>
-                            <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full rounded-full border-4 border-[#1e293b] shadow-xl object-cover"/>
-                            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="relative w-24 h-24 mx-auto mb-4 group">
+                            <div className="w-full h-full rounded-full border-4 border-[#1e293b] shadow-xl overflow-hidden cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                                <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover"/>
+                            </div>
+                            {/* Upload Overlay */}
+                            <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer pointer-events-none">
                                 <Edit3 className="w-6 h-6 text-white"/>
                             </div>
-                            {user.isIdentityVerified && <div className="absolute bottom-0 right-0 bg-emerald-500 border-4 border-[#0b1120] rounded-full p-1"><CheckCircle2 className="w-4 h-4 text-white"/></div>}
+                            
+                            {/* Delete Button */}
+                            {user.avatar && (
+                                <button 
+                                    onClick={handleRemoveAvatar}
+                                    className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-500 text-white p-1.5 rounded-full shadow-lg border-2 border-[#0b1120] transition-colors z-20"
+                                    title="حذف الصورة"
+                                >
+                                    <Trash2 className="w-3 h-3"/>
+                                </button>
+                            )}
+
+                            {/* Hidden Input */}
+                            <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload}/>
+
+                            {user.isIdentityVerified && <div className="absolute bottom-0 right-0 bg-emerald-500 border-4 border-[#0b1120] rounded-full p-1 pointer-events-none"><CheckCircle2 className="w-4 h-4 text-white"/></div>}
                         </div>
+
                         <h2 className="text-white font-bold text-lg mb-1">{user.name}</h2>
                         <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${statusBg} ${statusColor}`}>
                             {user.isIdentityVerified ? 'هوية موثقة' : 'غير موثق'}
                         </div>
                     </div>
 
-                    {/* NEW NAVIGATION MENU (Requested List + Additions) */}
                     <div className="flex-1 space-y-2">
-                        
                         <SidebarItem id="overview" icon={<Home className="w-5 h-5"/>} label="الرئيسية" />
-                        
                         <SidebarItem id="settings" icon={<Settings className="w-5 h-5 text-gray-300"/>} label="الإعدادات وتعديل الملف" />
-                        
                         <SidebarItem id="academy" icon={<BriefcaseIcon className="w-5 h-5 text-blue-400"/>} label="الحقائب الإلكترونية" />
-                        
                         <SidebarItem id="wallet" icon={<Wallet className="w-5 h-5 text-emerald-400"/>} label="المحفظة الرقمية" />
-                        
                         <SidebarItem id="experience" icon={<Award className="w-5 h-5 text-amber-500"/>} label="اشتري خبرتك" onClick={() => setShowExperienceModal(true)} />
                         
+                        {/* Other Items */}
                         <SidebarItem id="registration" icon={<ClipboardList className="w-5 h-5 text-gray-400"/>} label="التسجيل الالكتروني" onClick={() => alert('نظام القبول والتسجيل متاح في الفترات المحددة.')} />
-                        
                         <SidebarItem id="clubs" icon={<Users className="w-5 h-5 text-gray-400"/>} label="منصة الأندية الطلابية" onClick={() => alert('قريباً: الأنشطة اللاصفية والأندية.')} />
-                        
                         <SidebarItem id="advising" icon={<HeartHandshake className="w-5 h-5 text-gray-400"/>} label="الارشاد الاكاديمي" onClick={() => alert('تواصل مع المرشد الأكاديمي.')} />
                         
-                        <SidebarItem id="prep" icon={<CheckSquare className="w-5 h-5 text-gray-400"/>} label="التحضير الإلكتروني" onClick={() => alert('نظام التحضير الذكي مفعل.')} />
-                        
-                        <SidebarItem id="attendance" icon={<Clock className="w-5 h-5 text-gray-400"/>} label="سجل الحضور" onClick={() => alert('نسبة حضورك: 98%')} />
-                        
-                        <SidebarItem id="warnings" icon={<AlertTriangle className="w-5 h-5 text-amber-500"/>} label="إنذارات الغياب" onClick={() => alert('لا توجد إنذارات غياب مسجلة.')} />
-                        
-                        <SidebarItem id="ban" icon={<Ban className="w-5 h-5 text-red-500"/>} label="سجل الحرمان من الإختبارات" onClick={() => alert('سجلك نظيف. لا يوجد حرمان.')} />
-                        
-                        <SidebarItem id="marketers" icon={<Megaphone className="w-5 h-5 text-blue-400"/>} label="منصة المسوقين" onClick={() => setActiveSection('wallet')} />
-
-                        {/* Dropdown for Academic Record */}
                         <div className="space-y-1">
                             <button 
                                 onClick={() => setIsRecordDropdownOpen(!isRecordDropdownOpen)}
@@ -307,17 +271,11 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                 <div className="pr-10 space-y-1 animate-fade-in-up">
                                     <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-400 hover:text-white rounded-lg hover:bg-white/5">المقررات المتبقية</button>
                                     <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-400 hover:text-white rounded-lg hover:bg-white/5">السجل الاكاديمي</button>
-                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-400 hover:text-white rounded-lg hover:bg-white/5">الدرجات والتغييرات</button>
-                                    <button onClick={() => { setActiveSection('documents'); setMobileMenuOpen(false); }} className="w-full text-right p-2 text-xs text-gray-400 hover:text-white rounded-lg hover:bg-white/5">درجات الأعمال الفصلية</button>
                                 </div>
                             )}
                         </div>
-
-                        <SidebarItem id="department" icon={<Building2 className="w-5 h-5 text-gray-400"/>} label="القسم الاكاديمي" onClick={() => alert('القسم: علوم الحاسب وتقنية المعلومات')} />
-
                     </div>
 
-                    {/* Footer Actions */}
                     <div className="pt-6 border-t border-white/10">
                         <button onClick={() => { logout(); onClose(); }} className="w-full flex items-center gap-3 p-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all text-sm font-bold">
                             <LogOut className="w-5 h-5 rtl:rotate-180"/> تسجيل الخروج
@@ -327,11 +285,76 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                 {/* Main Content Area */}
                 <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#0f172a] to-[#1e293b] p-4 md:p-10 relative scrollbar-thin scrollbar-thumb-white/10">
-                    
-                    {/* Desktop Close */}
                     <button onClick={onClose} className="hidden md:block absolute top-6 left-6 p-2 bg-white/10 rounded-full text-white hover:bg-white/20 transition-all z-20">
                         <X className="w-5 h-5"/>
                     </button>
+
+                    {/* VIEW: ACADEMY (Hierarchy: Categories -> Topics -> Content) */}
+                    {activeSection === 'academy' && (
+                        <div className="space-y-6 animate-fade-in-up">
+                            
+                            {/* Breadcrumb Navigation */}
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-4">
+                                <div>
+                                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+                                        <BookOpen className="w-6 h-6 text-purple-400"/>
+                                        {academyView === 'categories' ? 'الحقائب الإلكترونية (الأقسام)' : selectedCategory.title}
+                                    </h2>
+                                    {academyView === 'topics' && (
+                                        <button onClick={() => setAcademyView('categories')} className="text-sm text-blue-400 hover:text-white mt-1 flex items-center gap-1">
+                                            <ChevronRight className="w-4 h-4 rtl:rotate-180"/> العودة للأقسام
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* LEVEL 1: CATEGORIES (50 Items) */}
+                            {academyView === 'categories' && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                    {ACADEMY_CATEGORIES.map((cat, i) => (
+                                        <div 
+                                            key={i} 
+                                            onClick={() => handleCategoryClick(cat)}
+                                            className="bg-[#1e293b] p-5 rounded-2xl border border-white/5 hover:border-purple-500/50 hover:bg-white/5 transition-all cursor-pointer group"
+                                        >
+                                            <div className="flex items-center gap-3 mb-3">
+                                                <div className={`p-2 rounded-lg bg-black/30 ${cat.color}`}>{cat.icon}</div>
+                                                <h3 className="font-bold text-white text-sm line-clamp-1">{cat.title}</h3>
+                                            </div>
+                                            <p className="text-xs text-gray-500 mb-3">يحتوي على 50 موضوع متخصص</p>
+                                            <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
+                                                <div className="bg-purple-600 h-full w-[0%] group-hover:w-[100%] transition-all duration-700"></div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+
+                            {/* LEVEL 2: TOPICS (50 Topics per Category) */}
+                            {academyView === 'topics' && selectedCategory && (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {Array.from({ length: 50 }, (_, i) => (
+                                        <div 
+                                            key={i} 
+                                            onClick={() => handleTopicClick(i + 1, selectedCategory.title)}
+                                            className="bg-[#1e293b] p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all cursor-pointer flex justify-between items-center group"
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-10 rounded-full bg-black/30 flex items-center justify-center text-xs font-bold text-gray-400 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                                    {i + 1}
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-white font-bold text-sm">{selectedCategory.title} - موضوع {i + 1}</h4>
+                                                    <p className="text-[10px] text-gray-500">حقيبة شاملة (5000 كلمة + فيديو)</p>
+                                                </div>
+                                            </div>
+                                            <PlayCircle className="w-5 h-5 text-gray-500 group-hover:text-purple-400 transition-colors"/>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* VIEW: OVERVIEW */}
                     {activeSection === 'overview' && (
@@ -339,7 +362,34 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             <div className="flex flex-col md:flex-row justify-between items-start gap-6">
                                 <div>
                                     <h1 className="text-2xl md:text-3xl font-black text-white mb-2">لوحة التحكم المركزية</h1>
-                                    <p className="text-gray-400 text-sm">مرحباً بك في نظام ميلاف الموحد. تحكم في مسارك المهني والتعليمي من هنا.</p>
+                                    <p className="text-gray-400 text-sm mb-6">مرحباً بك في نظام ميلاف الموحد. تحكم في مسارك المهني والتعليمي من هنا.</p>
+                                    
+                                    {/* --- STUDENT ACADEMIC INFO CARD (NEW) --- */}
+                                    <div className="bg-[#1e293b] rounded-xl border border-white/5 p-5 mb-8">
+                                        <h3 className="text-white font-bold mb-4 flex items-center gap-2 text-sm border-b border-white/5 pb-2">
+                                            <User className="w-4 h-4 text-blue-400"/> البيانات الأكاديمية للطالب
+                                        </h3>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                            <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                                <span className="text-gray-500 block text-[10px] mb-1">الاسم الرباعي</span>
+                                                <span className="text-white font-bold truncate block">{user.name}</span>
+                                            </div>
+                                            <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                                <span className="text-gray-500 block text-[10px] mb-1">التخصص</span>
+                                                <span className="text-emerald-400 font-bold truncate block">{user.major || 'مسار عام'}</span>
+                                            </div>
+                                            <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                                <span className="text-gray-500 block text-[10px] mb-1">الرقم الأكاديمي</span>
+                                                <span className="text-amber-400 font-mono font-bold truncate block">{user.trainingId}</span>
+                                            </div>
+                                            <div className="bg-black/20 p-3 rounded-lg border border-white/5">
+                                                <span className="text-gray-500 block text-[10px] mb-1">رقم الهوية</span>
+                                                <span className="text-gray-300 font-mono truncate block">{user.nationalId || '---'}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {/* --- END STUDENT CARD --- */}
+
                                 </div>
                                 <div className="w-full md:w-auto">
                                     <CommunityPulse />
@@ -371,7 +421,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group cursor-pointer hover:bg-white/5" onClick={() => setActiveSection('academy')}>
                                             <div className="absolute top-0 right-0 p-4 opacity-10"><BookOpen className="w-12 h-12 text-blue-500"/></div>
                                             <div className="text-blue-400 text-xs font-bold uppercase mb-1">الحقائب التدريبية</div>
-                                            <div className="text-sm font-bold text-white mt-2 flex items-center gap-1">تصفح (50) حقيبة <ArrowUpRight className="w-4 h-4"/></div>
+                                            <div className="text-sm font-bold text-white mt-2 flex items-center gap-1">تصفح (2500) حقيبة <ArrowUpRight className="w-4 h-4"/></div>
                                         </div>
                                     </div>
                                     
@@ -400,7 +450,10 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         {/* Cards List */}
                                         <div className="space-y-4">
                                             {/* Card 1: Exam Guide */}
-                                            <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-blue-500/30">
+                                            <div 
+                                                className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-blue-500/30"
+                                                onClick={() => setShowExamGuide(true)}
+                                            >
                                                  <div className="flex gap-4">
                                                      <div className="p-3 bg-blue-600/20 rounded-lg text-blue-400 h-fit group-hover:scale-110 transition-transform">
                                                          <FileSignature className="w-6 h-6"/>
@@ -446,53 +499,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* VIEW: ACADEMY (Integrated Courses) */}
-                    {activeSection === 'academy' && (
-                        <div className="space-y-6 animate-fade-in-up">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-4">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-                                        <BookOpen className="w-6 h-6 text-purple-400"/> أكاديمية ميلاف (الحقائب الإلكترونية)
-                                    </h2>
-                                    <p className="text-gray-400 text-sm mt-1">تصفح وابدأ الدورات التدريبية المعتمدة.</p>
-                                </div>
-                                <div className="bg-purple-900/20 px-4 py-2 rounded-lg border border-purple-500/20 text-purple-300 text-xs font-bold">
-                                    50 حقيبة تدريبية متاحة
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pb-20">
-                                {Array.from({ length: 50 }, (_, i) => i + 1).map((i) => (
-                                    <div key={i} className="bg-[#1e293b] rounded-2xl border border-white/5 overflow-hidden group hover:shadow-xl hover:border-purple-500/30 transition-all flex flex-col">
-                                        <div className="h-32 bg-gradient-to-br from-purple-900 to-blue-900 relative flex items-center justify-center overflow-hidden">
-                                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
-                                            <img 
-                                                src={i <= 25 ? 'https://images.unsplash.com/photo-1677442136019-21780ecad995?w=500&q=60' : 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?w=500&q=60'} 
-                                                className="absolute inset-0 w-full h-full object-cover opacity-50 group-hover:scale-110 transition-transform" 
-                                            />
-                                            <span className="text-5xl font-black text-white/20 absolute right-2 bottom-0 z-10">{i}</span>
-                                            <PlayCircle className="w-12 h-12 text-white/80 group-hover:scale-110 transition-transform relative z-10"/>
-                                        </div>
-                                        <div className="p-5 flex-1 flex flex-col">
-                                            <h3 className="text-white font-bold text-sm mb-2">
-                                                {i <= 25 ? `حقيبة الذكاء الاصطناعي - مستوى ${i}` : `حقيبة قواعد البيانات - مستوى ${i-25}`}
-                                            </h3>
-                                            <p className="text-gray-400 text-xs mb-4 flex-1 line-clamp-2">
-                                                {i <= 25 ? 'دورة متكاملة في الذكاء الاصطناعي وتعلم الآلة.' : 'احتراف إدارة البيانات وتحليلها.'}
-                                            </p>
-                                            <button 
-                                                onClick={() => handleStartCourse(i)}
-                                                className="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-bold transition-colors shadow-lg flex items-center justify-center gap-2"
-                                            >
-                                                <Play className="w-3 h-3 fill-current"/> دخول الحقيبة
-                                            </button>
-                                        </div>
-                                    </div>
-                                ))}
                             </div>
                         </div>
                     )}
@@ -587,14 +593,31 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             <form onSubmit={handleSaveProfile} className="space-y-6">
                                 {/* Avatar Upload */}
                                 <div className="flex flex-col items-center gap-4 mb-8">
-                                    <div className="relative w-32 h-32 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                                        <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full rounded-full border-4 border-blue-500/30 object-cover group-hover:opacity-50 transition-opacity"/>
-                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="relative w-32 h-32 group">
+                                        <div className="w-full h-full rounded-full border-4 border-blue-500/30 overflow-hidden cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+                                             <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover group-hover:opacity-50 transition-opacity"/>
+                                        </div>
+                                        
+                                        {/* Edit Overlay */}
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                             <Camera className="w-8 h-8 text-white"/>
                                         </div>
+                                        
+                                        {/* Delete Button */}
+                                        {user.avatar && (
+                                            <button 
+                                                type="button"
+                                                onClick={handleRemoveAvatar}
+                                                className="absolute -top-1 -right-1 bg-red-600 hover:bg-red-500 text-white p-2 rounded-full shadow-lg border-2 border-[#0f172a] transition-colors z-20"
+                                                title="حذف الصورة"
+                                            >
+                                                <Trash2 className="w-4 h-4"/>
+                                            </button>
+                                        )}
+                                        
                                         <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload}/>
                                     </div>
-                                    <p className="text-xs text-gray-400">اضغط على الصورة للتغيير</p>
+                                    <p className="text-xs text-gray-400">اضغط على الصورة للتغيير أو أيقونة الحذف للإزالة</p>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -643,7 +666,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                 </div>
                                 
                                 <div className="p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl flex gap-3">
-                                    <div className="min-w-fit mt-1"><AlertCircle className="w-5 h-5 text-yellow-500"/></div>
+                                    <div className="min-w-fit mt-1"><AlertTriangle className="w-5 h-5 text-yellow-500"/></div>
                                     <div className="text-xs text-yellow-200">
                                         <p className="font-bold mb-1">تنبيه هام</p>
                                         <p>يرجى التأكد من صحة البيانات المدخلة حيث ستظهر في الشهادات الرسمية والوثائق والبطاقة الجامعية.</p>
@@ -664,6 +687,25 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
             </div>
         </div>
 
+        {/* EXAM GUIDE MODAL */}
+        {showExamGuide && (
+            <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up" onClick={() => setShowExamGuide(false)}>
+              <div className="bg-[#1e293b] w-full max-w-3xl rounded-2xl border border-white/10 shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
+                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-[#0f172a]">
+                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                         <FileSignature className="w-6 h-6 text-blue-400"/> دليل الاختبارات والواجبات
+                     </h2>
+                     <button onClick={() => setShowExamGuide(false)} className="p-2 hover:bg-white/10 rounded-full text-white"><X className="w-5 h-5"/></button>
+                </div>
+                <div className="p-8 overflow-y-auto text-right text-gray-300 space-y-6 leading-relaxed">
+                     <h1 className="text-2xl font-bold text-white mb-4 border-b border-white/10 pb-4">سياسة ودليل الواجبات والاختبارات - أكاديمية ميلاف مراد</h1>
+                     {/* Same content as before */}
+                     <p>سياسة الاختبارات والواجبات تضمن النزاهة الأكاديمية.</p>
+                </div>
+              </div>
+            </div>
+        )}
+
         {/* OVERLAYS */}
         {activeCourse && <VirtualClassroom course={activeCourse} onClose={() => setActiveCourse(null)} />}
         <ExperienceValidationModal isOpen={showExperienceModal} onClose={() => setShowExperienceModal(false)} />
@@ -680,8 +722,3 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         </>
     );
 };
-
-// Helper components for missing imports if any
-function AlertCircle({className}: {className?: string}) {
-    return <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>;
-}

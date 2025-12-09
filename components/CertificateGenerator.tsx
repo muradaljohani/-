@@ -1,6 +1,6 @@
 
 import React, { useRef, useState } from 'react';
-import { Download, Loader2, Printer, CheckCircle2, User, FileText, Calendar, ShieldCheck } from 'lucide-react';
+import { Download, Loader2, Printer, CheckCircle2, User, FileText, Calendar, ShieldCheck, X } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { AssetProcessor } from '../services/System/AssetProcessor';
 
@@ -30,13 +30,15 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
         setIsGenerating(true);
         
         try {
+            // High Resolution Config for Mobile
             const canvas = await html2canvas(certRef.current, { 
-                scale: 2, // High resolution
+                scale: 3, // 3x for Retina displays
                 useCORS: true,
                 logging: false,
-                backgroundColor: '#fdfbf7' 
+                backgroundColor: '#fdfbf7',
+                windowWidth: 1200 // Force desktop width for rendering
             });
-            const image = canvas.toDataURL("image/png");
+            const image = canvas.toDataURL("image/png", 1.0);
             
             const link = document.createElement("a");
             link.href = image;
@@ -44,19 +46,29 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
             link.click();
         } catch (err) {
             console.error("Certificate Generation Failed", err);
-            alert("حدث خطأ أثناء إنشاء الشهادة.");
+            alert("حدث خطأ أثناء إنشاء الشهادة. يرجى المحاولة مرة أخرى.");
         } finally {
             setIsGenerating(false);
         }
     };
 
+    const handlePrint = () => {
+        window.print();
+    };
+
     return (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-fade-in-up font-sans" dir="rtl">
-            <div className="relative w-full max-w-6xl flex flex-col lg:flex-row gap-8 items-center justify-center h-full">
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center p-0 md:p-4 bg-black/95 backdrop-blur-xl animate-fade-in-up font-sans print:bg-white print:p-0" dir="rtl">
+            
+            {/* Close Button (Hidden on Print) */}
+            <button onClick={onClose} className="absolute top-4 left-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white z-50 print:hidden">
+                <X className="w-6 h-6"/>
+            </button>
+
+            <div className="relative w-full max-w-7xl flex flex-col lg:flex-row gap-8 items-center justify-center h-full print:w-full print:h-full print:max-w-none">
                 
-                {/* STEP 1: Details Input */}
+                {/* STEP 1: Details Input (Hidden on Print) */}
                 {step === 'details' && (
-                    <div className="bg-[#1e293b] p-8 rounded-3xl border border-white/10 shadow-2xl max-w-md w-full">
+                    <div className="bg-[#1e293b] p-8 rounded-3xl border border-white/10 shadow-2xl max-w-md w-full print:hidden">
                         <h2 className="text-2xl font-bold text-white mb-6 text-center flex items-center justify-center gap-2">
                              <ShieldCheck className="w-6 h-6 text-emerald-500"/> توثيق الشهادة
                         </h2>
@@ -112,7 +124,6 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                             >
                                 إصدار الشهادة الرسمية
                             </button>
-                            <button onClick={onClose} className="w-full text-gray-500 text-sm hover:text-white">إلغاء</button>
                         </div>
                     </div>
                 )}
@@ -120,38 +131,44 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                 {/* STEP 2: PREVIEW AREA */}
                 {step === 'preview' && (
                 <>
-                <div className="relative w-full flex justify-center items-center overflow-hidden rounded-xl bg-gray-900/50 border border-white/10 p-2 md:p-8">
-                    {/* SCALING WRAPPER */}
-                    <div className="relative w-full flex justify-center h-[230px] xs:h-[280px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[794px] transition-all duration-300">
+                <div className="relative w-full flex flex-col items-center gap-6 print:block print:w-full print:h-screen">
+                    
+                    {/* Toolbar (Hidden on Print) */}
+                    <div className="flex gap-4 print:hidden">
+                        <button onClick={handleDownload} disabled={isGenerating} className="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold shadow-lg flex items-center gap-2">
+                             {isGenerating ? <Loader2 className="w-4 h-4 animate-spin"/> : <Download className="w-4 h-4"/>} تحميل (PNG)
+                        </button>
+                        <button onClick={handlePrint} className="px-6 py-3 bg-gray-700 hover:bg-gray-600 text-white rounded-xl font-bold shadow-lg flex items-center gap-2">
+                             <Printer className="w-4 h-4"/> طباعة (PDF)
+                        </button>
+                    </div>
+
+                    {/* SCALING WRAPPER FOR PREVIEW */}
+                    <div className="relative w-full flex justify-center overflow-x-auto print:overflow-visible print:block">
                         
                         {/* CERTIFICATE CANVAS (A4 Landscape: 1123x794px) */}
                         <div 
                             ref={certRef}
-                            className="absolute top-0 shadow-2xl origin-top transform transition-transform duration-300
-                                       scale-[0.28] xs:scale-[0.34] sm:scale-[0.5] md:scale-[0.65] lg:scale-[0.75] xl:scale-100"
+                            className="bg-[#fdfbf7] text-[#1f2937] shadow-2xl relative print:shadow-none print:w-full print:h-full print:absolute print:top-0 print:left-0"
                             style={{ 
                                 width: '1123px', 
                                 height: '794px',
-                                backgroundColor: '#fdfbf7',
-                                color: '#1f2937',
+                                minWidth: '1123px', // Ensure it doesn't shrink on mobile view
                                 fontFamily: "'Tajawal', 'Amiri', serif",
-                                position: 'relative',
-                                overflow: 'hidden'
+                                overflow: 'hidden',
+                                transform: 'scale(0.6)', // Scale down for preview on desktop
+                                transformOrigin: 'top center',
                             }}
                         >
                             {/* --- DESIGN LAYERS --- */}
-                            {/* Blue Border */}
                             <div className="absolute top-[10mm] left-[10mm] right-[10mm] bottom-[10mm] border-2 border-[#1e3a8a] z-10 pointer-events-none"></div>
-                            {/* Gold Double Border */}
                             <div className="absolute top-[12mm] left-[12mm] right-[12mm] bottom-[12mm] border-4 border-double border-[#d97706] z-10 pointer-events-none"></div>
                             
-                            {/* Corners */}
                             <div className="absolute top-[10mm] right-[10mm] w-[40mm] h-[40mm] border-t-8 border-r-8 border-[#1e3a8a] rounded-tr-[15px] z-20"></div>
                             <div className="absolute top-[10mm] left-[10mm] w-[40mm] h-[40mm] border-t-8 border-l-8 border-[#1e3a8a] rounded-tl-[15px] z-20"></div>
                             <div className="absolute bottom-[10mm] right-[10mm] w-[40mm] h-[40mm] border-b-8 border-r-8 border-[#1e3a8a] rounded-br-[15px] z-20"></div>
                             <div className="absolute bottom-[10mm] left-[10mm] w-[40mm] h-[40mm] border-b-8 border-l-8 border-[#1e3a8a] rounded-bl-[15px] z-20"></div>
 
-                            {/* Watermark */}
                             <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-[0.03] text-[400px] font-black text-[#1e3a8a] z-0 pointer-events-none select-none">M</div>
 
                             {/* --- CONTENT LAYER --- */}
@@ -266,34 +283,6 @@ export const CertificateGenerator: React.FC<Props> = ({ courseName, studentName,
                             </div>
                         </div>
                     </div>
-                </div>
-
-                {/* 2. CONTROLS AREA */}
-                <div className="w-full lg:w-80 flex flex-col gap-4">
-                    <div className="bg-white rounded-2xl p-6 shadow-xl text-center border border-gray-100">
-                        <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <CheckCircle2 className="w-8 h-8 text-emerald-600" />
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-900 mb-2">الشهادة جاهزة</h3>
-                        <p className="text-gray-500 text-sm mb-6">تم توقيع وختم الشهادة رسمياً. يمكنك الآن تحميلها أو طباعتها.</p>
-                        
-                        <button 
-                            onClick={handleDownload} 
-                            disabled={isGenerating}
-                            className="w-full bg-[#1e3a8a] hover:bg-blue-800 text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all mb-3"
-                        >
-                            {isGenerating ? <Loader2 className="w-5 h-5 animate-spin"/> : <Download className="w-5 h-5"/>}
-                            تحميل PNG عالي الدقة
-                        </button>
-                        
-                        <button onClick={() => window.print()} className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all">
-                            <Printer className="w-5 h-5"/> طباعة فورية
-                        </button>
-                    </div>
-
-                    <button onClick={onClose} className="bg-white/10 hover:bg-white/20 text-white py-3 rounded-xl font-bold backdrop-blur-md border border-white/10">
-                        إغلاق
-                    </button>
                 </div>
                 </>
                 )}
