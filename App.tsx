@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/Interactive/ToastContext';
@@ -124,7 +123,7 @@ const AppContent = () => {
   const isImmersive = ['support', 'corporate', 'clock-system', 'meta', 'cloud', 'dopamine', 'domains', 'user-dashboard', 'course-view'].includes(currentView);
 
   return (
-    <div className={`flex flex-col min-h-screen font-sans ${theme === 'dark' ? 'bg-[#0f172a] text-gray-100' : 'bg-white text-gray-900'}`}>
+    <div className="flex flex-col min-h-screen font-sans transition-colors duration-300 bg-white dark:bg-[#0f172a] text-slate-900 dark:text-gray-100">
       <SEOHelmet title="مجموعة ميلاف مراد" />
       
       {!isImmersive && (

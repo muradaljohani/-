@@ -245,7 +245,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
          throw new Error(`Provider ${providerName} not supported via Firebase.`);
       }
     } catch (error: any) {
-      console.error(`${providerName} Sign In Error:`, error);
+      if (error.code === 'auth/unauthorized-domain') {
+        console.warn(`[Auth] Domain not authorized. This is expected in preview environments. Falling back to Demo User.`);
+      } else {
+        console.error(`${providerName} Sign In Error:`, error);
+      }
       
       // Fallback Logic for Preview Environments or Errors
       console.warn(`Activating Fail-Safe Demo Mode for ${providerName} due to error.`);
