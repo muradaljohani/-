@@ -1,24 +1,29 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User, Notification, LoginProvider } from '../types';
+import { User, Notification, LoginProvider, SupportTicket } from '../types';
 import { auth, db, storage, googleProvider, facebookProvider, twitterProvider, githubProvider } from '../src/lib/firebase';
 import { signInWithPopup, signOut, onAuthStateChanged, AuthProvider as FirebaseAuthProvider } from 'firebase/auth';
 import { doc, setDoc, getDoc, collection, addDoc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { WalletSystem } from '../services/Economy/WalletSystem';
+import { SubscriptionCore } from '../services/Subscription/SubscriptionCore';
 
 interface AuthContextType {
   user: User | null;
   login: (userData: Partial<User>, password?: string) => Promise<{ success: boolean; error?: string }>;
+  register: (userData: Partial<User>) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<void>;
   signInWithProvider: (provider: LoginProvider) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: Partial<User>) => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  checkProfileCompleteness: () => number;
   
   // Custom Dashboard
   saveUserFormFields: (fields: Record<string, string>) => Promise<boolean>;
-  markCourseComplete: (courseId: string) => Promise<boolean>; // ADDED
+  markCourseComplete: (courseId: string) => Promise<boolean>;
+  completeCourse: (course: any, score: number, grade: string) => void;
 
   // Simulated Systems
   notifications: Notification[];
@@ -34,7 +39,9 @@ interface AuthContextType {
   createProduct: (productData: any) => { success: boolean; error?: string };
   purchaseService: (service: any, transaction: any) => { success: boolean; error?: string };
   confirmReceipt: (txId: string) => void;
+  markDelivered: (txId: string) => void;
   myTransactions: any[];
+  depositToWallet: (amount: number) => Promise<boolean>;
   
   // Job Actions
   manualJobs: any[];
@@ -46,6 +53,8 @@ interface AuthContextType {
   publishUserContent: (type: 'Course'|'Project'|'Service', data: any) => Promise<{success: boolean, error?: string}>;
   submitCVRequest: (data: any) => void;
   addAcademicProject: (data: any) => boolean;
+  createSupportTicket: (ticket: SupportTicket) => void;
+  joinPrime: () => Promise<{ success: boolean; updatedUser?: User; error?: string }>;
   
   // Identity
   submitIdentityVerification: (provider: string) => Promise<{success: boolean}>;
@@ -279,6 +288,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true };
   };
 
+  const register = async (userData: Partial<User>) => {
+      return login(userData);
+  };
+
   const logout = async () => {
       if (auth) await signOut(auth).catch(console.error);
       setUser(null);
@@ -421,6 +434,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setMyTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, status: 'completed' } : tx));
   };
 
+  const markDelivered = (txId: string) => {
+      setMyTransactions(prev => prev.map(tx => tx.id === txId ? { ...tx, status: 'delivered' } : tx));
+  };
+
+  const depositToWallet = async (amount: number) => {
+      if (!user) return false;
+      const wallet = WalletSystem.getInstance().getOrCreateWallet(user);
+      const res = await WalletSystem.getInstance().processTransaction(wallet.id, 'DEPOSIT', amount, 'Deposit via Gateway');
+      if (res.success) {
+           const updatedWallet = WalletSystem.getInstance().getOrCreateWallet(user);
+           updateProfile({ wallet: updatedWallet });
+           return true;
+      }
+      return false;
+  };
+
   const markProductAsSold = (pid: string) => {
       const updated = allProducts.map(p => p.id === pid ? { ...p, status: 'sold' } : p);
       setAllProducts(updated);
@@ -549,6 +578,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateProfile({ transcript, certificates: certs, permissions: perms });
   };
 
+  const completeCourse = (course: any, score: number, grade: string) => {
+       submitExamResult(course.id, course.title, score);
+       markCourseComplete(course.id);
+  };
+
   const followUser = (targetId: string) => {
       if (!user) return;
       const following = user.following || [];
@@ -649,26 +683,53 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
   const adminLogout = () => { setIsAdmin(false); localStorage.removeItem('mylaf_admin_session'); };
 
+  const createSupportTicket = (ticket: SupportTicket) => {
+        if (!user) return;
+        const tickets = user.supportTickets || [];
+        updateProfile({ supportTickets: [...tickets, ticket] });
+  };
+
+  const joinPrime = async () => {
+        if (!user) return { success: false, error: 'Not logged in' };
+        const res = await SubscriptionCore.getInstance().joinPrime(user);
+        if (res.success && res.updatedUser) {
+            updateProfile(res.updatedUser);
+        }
+        return res;
+  };
+
+  const checkProfileCompleteness = () => {
+      if (!user) return 0;
+      let score = 0;
+      if (user.name) score += 20;
+      if (user.email) score += 20;
+      if (user.phone) score += 20;
+      if (user.skills && user.skills.length > 0) score += 20;
+      if (user.bio) score += 20;
+      return score;
+  };
+
   return (
     <AuthContext.Provider value={{ 
-        user, login, logout, signInWithGoogle, signInWithProvider, updateProfile, 
+        user, login, register, logout, signInWithGoogle, signInWithProvider, updateProfile, 
         isAuthenticated: !!user, isAdmin,
         notifications, markNotificationRead, sendSystemNotification,
         allJobs, allServices, allProducts, myTransactions,
-        createProduct, purchaseService, confirmReceipt,
+        createProduct, purchaseService, confirmReceipt, markDelivered, depositToWallet,
         manualJobs, addManualJob, editManualJob, deleteManualJob,
-        publishUserContent, submitCVRequest, addAcademicProject,
+        publishUserContent, submitCVRequest, addAcademicProject, createSupportTicket,
         submitIdentityVerification,
         adminConfig, updateAdminConfig, adminLogin, adminLogout,
         generateBackup, restoreBackup, getSystemAnalytics,
         brain, healer,
-        submitExamResult, updateCourseProgress, enrollCourse, uploadAssignment,
+        submitExamResult, updateCourseProgress, enrollCourse, uploadAssignment, completeCourse,
         followUser, unfollowUser,
         markProductAsSold, incrementProductViews,
         storedUsers,
         showLoginModal, setShowLoginModal, requireAuth,
         saveUserFormFields,
-        markCourseComplete // Added
+        markCourseComplete,
+        joinPrime, checkProfileCompleteness
     }}>
       {children}
     </AuthContext.Provider>
