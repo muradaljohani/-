@@ -1,6 +1,5 @@
 
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     User, Briefcase, GraduationCap, ShoppingBag, 
@@ -9,7 +8,7 @@ import {
     CreditCard, Save, MapPin, Phone, Mail, Edit3, Loader2, FileText,
     Menu, X, Camera, Award, Shield, FileCheck, Star, PlayCircle, Grid, List,
     Home, FileInput, Users, HeartHandshake, CheckSquare, AlertTriangle, Ban, Megaphone, ChevronDown, ChevronUp, Building2,
-    FileSignature, UserX, GitMerge, ChevronLeft, ChevronRight, ClipboardList, Briefcase as BriefcaseIcon, Database, Cpu, Globe, Server, Lock, Wifi, Code, Layers, Trash2, Search, Droplet, Calendar, Flag
+    FileSignature, UserX, GitMerge, ChevronLeft, ChevronRight, ClipboardList, Briefcase as BriefcaseIcon, Database, Cpu, Globe, Server, Lock, Wifi, Code, Layers, Trash2, Search, Droplet, Calendar, Flag, Fingerprint
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AcademicTranscript } from '../Academy/AcademicTranscript';
@@ -111,7 +110,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
     // Helper to calculate age
     const calculateAge = (dobString: string): string => {
-        if (!dobString) return '---';
+        if (!dobString) return '--';
         const dob = new Date(dobString);
         const diff_ms = Date.now() - dob.getTime();
         const age_dt = new Date(diff_ms);
@@ -362,7 +361,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         >
                                             <div className="flex items-center gap-3 mb-3">
                                                 <div className={`p-2 rounded-lg bg-black/30 ${cat.color}`}>{cat.icon}</div>
-                                                <h3 className="font-bold text-white text-sm line-clamp-1">{cat.title}</h3>
+                                                <h3 className="text-white font-bold text-sm line-clamp-1">{cat.title}</h3>
                                             </div>
                                             <p className="text-xs text-gray-500 mb-3">50 حقيبة تدريبية متخصصة</p>
                                             <div className="w-full bg-gray-800 h-1.5 rounded-full overflow-hidden">
@@ -407,105 +406,102 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     {/* VIEW: OVERVIEW */}
                     {activeSection === 'overview' && (
                         <div className="space-y-8 animate-fade-in-up pb-20">
-                            <div className="flex flex-col md:flex-row justify-between items-start gap-6">
-                                <div className="w-full">
-                                    <h1 className="text-2xl md:text-3xl font-black text-white mb-2">لوحة التحكم المركزية</h1>
-                                    <p className="text-gray-400 text-sm mb-6">مرحباً بك في نظام ميلاف الموحد. تحكم في مسارك المهني والتعليمي من هنا.</p>
+                            
+                            {/* --- DIGITAL ID CARD (TWITTER STYLE REDESIGN) --- */}
+                            <div className="relative w-full rounded-2xl overflow-hidden bg-[#1e293b] border border-white/10 shadow-xl">
+                                
+                                {/* 1. Cover Image Header */}
+                                <div className="h-40 w-full relative bg-gradient-to-r from-blue-900 to-slate-900">
+                                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                                     
-                                    {/* --- DIGITAL ID CARD (REDESIGNED) --- */}
-                                    <div className="bg-gradient-to-br from-[#1e3a8a] to-[#0f172a] rounded-2xl border border-blue-500/30 shadow-2xl relative overflow-hidden group">
-                                        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/circuit-board.png')] opacity-10"></div>
-                                        
-                                        {/* Card Header */}
-                                        <div className="relative z-10 bg-black/20 p-4 border-b border-white/10 flex justify-between items-center">
-                                            <h3 className="text-white font-bold flex items-center gap-2">
-                                                <User className="w-5 h-5 text-blue-400"/> معلوماتي
-                                            </h3>
-                                            <div className="flex items-center gap-3">
-                                                <div className="relative group/search hidden sm:block">
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="بحث في البيانات..." 
-                                                        className="bg-black/30 text-white text-xs px-3 py-1.5 rounded-lg border border-white/10 focus:border-blue-500 outline-none w-40 transition-all focus:w-56"
-                                                    />
-                                                    <Search className="w-3 h-3 text-gray-400 absolute left-2 top-2"/>
-                                                </div>
-                                                <button onClick={() => setActiveSection('settings')} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-white" title="الإعدادات">
-                                                    <Settings className="w-4 h-4"/>
-                                                </button>
-                                                <button onClick={() => setActiveSection('settings')} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-white" title="تعديل">
-                                                    <Edit3 className="w-4 h-4"/>
-                                                </button>
-                                            </div>
+                                    {/* Header Actions (Title & Search) */}
+                                    <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10">
+                                        <div className="flex items-center gap-2 bg-black/30 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/10">
+                                            <User className="w-4 h-4 text-blue-400"/>
+                                            <span className="text-sm font-bold text-white">معلوماتي</span>
                                         </div>
-
-                                        {/* Card Body */}
-                                        <div className="relative z-10 p-6 flex flex-col md:flex-row gap-8 items-center md:items-start">
-                                            {/* Avatar Section */}
-                                            <div className="flex flex-col items-center gap-3">
-                                                <div className="w-32 h-32 rounded-xl border-4 border-white/10 shadow-xl overflow-hidden bg-black/40 relative group/avatar cursor-pointer" onClick={() => setActiveSection('settings')}>
-                                                    <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover transition-transform group-hover/avatar:scale-110"/>
-                                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
-                                                        <Camera className="w-8 h-8 text-white"/>
-                                                    </div>
-                                                </div>
-                                                <div className="text-center">
-                                                    <div className="text-[10px] text-gray-400 uppercase tracking-widest font-mono mb-1">المعرف الأكاديمي</div>
-                                                    <div className="bg-black/40 px-3 py-1 rounded text-amber-400 font-mono font-bold text-sm border border-amber-500/20 shadow-inner">
-                                                        {user.trainingId}
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            {/* Info Grid */}
-                                            <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8">
-                                                <div>
-                                                    <span className="text-[10px] text-blue-300 uppercase font-bold block mb-1">الاسم الكامل</span>
-                                                    <span className="text-white font-bold text-lg">{user.name}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[10px] text-blue-300 uppercase font-bold block mb-1">رقم الهوية</span>
-                                                    <span className="text-gray-200 font-mono tracking-wide">{user.nationalId || '---'}</span>
-                                                </div>
-                                                <div>
-                                                    <span className="text-[10px] text-blue-300 uppercase font-bold block mb-1">الاختصاص الجامعي</span>
-                                                    <span className="text-white font-bold">{user.major || 'مسار عام'}</span>
-                                                </div>
-                                                
-                                                {/* Vitals */}
-                                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 border-t border-white/10 pt-4 mt-2">
-                                                    <div className="text-[10px] text-gray-400 uppercase font-bold mb-3 flex items-center gap-2">
-                                                        <ActivityDot/> معلومات ديموغرافية وحيوية
-                                                    </div>
-                                                    <div className="flex flex-wrap gap-4">
-                                                        <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/5">
-                                                            <span className="text-[10px] text-gray-500 block">العمر</span>
-                                                            <span className="text-white font-mono">{calculateAge(user.birthDate || '')} سنة</span>
-                                                        </div>
-                                                        <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/5">
-                                                            <span className="text-[10px] text-gray-500 block">تاريخ الميلاد</span>
-                                                            <span className="text-white font-mono">{user.birthDate || '---'}</span>
-                                                        </div>
-                                                        <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/5 flex items-center gap-3">
-                                                            <div>
-                                                                <span className="text-[10px] text-gray-500 block">فصيلة الدم</span>
-                                                                <span className="text-white font-mono font-bold">{user.bloodType || 'A+'}</span>
-                                                            </div>
-                                                            <Droplet className="w-5 h-5 text-red-500 fill-red-500 animate-pulse"/>
-                                                        </div>
-                                                        <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/5">
-                                                            <span className="text-[10px] text-gray-500 block">الجنسية</span>
-                                                            <span className="text-white">{user.nationality || '---'}</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
+                                        
+                                        <div className="relative group/search">
+                                            <input 
+                                                type="text" 
+                                                placeholder="بحث في البيانات..." 
+                                                className="bg-black/30 backdrop-blur-sm text-white text-xs px-3 py-1.5 pl-8 rounded-full border border-white/10 focus:border-blue-500 outline-none w-32 focus:w-48 transition-all"
+                                            />
+                                            <Search className="w-3 h-3 text-gray-300 absolute left-2 top-2"/>
                                         </div>
                                     </div>
-                                    {/* --- END DIGITAL ID CARD --- */}
+                                </div>
+
+                                {/* 2. Profile Content Area */}
+                                <div className="px-6 pb-6 relative">
+                                    
+                                    {/* Avatar & Edit Button Row */}
+                                    <div className="flex justify-between items-end -mt-12 mb-4">
+                                        {/* Avatar (Overlapping Cover) */}
+                                        <div className="relative group cursor-pointer" onClick={() => setActiveSection('settings')}>
+                                            <div className="w-24 h-24 rounded-full border-4 border-[#1e293b] overflow-hidden bg-black shadow-lg">
+                                                <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover transition-transform group-hover:scale-105"/>
+                                            </div>
+                                            <div className="absolute bottom-1 right-1 bg-black/50 p-1 rounded-full border border-white/20 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <Camera className="w-3 h-3 text-white"/>
+                                            </div>
+                                        </div>
+
+                                        {/* Edit Profile Button (Twitter Style) */}
+                                        <div className="flex gap-2 mb-2">
+                                            <button 
+                                                onClick={() => setActiveSection('settings')} 
+                                                className="px-4 py-1.5 rounded-full border border-white/20 font-bold text-sm hover:bg-white/5 transition-colors text-white"
+                                            >
+                                                تعديل الملف
+                                            </button>
+                                            <button onClick={() => setActiveSection('settings')} className="p-2 rounded-full border border-white/20 hover:bg-white/5 text-white">
+                                                <Settings className="w-4 h-4"/>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* User Info Block */}
+                                    <div className="mb-4">
+                                        <h1 className="text-xl font-black text-white flex items-center gap-2">
+                                            {user.name}
+                                            {user.isIdentityVerified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-black"/>}
+                                        </h1>
+                                        <p className="text-gray-500 text-sm font-mono dir-ltr text-right">@{user.trainingId}</p>
+                                    </div>
+
+                                    {/* Bio / Major */}
+                                    <div className="mb-4">
+                                         <p className="text-gray-300 text-sm leading-relaxed mb-2">
+                                            {user.bio || 'طالب في أكاديمية ميلاف مراد الوطنية.'}
+                                         </p>
+                                         <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs text-gray-400">
+                                             <span className="flex items-center gap-1"><BriefcaseIcon className="w-3 h-3"/> {user.major || 'مسار عام'}</span>
+                                             <span className="flex items-center gap-1"><MapPin className="w-3 h-3"/> {user.nationality || 'المملكة العربية السعودية'}</span>
+                                             <span className="flex items-center gap-1"><Fingerprint className="w-3 h-3"/> {user.nationalId || '---'}</span>
+                                             <span className="flex items-center gap-1"><Calendar className="w-3 h-3"/> {user.birthDate || '---'}</span>
+                                         </div>
+                                    </div>
+
+                                    {/* Vitals Stats (Following/Followers style) */}
+                                    <div className="flex gap-6 border-t border-white/10 pt-4 mt-4">
+                                        <div className="flex items-center gap-1">
+                                            <span className="font-bold text-white">{calculateAge(user.birthDate || '')}</span>
+                                            <span className="text-xs text-gray-500">سنة (العمر)</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <span className="font-bold text-red-500">{user.bloodType || 'A+'}</span>
+                                            <span className="text-xs text-gray-500">فصيلة الدم</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <span className="font-bold text-white">{user.trainingId}</span>
+                                            <span className="text-xs text-gray-500">الرقم الأكاديمي</span>
+                                        </div>
+                                    </div>
 
                                 </div>
                             </div>
+                            {/* --- END REDESIGNED DIGITAL ID CARD --- */}
                             
                             <div className="w-full">
                                 <CommunityPulse />
@@ -542,7 +538,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     
                                     {/* Smart ID Card Mini */}
                                     <div className="mt-8">
-                                        <h3 className="text-white font-bold mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-gray-400"/> بطاقتي الرقمية</h3>
+                                        <h3 className="text-white font-bold mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-gray-400"/> بطاقتي الرقمية (Classic)</h3>
                                         <SmartIDCard user={user} />
                                     </div>
                                 </div>
