@@ -8,7 +8,7 @@ import {
     CreditCard, Save, MapPin, Phone, Mail, Edit3, Loader2, FileText,
     Menu, X, Camera, Award, Shield, FileCheck, Star, PlayCircle, Grid, List,
     Home, FileInput, Users, HeartHandshake, CheckSquare, AlertTriangle, Ban, Megaphone, ChevronDown, ChevronUp, Building2,
-    FileSignature, UserX, GitMerge, ChevronLeft, ChevronRight, ClipboardList, Briefcase as BriefcaseIcon, Database, Cpu, Globe, Server, Lock, Wifi, Code, Layers, Trash2, Search, Droplet, Calendar, Flag, Fingerprint
+    FileSignature, UserX, GitMerge, ChevronLeft, ChevronRight, ClipboardList, Briefcase as BriefcaseIcon, Database, Cpu, Globe, Server, Lock, Wifi, Code, Layers, Trash2, Search, Droplet, Calendar, Flag, Fingerprint, Image as ImageIcon
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AcademicTranscript } from '../Academy/AcademicTranscript';
@@ -26,18 +26,15 @@ interface Props {
 }
 
 // --- ACADEMY DATA GENERATOR ---
-// Updated to strictly follow: AI, Software, Networks, InfoSec
 const ACADEMY_CATEGORIES = [
     { id: 'ai', title: 'الذكاء الاصطناعي (Artificial Intelligence)', icon: <Cpu/>, color: 'text-purple-400' },
     { id: 'dev', title: 'البرمجيات والتطوير (Software Eng)', icon: <Code/>, color: 'text-blue-400' },
     { id: 'networks', title: 'الشبكات والبنية التحتية (Networks)', icon: <Wifi/>, color: 'text-cyan-400' },
     { id: 'cyber', title: 'أمن المعلومات (Information Security)', icon: <Shield/>, color: 'text-emerald-400' },
-    // Secondary Categories
     { id: 'data', title: 'علم البيانات (Data Science)', icon: <Database/>, color: 'text-amber-400' },
     { id: 'cloud', title: 'الحوسبة السحابية (Cloud)', icon: <Server/>, color: 'text-indigo-400' },
     { id: 'blockchain', title: 'البلوك تشين (Blockchain)', icon: <Layers/>, color: 'text-orange-400' },
     { id: 'iot', title: 'إنترنت الأشياء (IoT)', icon: <Globe/>, color: 'text-pink-400' },
-    // Generating remaining categories to reach 50+
     ...Array.from({ length: 42 }, (_, i) => ({
         id: `tech_${i+9}`,
         title: `تخصصات تقنية دقيقة - مسار ${i+1}`,
@@ -75,13 +72,13 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         major: '',
         address: '',
         skills: '',
-        // New Vitals
         birthDate: '',
         bloodType: '',
         nationalId: '',
         nationality: ''
     });
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const coverInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         if (user) {
@@ -108,7 +105,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const statusColor = user.isIdentityVerified ? 'text-emerald-400' : 'text-amber-400';
     const statusBg = user.isIdentityVerified ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20';
 
-    // Helper to calculate age
     const calculateAge = (dobString: string): string => {
         if (!dobString) return '--';
         const dob = new Date(dobString);
@@ -135,36 +131,31 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         </button>
     );
 
-    // --- MASSIVE CONTENT GENERATOR ---
     const handleCategoryClick = (category: any) => {
         setSelectedCategory(category);
         setAcademyView('topics');
     };
 
     const handleTopicClick = (topicId: number, categoryTitle: string) => {
-        // Construct a rich course object
         const topicName = `${categoryTitle}: الحقيبة التدريبية رقم ${topicId}`;
-        
-        // Dynamic Banner based on category
         let bannerUrl = 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&q=80&w=1000';
         if (categoryTitle.includes('AI')) bannerUrl = 'https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=1000';
         if (categoryTitle.includes('Cyber')) bannerUrl = 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1000';
         if (categoryTitle.includes('Code') || categoryTitle.includes('Soft')) bannerUrl = 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?auto=format&fit=crop&q=80&w=1000';
 
-        // GENERATE 30 CHAPTERS (MODULES) PER TOPIC
         const modules = Array.from({ length: 30 }, (_, i) => ({
             id: `m_${i + 1}`,
             title: `الشابتر ${i + 1}: ${getChapterTitle(categoryTitle, i)}`,
-            type: i % 5 === 0 ? 'video' : 'text', // Mix of video and heavy text
+            type: i % 5 === 0 ? 'video' : 'text',
             duration: i % 5 === 0 ? '60:00' : '120 دقيقة',
             isCompleted: false,
-            contentLength: '5000+ كلمة' // Indicator
+            contentLength: '5000+ كلمة'
         }));
 
         setActiveCourse({
             id: `course_${selectedCategory.id}_${topicId}`,
             title: topicName,
-            description: `حقيبة تدريبية شاملة ومتكاملة في ${categoryTitle}. تحتوي على 30 شابتر (فصل دراسي) تغطي أكثر من 5000 كلمة من المحتوى العميق، شروحات مرئية، وتطبيقات عملية.`,
+            description: `حقيبة تدريبية شاملة ومتكاملة في ${categoryTitle}.`,
             thumbnail: bannerUrl,
             category: selectedCategory.title,
             modules: modules,
@@ -172,12 +163,10 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         });
     };
 
-    // Helper to fake chapter titles
     const getChapterTitle = (cat: string, index: number) => {
         const basics = ["المقدمة والأهداف", "الإطار النظري", "المفاهيم الأساسية", "التاريخ والنشأة", "الأدوات اللازمة"];
         const advanced = ["التحليل المتقدم", "التطبيقات العملية", "دراسة الحالة", "المشكلات والحلول", "المعايير العالمية"];
         const expert = ["البحث والتطوير", "المستقبل والابتكار", "الخلاصة والتوصيات", "المشروع النهائي", "المراجعة الشاملة"];
-        
         if (index < 5) return basics[index] || `أساسيات ${cat} - جزء ${index+1}`;
         if (index > 25) return expert[index - 26] || `خاتمة ${cat} - جزء ${index+1}`;
         return `محور ${cat} التفصيلي رقم ${index + 1}`;
@@ -195,9 +184,27 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         }
     };
 
+    const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                if (ev.target?.result) {
+                    updateProfile({ coverImage: ev.target.result as string });
+                }
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    };
+
     const handleRemoveAvatar = () => {
         if (confirm("هل أنت متأكد من حذف الصورة الشخصية؟")) {
             updateProfile({ avatar: "" });
+        }
+    };
+
+    const handleRemoveCover = () => {
+        if (confirm("هل أنت متأكد من حذف صورة الغلاف؟")) {
+            updateProfile({ coverImage: "" });
         }
     };
 
@@ -213,7 +220,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
             major: formData.major,
             address: formData.address,
             skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
-            // New Vitals
             birthDate: formData.birthDate,
             bloodType: formData.bloodType,
             nationalId: formData.nationalId,
@@ -222,6 +228,17 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         setIsSaving(false);
         alert("✅ تم تحديث البيانات الشخصية بنجاح!");
     };
+
+    // Nav Button Component for the Quick Links bar
+    const NavButton = ({ label, icon: Icon, onClick, active }: any) => (
+        <button 
+            onClick={onClick}
+            className={`flex flex-col items-center justify-center p-3 rounded-xl transition-all border ${active ? 'bg-blue-600/20 border-blue-500/50 text-blue-300' : 'bg-[#1e293b] border-white/5 text-gray-400 hover:bg-white/5 hover:text-white'}`}
+        >
+            <Icon className={`w-5 h-5 mb-1 ${active ? 'text-blue-400' : ''}`} />
+            <span className="text-xs font-bold">{label}</span>
+        </button>
+    );
 
     return (
         <>
@@ -257,12 +274,10 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                             <div className="w-full h-full rounded-full border-4 border-[#1e293b] shadow-xl overflow-hidden cursor-pointer" onClick={() => fileInputRef.current?.click()}>
                                 <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover"/>
                             </div>
-                            {/* Upload Overlay */}
                             <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer pointer-events-none">
                                 <Edit3 className="w-6 h-6 text-white"/>
                             </div>
                             
-                            {/* Delete Button */}
                             {user.avatar && (
                                 <button 
                                     onClick={handleRemoveAvatar}
@@ -273,9 +288,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                 </button>
                             )}
 
-                            {/* Hidden Input */}
                             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarUpload}/>
-
                             {user.isIdentityVerified && <div className="absolute bottom-0 right-0 bg-emerald-500 border-4 border-[#0b1120] rounded-full p-1 pointer-events-none"><CheckCircle2 className="w-4 h-4 text-white"/></div>}
                         </div>
 
@@ -287,15 +300,10 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                     <div className="flex-1 space-y-2">
                         <SidebarItem id="overview" icon={<Home className="w-5 h-5"/>} label="الرئيسية (معلوماتي)" />
-                        <SidebarItem id="settings" icon={<Settings className="w-5 h-5 text-gray-300"/>} label="إعدادات الحساب والملف الشخصي" />
+                        <SidebarItem id="settings" icon={<Settings className="w-5 h-5 text-gray-300"/>} label="إعدادات الحساب" />
                         <SidebarItem id="academy" icon={<BriefcaseIcon className="w-5 h-5 text-blue-400"/>} label="الحقائب التدريبية" />
                         <SidebarItem id="wallet" icon={<Wallet className="w-5 h-5 text-emerald-400"/>} label="المحفظة الرقمية" />
                         <SidebarItem id="experience" icon={<Award className="w-5 h-5 text-amber-500"/>} label="اشتري خبرتك" onClick={() => setShowExperienceModal(true)} />
-                        
-                        {/* Other Items */}
-                        <SidebarItem id="registration" icon={<ClipboardList className="w-5 h-5 text-gray-400"/>} label="التسجيل الالكتروني" onClick={() => alert('نظام القبول والتسجيل متاح في الفترات المحددة.')} />
-                        <SidebarItem id="clubs" icon={<Users className="w-5 h-5 text-gray-400"/>} label="منصة الأندية الطلابية" onClick={() => alert('قريباً: الأنشطة اللاصفية والأندية.')} />
-                        <SidebarItem id="advising" icon={<HeartHandshake className="w-5 h-5 text-gray-400"/>} label="الارشاد الاكاديمي" onClick={() => alert('تواصل مع المرشد الأكاديمي.')} />
                         
                         <div className="space-y-1">
                             <button 
@@ -331,11 +339,9 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         <X className="w-5 h-5"/>
                     </button>
 
-                    {/* VIEW: ACADEMY (Hierarchy: Categories -> Topics -> Content) */}
+                    {/* VIEW: ACADEMY */}
                     {activeSection === 'academy' && (
                         <div className="space-y-6 animate-fade-in-up pb-20">
-                            
-                            {/* Breadcrumb Navigation */}
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-white/10 pb-4">
                                 <div>
                                     <h2 className="text-xl md:text-2xl font-bold text-white flex items-center gap-2">
@@ -350,7 +356,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                 </div>
                             </div>
 
-                            {/* LEVEL 1: CATEGORIES (50 Items) */}
                             {academyView === 'categories' && (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                                     {ACADEMY_CATEGORIES.map((cat, i) => (
@@ -372,7 +377,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                 </div>
                             )}
 
-                            {/* LEVEL 2: TOPICS (50 Topics per Category) */}
                             {academyView === 'topics' && selectedCategory && (
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {Array.from({ length: 50 }, (_, i) => (
@@ -381,9 +385,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                             onClick={() => handleTopicClick(i + 1, selectedCategory.title)}
                                             className="bg-[#1e293b] p-4 rounded-xl border border-white/5 hover:bg-white/5 transition-all cursor-pointer flex justify-between items-center group relative overflow-hidden"
                                         >
-                                            {/* Decorative Number */}
                                             <div className="absolute -left-2 -bottom-4 text-6xl font-black text-white/5 z-0">{i+1}</div>
-                                            
                                             <div className="flex items-center gap-4 relative z-10">
                                                 <div className="w-10 h-10 rounded-full bg-black/30 flex items-center justify-center text-xs font-bold text-gray-400 group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
                                                     {i + 1}
@@ -407,12 +409,16 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     {activeSection === 'overview' && (
                         <div className="space-y-8 animate-fade-in-up pb-20">
                             
-                            {/* --- DIGITAL ID CARD (TWITTER STYLE REDESIGN) --- */}
+                            {/* --- DIGITAL ID CARD (SOCIAL PROFILE STYLE) --- */}
                             <div className="relative w-full rounded-2xl overflow-hidden bg-[#1e293b] border border-white/10 shadow-xl">
                                 
                                 {/* 1. Cover Image Header */}
-                                <div className="h-40 w-full relative bg-gradient-to-r from-blue-900 to-slate-900">
-                                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                                <div className="h-40 w-full relative bg-gradient-to-r from-blue-900 to-slate-900 overflow-hidden">
+                                    {user.coverImage ? (
+                                        <img src={user.coverImage} className="absolute inset-0 w-full h-full object-cover" alt="Cover" />
+                                    ) : (
+                                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                                    )}
                                     
                                     {/* Header Actions (Title & Search) */}
                                     <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-10">
@@ -447,7 +453,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                             </div>
                                         </div>
 
-                                        {/* Edit Profile Button (Twitter Style) */}
+                                        {/* Edit Profile Button */}
                                         <div className="flex gap-2 mb-2">
                                             <button 
                                                 onClick={() => setActiveSection('settings')} 
@@ -483,7 +489,7 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                          </div>
                                     </div>
 
-                                    {/* Vitals Stats (Following/Followers style) */}
+                                    {/* Vitals Stats */}
                                     <div className="flex gap-6 border-t border-white/10 pt-4 mt-4">
                                         <div className="flex items-center gap-1">
                                             <span className="font-bold text-white">{calculateAge(user.birthDate || '')}</span>
@@ -501,18 +507,47 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
 
                                 </div>
                             </div>
-                            {/* --- END REDESIGNED DIGITAL ID CARD --- */}
+                            
+                            {/* --- NEW QUICK NAVIGATION BAR (BELOW CARD) --- */}
+                            <div className="grid grid-cols-4 gap-2">
+                                <NavButton 
+                                    label="معلوماتي" 
+                                    icon={User} 
+                                    onClick={() => setActiveSection('overview')} 
+                                    active={true} // Since we are on overview
+                                />
+                                <NavButton 
+                                    label="شهادتي" 
+                                    icon={Award} 
+                                    onClick={() => {
+                                        // Navigate to documents section but trigger certificate view logic if possible, 
+                                        // or just go to documents section where certificates live.
+                                        setActiveSection('documents');
+                                    }} 
+                                    active={false}
+                                />
+                                <NavButton 
+                                    label="مستنداتي" 
+                                    icon={FileText} 
+                                    onClick={() => setActiveSection('documents')} 
+                                    active={false}
+                                />
+                                <NavButton 
+                                    label="سيرتي" 
+                                    icon={BriefcaseIcon} 
+                                    onClick={() => setActiveSection('settings')} // Profile/CV data is in settings
+                                    active={false}
+                                />
+                            </div>
+                            {/* --- END NAV BAR --- */}
                             
                             <div className="w-full">
                                 <CommunityPulse />
                             </div>
 
-                            {/* SPLIT LAYOUT: Right (Stats) and Left (Academic Services) */}
+                            {/* Stats & Services */}
                             <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-                                
-                                {/* RIGHT COLUMN (Stats) */}
                                 <div className="xl:col-span-2 space-y-8">
-                                    {/* Quick Stats */}
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 relative overflow-hidden group hover:border-emerald-500/30 transition-all">
                                             <div className="absolute top-0 right-0 p-4 opacity-10"><Wallet className="w-12 h-12 text-emerald-500"/></div>
@@ -536,31 +571,23 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                         </div>
                                     </div>
                                     
-                                    {/* Smart ID Card Mini */}
                                     <div className="mt-8">
                                         <h3 className="text-white font-bold mb-4 flex items-center gap-2"><CreditCard className="w-5 h-5 text-gray-400"/> بطاقتي الرقمية (Classic)</h3>
                                         <SmartIDCard user={user} />
                                     </div>
                                 </div>
 
-                                {/* LEFT COLUMN (Academic Affairs Services) */}
                                 <div className="xl:col-span-1">
                                     <div className="bg-[#1e293b] rounded-2xl border border-white/5 p-6 h-full">
-                                        {/* Breadcrumb */}
                                         <div className="flex items-center gap-2 text-[10px] text-gray-500 mb-6">
                                             <span>القائمة الرئيسية</span>
                                             <ChevronLeft className="w-3 h-3"/>
                                             <span className="text-blue-400 font-bold">الضوابط والأدلة</span>
                                         </div>
-                                        
-                                        {/* Title */}
                                         <h3 className="text-white font-bold text-lg mb-6 border-b border-white/10 pb-4 flex items-center gap-2">
                                             <Building2 className="w-5 h-5 text-blue-500"/> خدمات الشؤون الأكاديمية
                                         </h3>
-
-                                        {/* Cards List */}
                                         <div className="space-y-4">
-                                            {/* Card 1: Exam Guide */}
                                             <div 
                                                 className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-blue-500/30"
                                                 onClick={() => setShowExamGuide(true)}
@@ -577,8 +604,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                                      </div>
                                                  </div>
                                             </div>
-
-                                            {/* Card 2: Excuses */}
                                             <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-amber-500/30">
                                                  <div className="flex gap-4">
                                                      <div className="p-3 bg-amber-600/20 rounded-lg text-amber-400 h-fit group-hover:scale-110 transition-transform">
@@ -592,8 +617,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                                      </div>
                                                  </div>
                                             </div>
-                                            
-                                            {/* Card 3: Procedures */}
                                             <div className="bg-white/5 p-4 rounded-xl border border-white/5 hover:bg-white/10 transition-colors cursor-pointer group hover:border-emerald-500/30">
                                                  <div className="flex gap-4">
                                                      <div className="p-3 bg-emerald-600/20 rounded-lg text-emerald-400 h-fit group-hover:scale-110 transition-transform">
@@ -614,19 +637,17 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         </div>
                     )}
 
-                    {/* VIEW: DOCUMENTS (Unified Docs & Transcript) */}
+                    {/* VIEW: DOCUMENTS */}
                     {activeSection === 'documents' && (
                         <div className="space-y-8 animate-fade-in-up pb-20">
                             <h2 className="text-2xl font-bold text-white border-b border-white/10 pb-4 mb-6">مركز الوثائق والسجل الأكاديمي</h2>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Academic Transcript */}
                                 <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5">
                                     <h3 className="text-white font-bold mb-4 flex items-center gap-2"><FileText className="w-5 h-5 text-blue-400"/> السجل الأكاديمي</h3>
                                     <AcademicTranscript />
                                 </div>
                                 
-                                {/* Certificates Section */}
                                 <div className="space-y-6">
                                     <div className="bg-[#1e293b] p-6 rounded-2xl border border-white/5 text-center">
                                         <h3 className="text-white font-bold mb-4 flex items-center justify-center gap-2"><Award className="w-5 h-5 text-emerald-400"/> نموذج الشهادة المعتمد</h3>
@@ -696,12 +717,39 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                         </div>
                     )}
 
-                    {/* VIEW: SETTINGS (Edit Profile) */}
+                    {/* VIEW: SETTINGS */}
                     {activeSection === 'settings' && (
                          <div className="space-y-8 animate-fade-in-up max-w-3xl mx-auto pb-20">
                             <h2 className="text-2xl font-bold text-white mb-6 border-b border-white/10 pb-4">إعدادات الحساب والملف الشخصي</h2>
 
                             <form onSubmit={handleSaveProfile} className="space-y-6">
+                                {/* Cover Image Upload */}
+                                <div className="flex flex-col gap-2 mb-4">
+                                    <label className="block text-xs font-bold text-gray-400">صورة الغلاف (Header)</label>
+                                    <div className="relative h-32 w-full rounded-xl overflow-hidden bg-black/30 border border-white/10 group cursor-pointer" onClick={() => coverInputRef.current?.click()}>
+                                        {user.coverImage ? (
+                                            <img src={user.coverImage} className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
+                                        ) : (
+                                            <div className="w-full h-full bg-gradient-to-r from-blue-900/40 to-slate-900/40"></div>
+                                        )}
+                                        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <ImageIcon className="w-8 h-8 text-white" />
+                                        </div>
+                                        {user.coverImage && (
+                                            <button 
+                                                type="button" 
+                                                onClick={(e) => { e.stopPropagation(); handleRemoveCover(); }}
+                                                className="absolute top-2 right-2 bg-red-600 hover:bg-red-500 text-white p-1.5 rounded-full z-20 shadow-lg"
+                                                title="حذف الغلاف"
+                                            >
+                                                <Trash2 className="w-3 h-3"/>
+                                            </button>
+                                        )}
+                                        <input type="file" ref={coverInputRef} className="hidden" accept="image/*" onChange={handleCoverUpload}/>
+                                    </div>
+                                    <p className="text-[10px] text-gray-500">يفضل صورة بالعرض (1500x500)</p>
+                                </div>
+
                                 {/* Avatar Upload */}
                                 <div className="flex flex-col items-center gap-4 mb-8">
                                     <div className="relative w-32 h-32 group">
@@ -709,12 +757,10 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                              <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover group-hover:opacity-50 transition-opacity"/>
                                         </div>
                                         
-                                        {/* Edit Overlay */}
                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
                                             <Camera className="w-8 h-8 text-white"/>
                                         </div>
                                         
-                                        {/* Delete Button */}
                                         {user.avatar && (
                                             <button 
                                                 type="button"
@@ -844,7 +890,6 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                 </div>
                 <div className="p-8 overflow-y-auto text-right text-gray-300 space-y-6 leading-relaxed">
                      <h1 className="text-2xl font-bold text-white mb-4 border-b border-white/10 pb-4">سياسة ودليل الواجبات والاختبارات - أكاديمية ميلاف مراد</h1>
-                     {/* Same content as before */}
                      <p>سياسة الاختبارات والواجبات تضمن النزاهة الأكاديمية.</p>
                 </div>
               </div>

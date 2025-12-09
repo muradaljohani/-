@@ -947,6 +947,7 @@ export interface User {
   role: UserRole;
   permissions?: string[]; 
   avatar?: string;
+  coverImage?: string; // ADDED: Profile Cover Image
   isLoggedIn: boolean;
   loginMethod: LoginProvider;
   verified: boolean; 
@@ -970,11 +971,11 @@ export interface User {
   supportTickets?: SupportTicket[];
   ecosystem?: EcosystemProfile;
   transcript?: TranscriptEntry[];
-  customFormFields?: Record<string, string>; // ADDED for 30-field dashboard
+  customFormFields?: Record<string, string>; 
 
   gender?: 'Male' | 'Female';
   birthDate?: string;
-  bloodType?: string; // ADDED
+  bloodType?: string; 
   maritalStatus?: string;
   nationality?: string; 
   passportId?: string; 
