@@ -1,4 +1,6 @@
 
+
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     User, Briefcase, GraduationCap, ShoppingBag, 
@@ -7,7 +9,7 @@ import {
     CreditCard, Save, MapPin, Phone, Mail, Edit3, Loader2, FileText,
     Menu, X, Camera, Award, Shield, FileCheck, Star, PlayCircle, Grid, List,
     Home, FileInput, Users, HeartHandshake, CheckSquare, AlertTriangle, Ban, Megaphone, ChevronDown, ChevronUp, Building2,
-    FileSignature, UserX, GitMerge, ChevronLeft, ChevronRight, ClipboardList, Briefcase as BriefcaseIcon, Database, Cpu, Globe, Server, Lock, Wifi, Code, Layers, Trash2
+    FileSignature, UserX, GitMerge, ChevronLeft, ChevronRight, ClipboardList, Briefcase as BriefcaseIcon, Database, Cpu, Globe, Server, Lock, Wifi, Code, Layers, Trash2, Search, Droplet, Calendar, Flag
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { AcademicTranscript } from '../Academy/AcademicTranscript';
@@ -73,7 +75,12 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         currentJobTitle: '',
         major: '',
         address: '',
-        skills: ''
+        skills: '',
+        // New Vitals
+        birthDate: '',
+        bloodType: '',
+        nationalId: '',
+        nationality: ''
     });
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,7 +93,11 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                 currentJobTitle: user.currentJobTitle || '',
                 major: user.major || '',
                 address: user.address || '',
-                skills: user.skills ? user.skills.join(', ') : ''
+                skills: user.skills ? user.skills.join(', ') : '',
+                birthDate: user.birthDate || '',
+                bloodType: user.bloodType || 'A+',
+                nationalId: user.nationalId || '',
+                nationality: user.nationality || ''
             });
         }
     }, [user]);
@@ -97,6 +108,15 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
     const certsCount = user.certificates?.length || 0;
     const statusColor = user.isIdentityVerified ? 'text-emerald-400' : 'text-amber-400';
     const statusBg = user.isIdentityVerified ? 'bg-emerald-500/10 border-emerald-500/20' : 'bg-amber-500/10 border-amber-500/20';
+
+    // Helper to calculate age
+    const calculateAge = (dobString: string): string => {
+        if (!dobString) return '---';
+        const dob = new Date(dobString);
+        const diff_ms = Date.now() - dob.getTime();
+        const age_dt = new Date(diff_ms);
+        return Math.abs(age_dt.getUTCFullYear() - 1970).toString();
+    };
 
     const SidebarItem = ({ id, icon, label, onClick }: any) => (
         <button 
@@ -193,7 +213,12 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
             currentJobTitle: formData.currentJobTitle,
             major: formData.major,
             address: formData.address,
-            skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean)
+            skills: formData.skills.split(',').map(s => s.trim()).filter(Boolean),
+            // New Vitals
+            birthDate: formData.birthDate,
+            bloodType: formData.bloodType,
+            nationalId: formData.nationalId,
+            nationality: formData.nationality
         });
         setIsSaving(false);
         alert("✅ تم تحديث البيانات الشخصية بنجاح!");
@@ -262,8 +287,8 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                     </div>
 
                     <div className="flex-1 space-y-2">
-                        <SidebarItem id="overview" icon={<Home className="w-5 h-5"/>} label="الرئيسية" />
-                        <SidebarItem id="settings" icon={<Settings className="w-5 h-5 text-gray-300"/>} label="الإعدادات وتعديل الملف" />
+                        <SidebarItem id="overview" icon={<Home className="w-5 h-5"/>} label="الرئيسية (معلوماتي)" />
+                        <SidebarItem id="settings" icon={<Settings className="w-5 h-5 text-gray-300"/>} label="إعدادات الحساب والملف الشخصي" />
                         <SidebarItem id="academy" icon={<BriefcaseIcon className="w-5 h-5 text-blue-400"/>} label="الحقائب التدريبية" />
                         <SidebarItem id="wallet" icon={<Wallet className="w-5 h-5 text-emerald-400"/>} label="المحفظة الرقمية" />
                         <SidebarItem id="experience" icon={<Award className="w-5 h-5 text-amber-500"/>} label="اشتري خبرتك" onClick={() => setShowExperienceModal(true)} />
@@ -387,31 +412,97 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     <h1 className="text-2xl md:text-3xl font-black text-white mb-2">لوحة التحكم المركزية</h1>
                                     <p className="text-gray-400 text-sm mb-6">مرحباً بك في نظام ميلاف الموحد. تحكم في مسارك المهني والتعليمي من هنا.</p>
                                     
-                                    {/* --- STUDENT ACADEMIC INFO CARD (NEW) --- */}
-                                    <div className="bg-[#1e293b] rounded-xl border border-white/5 p-5 mb-8">
-                                        <h3 className="text-white font-bold mb-4 flex items-center gap-2 text-sm border-b border-white/5 pb-2">
-                                            <User className="w-4 h-4 text-blue-400"/> البيانات الأكاديمية للطالب
-                                        </h3>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                            <div className="bg-black/20 p-3 rounded-lg border border-white/5">
-                                                <span className="text-gray-500 block text-[10px] mb-1">الاسم الرباعي</span>
-                                                <span className="text-white font-bold truncate block">{user.name}</span>
+                                    {/* --- DIGITAL ID CARD (REDESIGNED) --- */}
+                                    <div className="bg-gradient-to-br from-[#1e3a8a] to-[#0f172a] rounded-2xl border border-blue-500/30 shadow-2xl relative overflow-hidden group">
+                                        <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/circuit-board.png')] opacity-10"></div>
+                                        
+                                        {/* Card Header */}
+                                        <div className="relative z-10 bg-black/20 p-4 border-b border-white/10 flex justify-between items-center">
+                                            <h3 className="text-white font-bold flex items-center gap-2">
+                                                <User className="w-5 h-5 text-blue-400"/> معلوماتي
+                                            </h3>
+                                            <div className="flex items-center gap-3">
+                                                <div className="relative group/search hidden sm:block">
+                                                    <input 
+                                                        type="text" 
+                                                        placeholder="بحث في البيانات..." 
+                                                        className="bg-black/30 text-white text-xs px-3 py-1.5 rounded-lg border border-white/10 focus:border-blue-500 outline-none w-40 transition-all focus:w-56"
+                                                    />
+                                                    <Search className="w-3 h-3 text-gray-400 absolute left-2 top-2"/>
+                                                </div>
+                                                <button onClick={() => setActiveSection('settings')} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-white" title="الإعدادات">
+                                                    <Settings className="w-4 h-4"/>
+                                                </button>
+                                                <button onClick={() => setActiveSection('settings')} className="p-2 hover:bg-white/10 rounded-full transition-colors text-gray-300 hover:text-white" title="تعديل">
+                                                    <Edit3 className="w-4 h-4"/>
+                                                </button>
                                             </div>
-                                            <div className="bg-black/20 p-3 rounded-lg border border-white/5">
-                                                <span className="text-gray-500 block text-[10px] mb-1">التخصص</span>
-                                                <span className="text-emerald-400 font-bold truncate block">{user.major || 'مسار عام'}</span>
+                                        </div>
+
+                                        {/* Card Body */}
+                                        <div className="relative z-10 p-6 flex flex-col md:flex-row gap-8 items-center md:items-start">
+                                            {/* Avatar Section */}
+                                            <div className="flex flex-col items-center gap-3">
+                                                <div className="w-32 h-32 rounded-xl border-4 border-white/10 shadow-xl overflow-hidden bg-black/40 relative group/avatar cursor-pointer" onClick={() => setActiveSection('settings')}>
+                                                    <img src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover transition-transform group-hover/avatar:scale-110"/>
+                                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
+                                                        <Camera className="w-8 h-8 text-white"/>
+                                                    </div>
+                                                </div>
+                                                <div className="text-center">
+                                                    <div className="text-[10px] text-gray-400 uppercase tracking-widest font-mono mb-1">المعرف الأكاديمي</div>
+                                                    <div className="bg-black/40 px-3 py-1 rounded text-amber-400 font-mono font-bold text-sm border border-amber-500/20 shadow-inner">
+                                                        {user.trainingId}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="bg-black/20 p-3 rounded-lg border border-white/5">
-                                                <span className="text-gray-500 block text-[10px] mb-1">الرقم الأكاديمي</span>
-                                                <span className="text-amber-400 font-mono font-bold truncate block">{user.trainingId}</span>
-                                            </div>
-                                            <div className="bg-black/20 p-3 rounded-lg border border-white/5">
-                                                <span className="text-gray-500 block text-[10px] mb-1">رقم الهوية</span>
-                                                <span className="text-gray-300 font-mono truncate block">{user.nationalId || '---'}</span>
+
+                                            {/* Info Grid */}
+                                            <div className="flex-1 w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-y-6 gap-x-8">
+                                                <div>
+                                                    <span className="text-[10px] text-blue-300 uppercase font-bold block mb-1">الاسم الكامل</span>
+                                                    <span className="text-white font-bold text-lg">{user.name}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] text-blue-300 uppercase font-bold block mb-1">رقم الهوية</span>
+                                                    <span className="text-gray-200 font-mono tracking-wide">{user.nationalId || '---'}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="text-[10px] text-blue-300 uppercase font-bold block mb-1">الاختصاص الجامعي</span>
+                                                    <span className="text-white font-bold">{user.major || 'مسار عام'}</span>
+                                                </div>
+                                                
+                                                {/* Vitals */}
+                                                <div className="col-span-1 sm:col-span-2 lg:col-span-3 border-t border-white/10 pt-4 mt-2">
+                                                    <div className="text-[10px] text-gray-400 uppercase font-bold mb-3 flex items-center gap-2">
+                                                        <ActivityDot/> معلومات ديموغرافية وحيوية
+                                                    </div>
+                                                    <div className="flex flex-wrap gap-4">
+                                                        <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/5">
+                                                            <span className="text-[10px] text-gray-500 block">العمر</span>
+                                                            <span className="text-white font-mono">{calculateAge(user.birthDate || '')} سنة</span>
+                                                        </div>
+                                                        <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/5">
+                                                            <span className="text-[10px] text-gray-500 block">تاريخ الميلاد</span>
+                                                            <span className="text-white font-mono">{user.birthDate || '---'}</span>
+                                                        </div>
+                                                        <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/5 flex items-center gap-3">
+                                                            <div>
+                                                                <span className="text-[10px] text-gray-500 block">فصيلة الدم</span>
+                                                                <span className="text-white font-mono font-bold">{user.bloodType || 'A+'}</span>
+                                                            </div>
+                                                            <Droplet className="w-5 h-5 text-red-500 fill-red-500 animate-pulse"/>
+                                                        </div>
+                                                        <div className="bg-white/5 px-4 py-2 rounded-lg border border-white/5">
+                                                            <span className="text-[10px] text-gray-500 block">الجنسية</span>
+                                                            <span className="text-white">{user.nationality || '---'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                    {/* --- END STUDENT CARD --- */}
+                                    {/* --- END DIGITAL ID CARD --- */}
 
                                 </div>
                             </div>
@@ -644,48 +735,82 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
                                     <p className="text-xs text-gray-400">اضغط على الصورة للتغيير أو أيقونة الحذف للإزالة</p>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 mb-2">الاسم الكامل</label>
-                                        <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" />
+                                <div className="bg-[#1e293b] p-6 rounded-xl border border-white/5 mb-6">
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                                        <User className="w-5 h-5 text-blue-400"/> البيانات الأساسية
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">الاسم الكامل</label>
+                                            <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">المسمى الوظيفي</label>
+                                            <input type="text" value={formData.currentJobTitle} onChange={e => setFormData({...formData, currentJobTitle: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" placeholder="مثال: مطور برمجيات" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">رقم الهاتف</label>
+                                            <div className="relative">
+                                                <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-blue-500 outline-none transition-colors text-right" dir="ltr" />
+                                                <Phone className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">العنوان</label>
+                                            <div className="relative">
+                                                <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-blue-500 outline-none transition-colors" />
+                                                <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
+                                            </div>
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">نبذة عنك</label>
+                                            <textarea value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors h-24 resize-none" placeholder="اكتب نبذة مختصرة..." />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 mb-2">المسمى الوظيفي</label>
-                                        <input type="text" value={formData.currentJobTitle} onChange={e => setFormData({...formData, currentJobTitle: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" placeholder="مثال: مطور برمجيات" />
-                                    </div>
-                                    
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 mb-2">التخصص الدراسي (يظهر في البطاقة)</label>
-                                        <input 
-                                            type="text" 
-                                            value={formData.major} 
-                                            onChange={e => setFormData({...formData, major: e.target.value})} 
-                                            className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" 
-                                            placeholder="مثال: علوم الحاسب، إدارة أعمال" 
-                                        />
-                                    </div>
+                                </div>
 
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 mb-2">رقم الهاتف</label>
-                                        <div className="relative">
-                                            <input type="text" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-blue-500 outline-none transition-colors text-right" dir="ltr" />
-                                            <Phone className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
+                                {/* Vital Information Section */}
+                                <div className="bg-[#1e293b] p-6 rounded-xl border border-white/5 mb-6">
+                                    <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                                        <ActivityDot/> المعلومات الحيوية والديموغرافية
+                                    </h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">رقم الهوية الوطنية / الإقامة</label>
+                                            <input type="text" value={formData.nationalId} onChange={e => setFormData({...formData, nationalId: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors font-mono" placeholder="10xxxxxxxxx"/>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-bold text-gray-400 mb-2">العنوان</label>
-                                        <div className="relative">
-                                            <input type="text" value={formData.address} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 pl-10 text-white focus:border-blue-500 outline-none transition-colors" />
-                                            <MapPin className="absolute left-3 top-3.5 w-4 h-4 text-gray-500"/>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">الجنسية</label>
+                                            <input type="text" value={formData.nationality} onChange={e => setFormData({...formData, nationality: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"/>
                                         </div>
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-xs font-bold text-gray-400 mb-2">المهارات (افصل بفاصلة)</label>
-                                        <input type="text" value={formData.skills} onChange={e => setFormData({...formData, skills: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" placeholder="HTML, CSS, JavaScript..." />
-                                    </div>
-                                    <div className="md:col-span-2">
-                                        <label className="block text-xs font-bold text-gray-400 mb-2">نبذة عنك</label>
-                                        <textarea value={formData.bio} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors h-24 resize-none" placeholder="اكتب نبذة مختصرة..." />
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">تاريخ الميلاد</label>
+                                            <input type="date" value={formData.birthDate} onChange={e => setFormData({...formData, birthDate: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors"/>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">فصيلة الدم</label>
+                                            <select value={formData.bloodType} onChange={e => setFormData({...formData, bloodType: e.target.value})} className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors">
+                                                <option value="">اختر الفصيلة</option>
+                                                <option value="A+">A+</option>
+                                                <option value="A-">A-</option>
+                                                <option value="B+">B+</option>
+                                                <option value="B-">B-</option>
+                                                <option value="AB+">AB+</option>
+                                                <option value="AB-">AB-</option>
+                                                <option value="O+">O+</option>
+                                                <option value="O-">O-</option>
+                                            </select>
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="block text-xs font-bold text-gray-400 mb-2">التخصص الجامعي (يظهر في البطاقة)</label>
+                                            <input 
+                                                type="text" 
+                                                value={formData.major} 
+                                                onChange={e => setFormData({...formData, major: e.target.value})} 
+                                                className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white focus:border-blue-500 outline-none transition-colors" 
+                                                placeholder="مثال: علوم الحاسب، إدارة أعمال" 
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -746,3 +871,10 @@ export const UniversalProfileHub: React.FC<Props> = ({ isOpen, onClose }) => {
         </>
     );
 };
+
+const ActivityDot = () => (
+  <span className="relative flex h-2 w-2 mr-1">
+    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+  </span>
+);

@@ -974,6 +974,7 @@ export interface User {
 
   gender?: 'Male' | 'Female';
   birthDate?: string;
+  bloodType?: string; // ADDED
   maritalStatus?: string;
   nationality?: string; 
   passportId?: string; 
