@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { 
     Home, Search, Bell, Mail, User, MoreHorizontal, 
     Image as ImageIcon, Smile, Send, Heart, MessageCircle, 
-    Repeat, Share2, ArrowLeft, MoreVertical, Plus, CheckCircle2, Pin 
+    Repeat, Share2, ArrowLeft, MoreVertical, Plus, CheckCircle2, Pin
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -11,14 +11,10 @@ interface Props {
     onBack: () => void;
 }
 
-// --- HELPER: Number Formatter ---
+// --- HELPER: Number Formatting ---
 const formatNumber = (num: number) => {
-    if (num >= 1000000) {
-        return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
-    }
-    if (num >= 1000) {
-        return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
-    }
+    if (num >= 1000000) return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
     return num.toString();
 };
 
@@ -26,30 +22,19 @@ const formatNumber = (num: number) => {
 const POSTS = [
     {
         id: 'post-0',
-        user: { 
-            name: 'Murad Al-Juhani', 
-            handle: '@IpMurad', 
-            avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=200', // Placeholder for /murad-avatar.jpg
-            verified: true 
+        user: {
+            name: 'Murad Al-Juhani',
+            handle: '@IpMurad',
+            avatar: '/murad-car-selfie.jpg',
+            verified: true
         },
         time: 'Just now',
         content: 'مرحبا بكم في مجتمع ميلاف .........................اول منشور .. ياسلام اخير صرت انافس ايلون ماسك ...',
+        image: '/murad-car-selfie.jpg',
         likes: 50000,
-        comments: 12500, // mapped from replies
-        reposts: 5000000, // mapped from retweets
-        image: '/murad-car-selfie.jpg', // Updated to use local file
+        comments: 12500, // Replaces replies
+        reposts: 5000000, // Replaces retweets
         isPinned: true
-    },
-    {
-        id: 1,
-        user: { name: 'Murad Aljohani', handle: '@murad', avatar: 'https://api.dicebear.com/7.x/initials/svg?seed=Murad', verified: true },
-        time: '2h',
-        content: 'أطلقنا اليوم ميزة "المجتمع" الجديدة في منصة ميلاف! 🚀\nالهدف هو خلق بيئة تواصل فعالة بين المبدعين وأصحاب العمل.',
-        likes: 120,
-        comments: 45,
-        reposts: 12,
-        image: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&q=80&w=1000',
-        isPinned: false
     },
     {
         id: 2,
@@ -58,8 +43,7 @@ const POSTS = [
         content: 'مين جرب خدمة الذكاء الاصطناعي الجديدة في المنصة؟ بصراحة النتائج مبهرة جداً في تحليل البيانات.',
         likes: 85,
         comments: 20,
-        reposts: 5,
-        isPinned: false
+        reposts: 5
     },
     {
         id: 3,
@@ -68,8 +52,7 @@ const POSTS = [
         content: 'نصيحة للمصممين: دائماً وثق أعمالك في معرض الأعمال، هذا يزيد من فرص حصولك على مشاريع.',
         likes: 240,
         comments: 32,
-        reposts: 40,
-        isPinned: false
+        reposts: 40
     }
 ];
 
@@ -97,45 +80,54 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
     );
 
     const PostCard = ({ post }: any) => (
-        <div className="border-b border-slate-800 hover:bg-slate-900/30 transition-colors cursor-pointer animate-fade-in-up">
+        <div className="p-4 border-b border-slate-800 hover:bg-slate-900/30 transition-colors cursor-pointer">
             {post.isPinned && (
-                <div className="px-4 pt-3 flex items-center gap-2 text-slate-500 text-xs font-bold">
-                    <Pin className="w-3 h-3 fill-current" />
+                <div className="flex items-center gap-2 text-slate-500 text-xs font-bold mb-2 mr-12">
+                    <Pin className="w-3 h-3 fill-current rotate-45" />
                     <span>Pinned Post</span>
                 </div>
             )}
-            <div className="p-4 flex gap-3">
-                <img src={post.user.avatar} className="w-10 h-10 rounded-full bg-slate-800 object-cover border border-slate-700" alt={post.user.name} />
+            <div className="flex gap-3">
+                <img 
+                    src={post.user.avatar} 
+                    className="w-10 h-10 rounded-full bg-slate-800 object-cover border border-slate-700" 
+                    alt={post.user.name} 
+                    onError={(e) => {
+                        e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${post.user.name}`;
+                    }}
+                />
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1 mb-0.5 flex-wrap">
-                        <span className="font-bold text-white hover:underline truncate">{post.user.name}</span>
-                        {post.user.verified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-white dark:fill-slate-900" />}
-                        <span className="text-slate-500 text-sm truncate dir-ltr">{post.user.handle}</span>
+                    <div className="flex items-center gap-1 mb-0.5">
+                        <span className="font-bold text-white hover:underline truncate flex items-center gap-1">
+                            {post.user.name}
+                            {post.user.verified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-white" />}
+                        </span>
+                        <span className="text-slate-500 text-sm truncate">{post.user.handle}</span>
                         <span className="text-slate-500 text-sm">· {post.time}</span>
                     </div>
-                    <p className="text-slate-200 text-sm md:text-base whitespace-pre-line mb-3 leading-relaxed font-sans">
+                    <p className="text-slate-200 text-sm md:text-base whitespace-pre-line mb-3 leading-relaxed">
                         {post.content}
                     </p>
                     {post.image && (
                         <div className="mb-3 rounded-xl overflow-hidden border border-slate-800">
-                            <img src={post.image} className="w-full h-auto object-cover max-h-[500px]" alt="Post content" />
+                            <img src={post.image} className="w-full h-auto object-cover max-h-[400px]" alt="Post content" />
                         </div>
                     )}
-                    <div className="flex justify-between text-slate-500 max-w-md pt-1">
+                    <div className="flex justify-between text-slate-500 max-w-md">
                         <button className="flex items-center gap-2 hover:text-blue-400 transition-colors group">
-                            <div className="p-2 rounded-full group-hover:bg-blue-500/10 transition-colors"><MessageCircle className="w-4.5 h-4.5"/></div>
-                            <span className="text-xs font-medium">{formatNumber(post.comments)}</span>
+                            <div className="p-2 rounded-full group-hover:bg-blue-500/10"><MessageCircle className="w-4 h-4"/></div>
+                            <span className="text-xs">{formatNumber(post.comments)}</span>
                         </button>
                         <button className="flex items-center gap-2 hover:text-green-400 transition-colors group">
-                            <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors"><Repeat className="w-4.5 h-4.5"/></div>
-                            <span className="text-xs font-medium">{formatNumber(post.reposts)}</span>
+                            <div className="p-2 rounded-full group-hover:bg-green-500/10"><Repeat className="w-4 h-4"/></div>
+                            <span className="text-xs">{formatNumber(post.reposts)}</span>
                         </button>
                         <button className="flex items-center gap-2 hover:text-pink-400 transition-colors group">
-                            <div className="p-2 rounded-full group-hover:bg-pink-500/10 transition-colors"><Heart className="w-4.5 h-4.5"/></div>
-                            <span className="text-xs font-medium">{formatNumber(post.likes)}</span>
+                            <div className="p-2 rounded-full group-hover:bg-pink-500/10"><Heart className="w-4 h-4"/></div>
+                            <span className="text-xs">{formatNumber(post.likes)}</span>
                         </button>
                         <button className="flex items-center gap-2 hover:text-blue-400 transition-colors group">
-                            <div className="p-2 rounded-full group-hover:bg-blue-500/10 transition-colors"><Share2 className="w-4.5 h-4.5"/></div>
+                            <div className="p-2 rounded-full group-hover:bg-blue-500/10"><Share2 className="w-4 h-4"/></div>
                         </button>
                     </div>
                 </div>
@@ -388,5 +380,5 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
 
 // Helper Icon
 const SettingsIcon = ({className}: {className?: string}) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1-1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
 );

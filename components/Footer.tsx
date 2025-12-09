@@ -4,13 +4,13 @@ import { ShieldCheck, Building2, Globe, Mail, Phone, MapPin, Code, Layout, Trend
 import { AssetProcessor } from '../services/System/AssetProcessor';
 import { PolicyModal } from './PolicyModal';
 
-export const Footer: React.FC<{ compact?: boolean; className?: string }> = ({ compact = false, className = '' }) => {
+export const Footer: React.FC<{ compact?: boolean; className?: string }> = ({ compact = false, className }) => {
   const assetProcessor = AssetProcessor.getInstance();
   const [isPolicyOpen, setIsPolicyOpen] = useState(false);
 
   if (compact) {
       return (
-        <footer className={`bg-transparent border-t border-slate-200/50 pt-8 pb-8 font-sans text-right ${className}`} dir="rtl">
+        <footer className={`bg-transparent border-t border-slate-200/50 pt-8 pb-8 font-sans text-right ${className || ''}`} dir="rtl">
             <div className="text-center text-xs text-slate-500">
                 © 2025 مجموعة مراد. جميع الحقوق محفوظة.
             </div>
@@ -20,7 +20,7 @@ export const Footer: React.FC<{ compact?: boolean; className?: string }> = ({ co
 
   return (
     <>
-    <footer className={`bg-[#0b1120]/80 backdrop-blur-xl border-t border-white/10 pt-16 pb-8 font-sans text-right relative overflow-hidden ${className}`} dir="rtl">
+    <footer className="bg-[#0b1120]/80 backdrop-blur-xl border-t border-white/10 pt-16 pb-8 font-sans text-right relative overflow-hidden" dir="rtl">
         {/* Glass Effect Background Noise */}
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-5 pointer-events-none"></div>
 
