@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/Interactive/ToastContext';
 import { LanguageProvider } from './context/LanguageContext';
@@ -28,37 +28,24 @@ import { CourseView } from './components/CourseView';
 import { VisualSitemap } from './components/VisualSitemap';
 import { SocialLayout } from './components/Social/SocialLayout';
 
+// --- THEME ENGINE ---
+export type ThemeMode = 'light' | 'dim' | 'lights-out';
+
+interface ThemeContextType {
+  theme: ThemeMode;
+  cycleTheme: () => void;
+}
+
+export const ThemeContext = createContext<ThemeContextType>({ theme: 'lights-out', cycleTheme: () => {} });
+
+export const useTheme = () => useContext(ThemeContext);
+
 const AppContent = () => {
   const [currentView, setCurrentView] = useState('landing');
   const [courseId, setCourseId] = useState<string | null>(null);
-  
-  // Theme State (Default Dark)
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
-
-  const toggleTheme = () => {
-      const newTheme = theme === 'dark' ? 'light' : 'dark';
-      setTheme(newTheme);
-      // Toggle class on HTML element for global Tailwind Dark Mode
-      document.documentElement.classList.toggle('dark', newTheme === 'dark');
-      localStorage.setItem('murad_theme', newTheme);
-  };
-
-  // Initialize Theme
-  useEffect(() => {
-      const savedTheme = localStorage.getItem('murad_theme') as 'dark' | 'light';
-      if (savedTheme) {
-          setTheme(savedTheme);
-          document.documentElement.classList.toggle('dark', savedTheme === 'dark');
-      } else {
-          // Default to dark
-          document.documentElement.classList.add('dark');
-          setTheme('dark');
-      }
-  }, []);
 
   // Simple Router
   const navigate = (view: string) => {
-    // Handle parameterized routes manually for simple router
     if (view.startsWith('courses/')) {
         const id = view.split('/')[1];
         setCourseId(id);
@@ -87,7 +74,6 @@ const AppContent = () => {
         setCurrentView(path.replace('/', ''));
     }
 
-    // Listener for internal navigation events if needed
     const handlePopState = () => {
         const p = window.location.pathname;
         if (p.startsWith('/courses/')) {
@@ -110,8 +96,6 @@ const AppContent = () => {
       case 'corporate': return <MuradGroupPortal onNavigate={navigate} />;
       case 'support': return <SupportPortal onExit={() => navigate('landing')} />;
       case 'profile': return <UniversalProfileHub isOpen={true} onClose={() => navigate('landing')} />;
-      
-      // New Routes
       case 'meta': return <MuradMeta onExit={() => navigate('landing')} />;
       case 'clock-system': return <CloudMarketing onNavigate={navigate} />;
       case 'cloud': return <MuradCloud onExit={() => navigate('landing')} />;
@@ -121,23 +105,19 @@ const AppContent = () => {
       case 'user-dashboard': return <UserFieldsDashboard onBack={() => navigate('landing')} />;
       case 'courses': return <CoursesList onBack={() => navigate('landing')} />;
       case 'course-view': return <CourseView courseId={courseId!} onBack={() => navigate('courses')} />;
-      
-      // SOCIAL PLATFORM
       case 'social': return <SocialLayout onBack={() => navigate('landing')} />;
-
       default: return <LandingPage onStart={() => navigate('academy')} onSearch={() => {}} onOpenJobs={() => navigate('jobs')} onOpenTraining={() => navigate('academy')} onOpenMarket={() => navigate('market')} />;
     }
   };
 
-  // Certain immersive views might want to hide the global header
   const isImmersive = ['clock-system', 'dopamine', 'social'].includes(currentView);
 
   return (
-    <div className="flex flex-col min-h-screen font-sans transition-colors duration-200 bg-white text-black dark:bg-black dark:text-[#e7e9ea]">
+    <div className="flex flex-col min-h-screen font-sans transition-colors duration-200 bg-[var(--bg-primary)] text-[var(--text-primary)]">
       <SEOHelmet title="مجموعة ميلاف مراد" />
       
       {!isImmersive && (
-        <Header onNavigate={navigate} theme={theme} toggleTheme={toggleTheme} />
+        <Header onNavigate={navigate} />
       )}
 
       <main className="flex-1 relative">
@@ -154,11 +134,57 @@ const AppContent = () => {
 };
 
 const App = () => {
+  const [theme, setTheme] = useState<ThemeMode>(() => (localStorage.getItem('murad_x_theme') as ThemeMode) || 'lights-out');
+
+  const cycleTheme = () => {
+    const modes: ThemeMode[] = ['light', 'dim', 'lights-out'];
+    const nextIndex = (modes.indexOf(theme) + 1) % modes.length;
+    setTheme(modes[nextIndex]);
+  };
+
+  useEffect(() => {
+    const root = document.documentElement;
+    localStorage.setItem('murad_x_theme', theme);
+    
+    // Reset classes
+    root.classList.remove('light', 'dark');
+    
+    // Apply Variables based on Mode
+    if (theme === 'light') {
+      root.classList.add('light');
+      root.style.setProperty('--bg-primary', '#ffffff');
+      root.style.setProperty('--bg-secondary', '#f7f9f9');
+      root.style.setProperty('--text-primary', '#0f1419');
+      root.style.setProperty('--text-secondary', '#536471');
+      root.style.setProperty('--border-color', '#eff3f4');
+      root.style.setProperty('--accent-color', '#1d9bf0');
+    } else if (theme === 'dim') {
+      root.classList.add('dark');
+      root.style.setProperty('--bg-primary', '#15202b');
+      root.style.setProperty('--bg-secondary', '#1e2732');
+      root.style.setProperty('--text-primary', '#f7f9f9');
+      root.style.setProperty('--text-secondary', '#8b98a5');
+      root.style.setProperty('--border-color', '#38444d');
+      root.style.setProperty('--accent-color', '#1d9bf0');
+    } else {
+      // Lights Out (True Black)
+      root.classList.add('dark');
+      root.style.setProperty('--bg-primary', '#000000');
+      root.style.setProperty('--bg-secondary', '#16181c');
+      root.style.setProperty('--text-primary', '#e7e9ea');
+      root.style.setProperty('--text-secondary', '#71767b');
+      root.style.setProperty('--border-color', '#2f3336');
+      root.style.setProperty('--accent-color', '#1d9bf0');
+    }
+  }, [theme]);
+
   return (
     <ToastProvider>
       <AuthProvider>
         <LanguageProvider>
-          <AppContent />
+          <ThemeContext.Provider value={{ theme, cycleTheme }}>
+            <AppContent />
+          </ThemeContext.Provider>
         </LanguageProvider>
       </AuthProvider>
     </ToastProvider>
