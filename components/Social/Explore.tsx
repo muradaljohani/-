@@ -14,17 +14,25 @@ export const Explore: React.FC<Props> = ({ onPostClick }) => {
 
   // Real-time Media Feed
   useEffect(() => {
-    // Only fetch posts that have images for the media grid
+    // FIXED: Removed 'where' clause to prevent composite index error with 'orderBy'.
+    // We fetch recent posts and filter for images client-side.
+    // Ideally we would have a specific 'media' collection or a proper index.
     const postsRef = collection(db, 'posts');
     const q = query(
         postsRef, 
-        where('type', '==', 'image'), 
         orderBy('createdAt', 'desc'), 
-        limit(20)
+        limit(50) // Fetch more to allow for filtering
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-        setMediaPosts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Client-side filter for media posts
+        // Backward compatibility: check 'type' or 'images' array
+        const mediaOnly = posts.filter((p: any) => 
+            p.type === 'image' || (p.images && p.images.length > 0)
+        ).slice(0, 21); // Limit display to grid size
+        
+        setMediaPosts(mediaOnly);
     });
 
     return () => unsubscribe();
@@ -115,10 +123,17 @@ export const Explore: React.FC<Props> = ({ onPostClick }) => {
                         className="aspect-square bg-[#16181c] relative cursor-pointer group overflow-hidden"
                         onClick={() => onPostClick(post.id)}
                     >
-                        <img src={post.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" loading="lazy" />
+                        <img 
+                            src={post.images?.[0] || post.image} 
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" 
+                            loading="lazy" 
+                        />
                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                     </div>
                 ))}
+                {mediaPosts.length === 0 && (
+                    <div className="col-span-3 p-8 text-center text-gray-500">لا توجد وسائط حالياً</div>
+                )}
             </div>
         )}
 

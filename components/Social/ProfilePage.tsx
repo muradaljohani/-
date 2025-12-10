@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Calendar, MapPin, Link as LinkIcon, Mail } from 'lucide-react';
-import { doc, getDoc, collection, query, where, orderBy, getDocs, db } from '../../src/lib/firebase';
+import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
 import { EditProfileModal } from './EditProfileModal';
@@ -42,14 +42,23 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                 setProfileUser(userData);
 
                 // 2. Fetch User Posts
+                // FIXED: Removed orderBy('createdAt', 'desc') to avoid composite index error with where clause.
+                // Sorting will be done client-side.
                 if (userData) {
                     const postsQuery = query(
                         collection(db, 'posts'),
-                        where('user.uid', '==', userId),
-                        orderBy('createdAt', 'desc')
+                        where('user.uid', '==', userId)
                     );
                     const postsSnap = await getDocs(postsQuery);
                     const userPosts = postsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                    
+                    // Client-side sort
+                    userPosts.sort((a: any, b: any) => {
+                        const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (new Date(a.createdAt || 0).getTime());
+                        const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (new Date(b.createdAt || 0).getTime());
+                        return tB - tA;
+                    });
+                    
                     setPosts(userPosts);
                 }
 
@@ -61,7 +70,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
         };
 
         fetchData();
-    }, [userId, currentUser]); // Refetch if currentUser changes (e.g. after edit)
+    }, [userId, currentUser]); // Refetch if currentUser changes
 
     const handleFollowToggle = () => {
         if (!currentUser) return alert("يرجى تسجيل الدخول");

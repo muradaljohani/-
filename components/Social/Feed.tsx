@@ -49,16 +49,15 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
 
     if (activeTab === 'foryou') {
         // QUERY STRATEGY:
-        // We ONLY sort by createdAt on the server to avoid Composite Index errors.
-        // We will handle 'isPinned' sorting on the client side.
+        // Use only orderBy createdAt to avoid composite index error with isPinned.
+        // We handle pinning sort on the client.
         q = query(
           postsRef, 
           orderBy("createdAt", "desc")
         );
     } else {
         if (user) {
-            // Filter by user, sort by time client-side or add simple index if needed.
-            // For now, simple filtering is safest without custom indexes.
+            // Filter by user. To avoid index error with orderBy, we fetch then sort client-side.
             q = query(
               postsRef,
               where("user.uid", "==", user.id)
@@ -80,15 +79,15 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
       });
 
       // CLIENT-SIDE SORTING
-      // 1. Pinned posts first
-      // 2. Newest posts second
-      livePosts.sort((a: any, b: any) => {
+      const sortedPosts = livePosts.sort((a: any, b: any) => {
+          // 1. Pinned posts first (only for 'foryou')
           if (activeTab === 'foryou') {
               const pinA = a.isPinned ? 1 : 0;
               const pinB = b.isPinned ? 1 : 0;
               if (pinA !== pinB) return pinB - pinA;
           }
           
+          // 2. Newest posts second
           // Handle various timestamp formats (Firestore Timestamp vs Date vs String)
           const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (new Date(a.createdAt || 0).getTime());
           const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (new Date(b.createdAt || 0).getTime());
@@ -96,12 +95,12 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           return timeB - timeA;
       });
 
-      setPosts(livePosts);
+      setPosts(sortedPosts);
       setLoading(false);
     }, (err) => {
         console.error("Feed Error:", err);
         setLoading(false);
-        if (showToast) showToast("جاري إعادة المحاولة...", "error");
+        if (showToast) showToast("حدث خطأ في تحميل المنشورات", "error");
     });
 
     return () => unsubscribe();
@@ -136,7 +135,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           type: imageUrls.length > 0 ? 'image' : 'text',
           images: imageUrls,
           image: imageUrls[0] || null, // Backward compatibility
-          createdAt: serverTimestamp(), // Standardized field name
+          createdAt: serverTimestamp(),
           likes: 0,
           retweets: 0,
           replies: 0,
