@@ -9,9 +9,10 @@ import {
   serverTimestamp, 
   setDoc, 
   doc, 
+  getDoc,
   auth,
-  onAuthStateChanged,
-  db
+  db,
+  onAuthStateChanged
 } from '../../src/lib/firebase';
 import { PostCard } from './PostCard';
 import { Image, BarChart2, Smile, Calendar, Loader2 } from 'lucide-react';
@@ -28,58 +29,51 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // 1. Listen to Auth State (Modular Syntax Fix)
+  // 1. Listen to Auth State
   useEffect(() => {
-    // Uncaught Error Fix: Use onAuthStateChanged(auth, callback) instead of auth.onAuthStateChanged(callback)
+    // Correct modular usage
     const unsubscribe = onAuthStateChanged(auth, (user: any) => {
       setCurrentUser(user);
     });
     return () => unsubscribe();
   }, []);
 
-  // 2. SELF-HEALING SEEDING LOGIC (Robust Persistence)
-  // This runs whenever currentUser changes to ensure profile syncing
+  // 2. SELF-HEALING SEEDING LOGIC (Persistence Fix)
   useEffect(() => {
     const seedDatabase = async () => {
       try {
-        // Use current user UID if available, else a fallback admin ID.
-        // This ensures the viral posts appear as if they are from the logged-in user (as requested).
         const userUid = currentUser?.uid || "admin-murad-id";
-        const userName = currentUser?.displayName || "Murad Aljohani";
-        const userAvatar = currentUser?.photoURL || "https://i.ibb.co/QjNHDv3F/images-4.jpg";
-
+        
         // --- Viral Post 1: YouTube Story (PINNED) ---
-        const viralPostRef = doc(db, "posts", "viral-youtube-story"); // Fixed ID 1
+        const viralPostRef = doc(db, "posts", "viral-youtube-story");
         
         await setDoc(viralPostRef, {
             content: 'هل تعلم أن يوتيوب بدأ بمقطع فيديو مدته 18 ثانية فقط لشخص يتحدث عن "الفيلة" في حديقة الحيوان؟ والآن يشاهده المليارات يومياً! 🌍\n\nاليوم نضع حجر الأساس لـ "مجتمع ميلاف".. قد تبدو بداية بسيطة، ولكن تذكروا هذا المنشور جيداً.. لأننا قادمون لنغير قواعد اللعبة. 🚀🔥\n\n#البداية #ميلاف #المستقبل',
-            // Data Structure Adaptation for PostCard:
-            images: ['https://i.ibb.co/QjNHDv3F/images-4.jpg'], // Array format
-            type: 'image',
+            // Data Structure Adaptation for PostCard compatibility
+            images: ['https://i.ibb.co/QjNHDv3F/images-4.jpg'],
             user: { 
-                name: "Murad Aljohani", // Keep original author name for history or use userName to sync
+                name: "Murad Aljohani", 
                 handle: "@IpMurad", 
                 avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg", 
                 verified: true,
                 isGold: true,
-                uid: userUid // Synced UID
+                uid: userUid 
             },
-            // Flattened stats for PostCard
             likes: 50000,
             retweets: 5000000,
             replies: 12500,
             views: '15M',
             isPinned: true,
-            createdAt: serverTimestamp() // Updates timestamp on seed to keep it fresh or use fixed date
+            type: 'image',
+            createdAt: serverTimestamp()
         }, { merge: true });
 
-        // --- Viral Post 2: Archive Memory (Fixed ID 2) ---
+        // --- Viral Post 2: Archive Memory (Fixed ID) ---
         const archivePostRef = doc(db, "posts", "viral-archive-memory");
         
         await setDoc(archivePostRef, {
             content: 'من الأرشيف.. الطموح لا يشيخ. 🦅\nكنت أعلم منذ تلك اللحظة أننا سنصل إلى هنا يوماً ما.\n\n#ذكريات #اصرار',
             images: ['https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg'],
-            type: 'image',
             user: { 
                 name: "Murad Aljohani", 
                 handle: "@IpMurad", 
@@ -93,6 +87,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
             replies: 8000,
             views: '10M',
             isPinned: false,
+            type: 'image',
             createdAt: serverTimestamp()
         }, { merge: true });
 
@@ -101,32 +96,33 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
       }
     };
 
+    // Run seed whenever user logs in or component mounts
     seedDatabase();
-  }, [currentUser]); // Re-run when user logs in to sync ID
+  }, [currentUser]);
 
-  // 3. FETCH & DISPLAY LOGIC (Real-time)
+  // 3. FETCH & DISPLAY LOGIC
   useEffect(() => {
     const q = query(
       collection(db, "posts"), 
-      orderBy("isPinned", "desc"), // Pinned (true) comes first
-      orderBy("createdAt", "desc") // Then newest
+      orderBy("isPinned", "desc"),
+      orderBy("createdAt", "desc")
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const fetchedPosts = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return { 
-              id: doc.id,
-              ...data,
-              // Fallback for timestamp rendering
-              timestamp: data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString('ar-SA') : 'الآن' 
-          };
+        const data = doc.data();
+        return {
+            id: doc.id,
+            ...data,
+            // Safe timestamp conversion
+            timestamp: data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString('ar-SA') : 'الآن'
+        };
       });
       setPosts(fetchedPosts);
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching feed:", error);
-      setLoading(false);
+        console.error("Feed snapshot error:", error);
+        setLoading(false);
     });
 
     return () => unsubscribe();
@@ -143,7 +139,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
         avatar: currentUser?.photoURL || "https://api.dicebear.com/7.x/initials/svg?seed=User",
         verified: !!currentUser, 
         isGold: false,
-        uid: currentUser?.uid || "guest-id"
+        uid: currentUser?.uid || "guest"
       };
 
       await addDoc(collection(db, "posts"), {
@@ -160,10 +156,9 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
       });
 
       setNewPostText("");
-      if (showToast) showToast('تم النشر بنجاح', 'success');
+      if(showToast) showToast('تم النشر', 'success');
     } catch (error: any) {
-      console.error("Error posting:", error);
-      if (showToast) showToast('فشل النشر: ' + error.message, 'error');
+      if(showToast) showToast('فشل النشر: ' + error.message, 'error');
     }
   };
 
