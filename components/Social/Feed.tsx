@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   collection, 
@@ -9,9 +8,11 @@ import {
   serverTimestamp, 
   setDoc, 
   doc, 
-  getDoc 
-} from 'firebase/firestore';
-import { db, auth } from '../../src/lib/firebase';
+  getDoc,
+  db,
+  auth,
+  onAuthStateChanged
+} from '../../src/lib/firebase';
 import { PostCard } from './PostCard';
 import { Image, BarChart2, Smile, Calendar } from 'lucide-react';
 
@@ -29,51 +30,72 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
 
   // 1. Listen to Auth State
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
     });
     return () => unsubscribe();
   }, []);
 
-  // 2. SELF-HEALING SEEDING LOGIC (Preserved)
+  // 2. SELF-HEALING SEEDING LOGIC
   useEffect(() => {
     const seedDatabase = async () => {
       try {
-        const viralPostRef = doc(db, "social_posts", "viral-welcome-post"); 
-        const viralSnap = await getDoc(viralPostRef);
+        const userUid = currentUser?.uid || "admin-murad-id";
 
-        if (!viralSnap.exists()) {
-          await setDoc(viralPostRef, {
-            content: 'هل تعلم أن يوتيوب بدأ بمقطع فيديو مدته 18 ثانية فقط لشخص يتحدث عن "الفيلة" في حديقة الحيوان؟ والآن يشاهده المليارات يومياً! 🌍\n\nاليوم نضع حجر الأساس لـ "مجتمع ميلاف".. قد تبدو بداية بسيطة، ولكن تذكروا هذا المنشور جيداً.. لأننا قادمون لنغير قواعد اللعبة. 🚀🔥\n\n#البداية #ميلاف #المستقبل',
-            images: ['https://i.ibb.co/QjNHDv3F/images-4.jpg'],
-            user: {
-              name: "Murad Aljohani",
-              handle: "@IpMurad",
-              avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
-              verified: true,
-              isGold: true,
-              uid: "admin-murad-fixed-id" 
+        // --- Fixed ID 1: Viral YouTube Story ---
+        const viralPostRef = doc(db, "posts", "viral-youtube-story");
+        await setDoc(viralPostRef, {
+            content: 'هل تعلم أن يوتيوب بدأ بمقطع فيديو مدته 18 ثانية فقط لشخص يتحدث عن "الفيلة" في حديقة الحيوان؟ والآن يشاهده المليارات يومياً! 🌍\n\nاليوم نضع حجر الأساس لـ "مجتمع ميلاف".. قد تبدو بداية بسيطة، ولكن تذكروا هذا المنشور جيداً.. لأننا قادمون لنغير قواعد اللعبة. 🚀🔥\n\n#البداية #ميلاف #المستقبل', 
+            images: ['https://i.ibb.co/QjNHDv3F/images-4.jpg'], 
+            user: { 
+                name: "Murad Aljohani", 
+                handle: "@IpMurad", 
+                avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg", 
+                verified: true,
+                isGold: true,
+                uid: userUid 
             },
-            type: 'image',
-            likes: 50000, 
-            retweets: 5000000, 
+            likes: 50000,
+            retweets: 5000000,
             replies: 12500,
-            views: '15M',
-            isPinned: true, 
-            createdAt: serverTimestamp()
-          });
-        }
+            isPinned: true,
+            createdAt: serverTimestamp(),
+            type: 'image'
+        }, { merge: true });
+
+        // --- Fixed ID 2: Archive Memory ---
+        const archivePostRef = doc(db, "posts", "viral-archive-memory");
+        await setDoc(archivePostRef, {
+            content: 'من الأرشيف.. الطموح لا يشيخ. 🦅\nكنت أعلم منذ تلك اللحظة أننا سنصل إلى هنا يوماً ما.\n\n#ذكريات #اصرار',
+            images: ['https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg'],
+            user: { 
+                name: "Murad Aljohani", 
+                handle: "@IpMurad", 
+                avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg", 
+                verified: true,
+                isGold: true,
+                uid: userUid 
+            },
+            likes: 42000,
+            retweets: 2000000,
+            replies: 8000,
+            isPinned: false,
+            createdAt: serverTimestamp(),
+            type: 'image'
+        }, { merge: true });
+
       } catch (error) {
         console.error("Error seeding posts:", error);
       }
     };
+
     seedDatabase();
-  }, []);
+  }, [currentUser]);
 
   // 3. FETCH & DISPLAY LOGIC
   useEffect(() => {
     const q = query(
-      collection(db, "social_posts"), 
+      collection(db, "posts"), 
       orderBy("isPinned", "desc"),
       orderBy("createdAt", "desc") 
     );
@@ -82,12 +104,15 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
       const fetchedPosts = snapshot.docs.map((doc) => {
           const data = doc.data();
           return { 
-              ...data, 
               id: doc.id,
-              timestamp: 'الآن' 
+              ...data,
+              timestamp: data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString('ar-SA') : 'الآن' 
           };
       });
       setPosts(fetchedPosts);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching posts:", error);
       setLoading(false);
     });
 
@@ -108,7 +133,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
         uid: currentUser?.uid || "guest-id"
       };
 
-      await addDoc(collection(db, "social_posts"), {
+      await addDoc(collection(db, "posts"), {
         content: newPostText,
         user: postUser,
         createdAt: serverTimestamp(),
@@ -125,14 +150,14 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
       if (showToast) showToast('تم النشر بنجاح', 'success');
     } catch (error: any) {
       console.error("Error posting:", error);
-      if (showToast) showToast('فشل النشر', 'error');
+      if (showToast) showToast('فشل النشر: ' + error.message, 'error');
     }
   };
 
   return (
     <div className="flex-1 min-h-screen pb-20 md:pb-0 bg-[var(--bg-primary)]">
       
-      {/* 0. HEADER BRANDING (Mobile & Sticky) */}
+      {/* 0. HEADER BRANDING */}
       <div className="sticky top-0 z-50 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border-color)] py-4 mb-2">
         <h1 className="text-center text-xl font-extrabold text-[var(--text-primary)] font-arabic tracking-wide">
           مجتمع ميلاف
