@@ -1,315 +1,238 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
-    collection, 
-    query, 
-    orderBy, 
-    onSnapshot, 
-    addDoc, 
-    serverTimestamp, 
-    doc, 
-    setDoc 
-} from '../../src/lib/firebase';
-import { db } from '../../src/lib/firebase';
-import { SocialPost, stories } from '../../dummyData';
+  collection, 
+  query, 
+  orderBy, 
+  onSnapshot, 
+  addDoc, 
+  serverTimestamp, 
+  setDoc, 
+  doc, 
+  getDoc 
+} from 'firebase/firestore';
+import { db, auth } from '../../src/lib/firebase';
 import { PostCard } from './PostCard';
-import { ArrowUp, Loader2, Plus, Image as ImageIcon, Send, ArrowLeft, Sparkles } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { Image, Send, Smile, BarChart2, Calendar } from 'lucide-react';
 
 interface FeedProps {
-    onOpenLightbox: (src: string) => void;
-    showToast: (msg: string, type: 'success'|'error') => void;
-    onBack: () => void;
+    onOpenLightbox?: (src: string) => void; // Optional prop if passed from layout
+    showToast?: (msg: string, type: 'success'|'error') => void; // Optional prop
+    onBack?: () => void;
 }
 
 export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onBack }) => {
-    const { user } = useAuth();
-    const [posts, setPosts] = useState<SocialPost[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [showScrollTop, setShowScrollTop] = useState(false);
-    
-    // Posting State
-    const [newPostText, setNewPostText] = useState('');
-    const [isPosting, setIsPosting] = useState(false);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [newPostText, setNewPostText] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
-    // Time helper
-    const getTimeDifference = (date: Date) => {
-        const now = new Date();
-        const diff = (now.getTime() - date.getTime()) / 1000;
-        if (diff < 60) return 'الآن';
-        if (diff < 3600) return `منذ ${Math.floor(diff / 60)} دقيقة`;
-        if (diff < 86400) return `منذ ${Math.floor(diff / 3600)} ساعة`;
-        return `منذ ${Math.floor(diff / 86400)} يوم`;
-    };
+  // 1. Listen to Auth State
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
-    // --- 1. THE SELF-HEALING ENGINE & REAL-TIME SYNC ---
-    useEffect(() => {
-        const initFeed = async () => {
-            if (!db) {
-                console.error("Firestore not initialized");
-                setIsLoading(false);
-                return;
-            }
+  // 2. SELF-HEALING SEEDING LOGIC (Preserved)
+  useEffect(() => {
+    const seedDatabase = async () => {
+      try {
+        // --- Viral Post 1: YouTube Story (PINNED) ---
+        const viralPostRef = doc(db, "social_posts", "viral-welcome-post"); 
+        // Note: We use social_posts collection based on previous context, ensuring consistency
+        const viralSnap = await getDoc(viralPostRef);
 
-            // A. Self-Healing: Ensure Viral Posts Exist
-            // We do this inside a try-catch to avoid crashing if offline or permission denied
-            try {
-                 const viralUser = {
-                    name: "Murad Aljohani",
-                    handle: "@IpMurad",
-                    avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
-                    verified: true,
-                    isGold: true,
-                    uid: user?.id || "admin-murad-id" // Use current user ID if available so it links to profile
-                };
-
-                // Fixed ID 1: The YouTube Story
-                const viralRef = doc(db, "social_posts", "viral-youtube-story"); 
-                await setDoc(viralRef, {
-                    user: viralUser,
-                    type: 'image',
-                    content: 'هل تعلم أن يوتيوب بدأ بمقطع فيديو مدته 18 ثانية فقط لشخص يتحدث عن "الفيلة" في حديقة الحيوان؟ والآن يشاهده المليارات يومياً! 🌍\n\nاليوم نضع حجر الأساس لـ "مجتمع ميلاف".. قد تبدو بداية بسيطة، ولكن تذكروا هذا المنشور جيداً.. لأننا قادمون لنغير قواعد اللعبة. 🚀🔥\n\n#البداية #ميلاف #المستقبل',
-                    images: ["https://i.ibb.co/QjNHDv3F/images-4.jpg"],
-                    createdAt: serverTimestamp(), 
-                    likes: 50000,
-                    retweets: 5000000,
-                    replies: 12000,
-                    views: '15M',
-                    isPinned: true
-                }, { merge: true });
-
-                // Fixed ID 2: The Archive Memory
-                const archiveRef = doc(db, "social_posts", "viral-archive-memory");
-                await setDoc(archiveRef, {
-                    user: viralUser,
-                    type: 'image',
-                    content: 'من الأرشيف.. الطموح لا يشيخ. 🦅\nكنت أعلم منذ تلك اللحظة أننا سنصل إلى هنا يوماً ما.\n\n#ذكريات #اصرار',
-                    images: ["https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg"],
-                    createdAt: new Date(Date.now() - 86400000), // 1 day ago
-                    likes: 42000,
-                    retweets: 2000000,
-                    replies: 8000,
-                    views: '10M',
-                    isPinned: false
-                }, { merge: true });
-                
-                console.log("Self-healing complete.");
-            } catch (e) {
-                console.warn("Self-healing skipped (offline or permission):", e);
-            }
-
-            // B. Real-Time Listener
-            const postsCollection = collection(db, 'social_posts');
-            const q = query(
-                postsCollection,
-                orderBy('isPinned', 'desc'),
-                orderBy('createdAt', 'desc')
-            );
-
-            const unsubscribe = onSnapshot(q, (snapshot) => {
-                const livePosts = snapshot.docs.map(doc => {
-                    const data = doc.data();
-                    // Handle Firestore Timestamp
-                    let timeDisplay = 'Just now';
-                    if (data.createdAt) {
-                        const date = data.createdAt.toDate ? data.createdAt.toDate() : new Date(data.createdAt);
-                        timeDisplay = getTimeDifference(date);
-                    }
-                    
-                    return {
-                        id: doc.id,
-                        ...data,
-                        timestamp: timeDisplay
-                    } as SocialPost;
-                });
-                setPosts(livePosts);
-                setIsLoading(false);
-            }, (error) => {
-                console.error("Stream Error:", error);
-                setIsLoading(false);
-            });
-
-            return unsubscribe;
-        };
-
-        const unsubPromise = initFeed();
-        return () => { unsubPromise.then(unsub => unsub && unsub()); };
-    }, [user]);
-
-    // Scroll to Top Logic
-    useEffect(() => {
-        const handleScroll = () => {
-            if (window.scrollY > 400) setShowScrollTop(true);
-            else setShowScrollTop(false);
-        };
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
-    const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
-
-    const handlePost = async () => {
-        if (!newPostText.trim()) return;
-        if (!user) return alert("يرجى تسجيل الدخول");
-
-        setIsPosting(true);
-        try {
-            await addDoc(collection(db, "social_posts"), {
-                user: {
-                    id: user.id,
-                    name: user.name,
-                    handle: user.username ? `@${user.username}` : `@${user.id.substring(0,8)}`,
-                    avatar: user.avatar,
-                    verified: user.isIdentityVerified,
-                    isGold: user.role === 'admin'
-                },
-                content: newPostText,
-                type: 'text',
-                createdAt: serverTimestamp(),
-                likes: 0,
-                retweets: 0,
-                replies: 0,
-                views: '0',
-                isPinned: false
-            });
-            setNewPostText('');
-            showToast('تم النشر!', 'success');
-        } catch (e) {
-            console.error(e);
-            showToast('فشل النشر', 'error');
-        } finally {
-            setIsPosting(false);
+        if (!viralSnap.exists()) {
+          await setDoc(viralPostRef, {
+            content: 'هل تعلم أن يوتيوب بدأ بمقطع فيديو مدته 18 ثانية فقط لشخص يتحدث عن "الفيلة" في حديقة الحيوان؟ والآن يشاهده المليارات يومياً! 🌍\n\nاليوم نضع حجر الأساس لـ "مجتمع ميلاف".. قد تبدو بداية بسيطة، ولكن تذكروا هذا المنشور جيداً.. لأننا قادمون لنغير قواعد اللعبة. 🚀🔥\n\n#البداية #ميلاف #المستقبل',
+            images: ['https://i.ibb.co/QjNHDv3F/images-4.jpg'], // Using images array for PostCard compatibility
+            user: {
+              name: "Murad Aljohani",
+              handle: "@IpMurad",
+              avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
+              verified: true,
+              isGold: true,
+              uid: "admin-murad-fixed-id" 
+            },
+            type: 'image',
+            likes: 50000, 
+            retweets: 5000000, 
+            replies: 12500,
+            views: '15M',
+            isPinned: true, 
+            createdAt: serverTimestamp()
+          });
+          console.log("Recovered Viral Post 1");
         }
+
+        // --- Viral Post 2: Archive Memory (Unpinned) ---
+        const archivePostRef = doc(db, "social_posts", "archive-memory-post");
+        const archiveSnap = await getDoc(archivePostRef);
+
+        if (!archiveSnap.exists()) {
+          await setDoc(archivePostRef, {
+            content: 'من الأرشيف.. الطموح لا يشيخ. 🦅\nكنت أعلم منذ تلك اللحظة أننا سنصل إلى هنا يوماً ما.\n\n#ذكريات #اصرار',
+            images: ['https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg'],
+            user: {
+              name: "Murad Aljohani",
+              handle: "@IpMurad",
+              avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
+              verified: true,
+              isGold: true,
+              uid: "admin-murad-fixed-id"
+            },
+            type: 'image',
+            likes: 42000, 
+            retweets: 2000000, 
+            replies: 8000,
+            views: '10M',
+            isPinned: false, 
+            createdAt: serverTimestamp() // Will sort correctly
+          });
+          console.log("Recovered Archive Post 2");
+        }
+
+      } catch (error) {
+        console.error("Error seeding posts:", error);
+      }
     };
 
-    return (
-        <div className="relative min-h-screen pb-20">
-            {/* Header */}
-            <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-slate-800">
-                <div className="flex justify-between items-center px-4 py-3 md:hidden">
-                    <h2 className="text-lg font-bold text-white">الرئيسية</h2>
-                    <button onClick={onBack} className="text-white bg-slate-800 p-2 rounded-full"><ArrowLeft className="w-5 h-5 rtl:rotate-180"/></button>
-                </div>
-                 {/* Banner */}
-                <div className="bg-gradient-to-r from-indigo-900 via-purple-900 to-black px-4 py-3 border-b border-white/5 relative overflow-hidden">
-                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10"></div>
-                    <div className="relative z-10 flex items-center justify-between">
-                         <div className="flex items-center gap-2">
-                             <div className="p-1.5 bg-amber-500/20 rounded-lg">
-                                <Sparkles className="w-4 h-4 text-amber-400 animate-pulse"/>
-                             </div>
-                             <div>
-                                 <h1 className="text-sm font-black text-white tracking-wide">مراد سوشل ميديا | Murad Social</h1>
-                                 <p className="text-[10px] text-purple-200">المنصة الاجتماعية الأولى للمبدعين</p>
-                             </div>
-                         </div>
-                    </div>
-                </div>
-            </div>
+    seedDatabase();
+  }, []);
 
-            {/* Stories Rail */}
-            <div className="flex gap-3 overflow-x-auto pt-4 pb-4 px-4 scrollbar-hide border-b border-slate-800 bg-black">
-                {/* Add Story */}
-                <div className="flex flex-col items-center gap-1 cursor-pointer min-w-[64px]">
-                    <div className="w-[64px] h-[64px] rounded-full border-2 border-slate-800 relative bg-slate-900">
-                        <img 
-                            src={user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
-                            className="w-full h-full rounded-full object-cover opacity-60"
-                        />
-                        <div className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-1 border-2 border-black">
-                            <Plus className="w-3 h-3"/>
-                        </div>
-                    </div>
-                    <span className="text-[10px] text-slate-500 font-medium">قصتك</span>
-                </div>
-                {stories.map((story) => (
-                    <div key={story.id} className="flex flex-col items-center gap-1 cursor-pointer min-w-[64px] group">
-                        <div className={`w-[68px] h-[68px] rounded-full p-[2px] ${story.isViewed ? 'bg-slate-800' : 'bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600'}`}>
-                            <div className="w-full h-full bg-black rounded-full p-0.5 border-2 border-black">
-                                <img 
-                                    src={story.user.avatar} 
-                                    className="w-full h-full rounded-full object-cover transition-transform group-hover:scale-105"
-                                />
-                            </div>
-                        </div>
-                        <span className="text-[10px] text-slate-300 w-16 truncate text-center font-medium">{story.user.name}</span>
-                    </div>
-                ))}
-            </div>
-
-            {/* Compose Area */}
-            <div className="p-4 border-b border-slate-800 bg-black hidden md:block">
-                <div className="flex gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden shrink-0">
-                        <img src={user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=Guest"} className="w-full h-full object-cover"/>
-                    </div>
-                    <div className="flex-1">
-                        <textarea
-                            value={newPostText}
-                            onChange={(e) => setNewPostText(e.target.value)}
-                            placeholder={user ? "ماذا يدور في ذهنك؟" : "سجل دخولك لتشاركنا أفكارك..."}
-                            className="w-full bg-transparent text-white text-lg placeholder-slate-500 outline-none resize-none h-20 scrollbar-hide"
-                            disabled={!user || isPosting}
-                        />
-                        <div className="flex justify-between items-center mt-2 border-t border-slate-800 pt-3">
-                            <div className="flex gap-2 text-blue-500">
-                                <button className="p-2 hover:bg-blue-500/10 rounded-full transition-colors"><ImageIcon className="w-5 h-5"/></button>
-                            </div>
-                            <button 
-                                onClick={handlePost}
-                                disabled={!newPostText.trim() || isPosting || !user}
-                                className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-1.5 rounded-full font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
-                            >
-                                {isPosting ? <Loader2 className="w-4 h-4 animate-spin"/> : 'نشر'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Feed */}
-            <div className="pb-32 min-h-[50vh]">
-                {isLoading ? (
-                    <div className="space-y-4 p-4">
-                        {[1, 2, 3].map(i => (
-                            <div key={i} className="animate-pulse flex gap-4">
-                                <div className="rounded-full bg-slate-800 h-12 w-12 shrink-0"></div>
-                                <div className="flex-1 space-y-2 py-1">
-                                    <div className="h-4 bg-slate-800 rounded w-1/4"></div>
-                                    <div className="space-y-2">
-                                        <div className="h-4 bg-slate-800 rounded"></div>
-                                        <div className="h-4 bg-slate-800 rounded w-5/6"></div>
-                                    </div>
-                                    <div className="h-48 bg-slate-800 rounded-xl mt-2"></div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    posts.map(post => (
-                        <PostCard 
-                            key={post.id} 
-                            post={post} 
-                            onOpenLightbox={onOpenLightbox}
-                            onShare={(text) => showToast(text, 'success')}
-                        />
-                    ))
-                )}
-
-                {!isLoading && posts.length === 0 && (
-                    <div className="text-center py-20 text-slate-500">
-                        <p>لا توجد منشورات حالياً.</p>
-                    </div>
-                )}
-            </div>
-
-            {showScrollTop && (
-                <button 
-                    onClick={scrollToTop}
-                    className="fixed bottom-24 left-4 z-40 p-3 bg-blue-600 text-white rounded-full shadow-xl hover:bg-blue-500 transition-all animate-bounce-slow"
-                >
-                    <ArrowUp className="w-5 h-5"/>
-                </button>
-            )}
-        </div>
+  // 3. FETCH & DISPLAY LOGIC
+  useEffect(() => {
+    const q = query(
+      collection(db, "social_posts"), 
+      orderBy("isPinned", "desc"),
+      orderBy("createdAt", "desc") 
     );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetchedPosts = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          // Map Firestore timestamp to readable string or keep object
+          // PostCard expects a string timestamp usually, but we handle it here roughly
+          return { 
+              ...data, 
+              id: doc.id,
+              timestamp: 'الآن' // Simplified for dynamic feed
+          };
+      });
+      setPosts(fetchedPosts);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // 4. HANDLE NEW USER POSTS
+  const handlePost = async () => {
+    if (!newPostText.trim()) return;
+
+    try {
+      const postUser = {
+        name: currentUser?.displayName || "Anonymous User",
+        handle: currentUser?.email ? `@${currentUser.email.split('@')[0]}` : "@user",
+        avatar: currentUser?.photoURL || "https://api.dicebear.com/7.x/initials/svg?seed=User",
+        verified: false,
+        isGold: false,
+        uid: currentUser?.uid || "guest-id"
+      };
+
+      await addDoc(collection(db, "social_posts"), {
+        content: newPostText,
+        user: postUser,
+        createdAt: serverTimestamp(),
+        likes: 0,
+        retweets: 0,
+        replies: 0,
+        views: '0',
+        isPinned: false,
+        type: 'text',
+        images: []
+      });
+
+      setNewPostText("");
+      if (showToast) showToast('تم النشر بنجاح', 'success');
+    } catch (error: any) {
+      console.error("Error posting:", error);
+      if (showToast) showToast('فشل النشر', 'error');
+    }
+  };
+
+  return (
+    <div className="flex-1 min-h-screen pb-20 md:pb-0">
+      {/* 0. NEW HEADER (Requested Design) */}
+      <div className="sticky top-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 py-4 mb-4">
+        <h1 className="text-center text-xl font-bold text-gray-900 dark:text-white font-arabic tracking-wide">
+          مراد سوشل ميديا <span className="text-blue-500 mx-2">|</span> Murad Social
+        </h1>
+      </div>
+
+      {/* 1. COMPOSE AREA */}
+      <div className="border-b border-gray-200 dark:border-gray-800 p-4 bg-white dark:bg-black">
+        <div className="flex gap-4">
+          <img 
+            src={currentUser?.photoURL || "https://i.ibb.co/QjNHDv3F/images-4.jpg"} 
+            alt="User" 
+            className="w-10 h-10 rounded-full object-cover"
+          />
+          <div className="flex-1">
+            <textarea
+              className="w-full bg-transparent text-xl placeholder-gray-500 text-black dark:text-white border-none focus:ring-0 resize-none h-12"
+              placeholder="What is happening?!"
+              value={newPostText}
+              onChange={(e) => setNewPostText(e.target.value)}
+            />
+            <div className="flex justify-between items-center mt-3">
+              <div className="flex gap-4 text-blue-400">
+                <Image className="w-5 h-5 cursor-pointer hover:bg-blue-500/10 rounded-full p-1 box-content" />
+                <BarChart2 className="w-5 h-5 cursor-pointer hover:bg-blue-500/10 rounded-full p-1 box-content" />
+                <Smile className="w-5 h-5 cursor-pointer hover:bg-blue-500/10 rounded-full p-1 box-content" />
+                <Calendar className="w-5 h-5 cursor-pointer hover:bg-blue-500/10 rounded-full p-1 box-content" />
+              </div>
+              <button 
+                onClick={handlePost}
+                disabled={!newPostText.trim()}
+                className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-1.5 px-4 rounded-full disabled:opacity-50 transition-all"
+              >
+                Post
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. FEED LIST */}
+      <div className="divide-y divide-gray-100 dark:divide-gray-800">
+        {loading ? (
+          // Skeleton Loader
+          [1, 2, 3].map((n) => (
+            <div key={n} className="p-4 animate-pulse">
+              <div className="flex gap-4">
+                <div className="w-12 h-12 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+                <div className="flex-1 space-y-3">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-1/4"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+                  <div className="h-32 bg-gray-200 dark:bg-gray-800 rounded w-full"></div>
+                </div>
+              </div>
+            </div>
+          ))
+        ) : (
+          posts.map((post) => (
+            <PostCard 
+                key={post.id} 
+                post={post} 
+                onOpenLightbox={onOpenLightbox || (() => {})} 
+                onShare={() => {}} 
+            />
+          ))
+        )}
+      </div>
+    </div>
+  );
 };
