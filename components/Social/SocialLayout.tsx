@@ -249,10 +249,12 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                                 className="w-8 h-8 rounded-full object-cover" 
                                 alt="Menu"
                             />
-                            {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>}
+                            {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-black"></span>}
                         </div>
-                        <div className="font-black text-lg">M</div>
-                        <div className="w-8"></div>
+                        <div className="font-black text-lg tracking-wider">M</div>
+                        <div className="w-8">
+                             {/* Placeholder to center the logo */}
+                        </div>
                     </div>
                 )}
 
@@ -369,16 +371,18 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
 
             {/* Mobile Bottom Nav */}
             {!isDeepPage && view !== 'post-detail' && view !== 'chat' && (
-                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-xl border-t border-[#2f3336] flex justify-around p-3 pb-safe z-50">
+                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-[#2f3336] flex justify-around items-center px-2 pb-safe z-50 h-[60px]">
                     <NavButton icon={Home} active={view === 'feed'} onClick={() => handleNavigation('feed')} />
                     <NavButton icon={Search} active={view === 'explore'} onClick={() => handleNavigation('explore')} />
                     
-                    {/* CENTER AI BUTTON */}
+                    {/* CENTER "M" BUTTON */}
                     <button 
                         onClick={() => setIsAIOpen(true)}
-                        className="bg-[var(--accent-color)] text-white p-3 rounded-full shadow-lg transform -translate-y-4 border-4 border-black active:scale-95 transition-transform"
+                        className="relative -top-4 bg-white text-black p-1 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.3)] border-[4px] border-black transition-transform active:scale-95"
                     >
-                        <Sparkles className="w-6 h-6"/>
+                        <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center">
+                            <span className="font-black text-white text-xl">M</span>
+                        </div>
                     </button>
                     
                     <NavButton icon={Bell} active={view === 'notifications'} onClick={() => handleNavigation('notifications')} notifyCount={unreadCount} />

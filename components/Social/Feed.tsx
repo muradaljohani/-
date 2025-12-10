@@ -43,6 +43,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     if (!db) return;
 
     const initFeed = async () => {
+        // Ensure viral posts are present
         await SocialService.checkAndSeed();
 
         let q;
@@ -210,7 +211,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
 
         {/* --- COMPOSE AREA --- */}
         {user && !isFocusMode && (
-        <div className="px-4 py-3 border-b border-[#2f3336] hidden md:block">
+        <div className="px-4 py-3 border-b border-[#2f3336] hidden md:block max-w-2xl mx-auto">
             <div className="flex gap-4">
                 <img 
                     src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
@@ -274,7 +275,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         )}
 
         {/* --- POSTS FEED --- */}
-        <div className="min-h-screen pb-20 w-full max-w-4xl mx-auto">
+        <div className="min-h-screen pb-20 w-full max-w-2xl mx-auto">
             {loading ? (
                 <div className="flex justify-center p-8">
                     <Loader2 className="w-8 h-8 text-[var(--accent-color)] animate-spin" />
@@ -297,12 +298,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                         isFocusMode={isFocusMode}
                     />
                 ))
-            )}
-            
-            {!loading && posts.length > 0 && (
-                <div className="py-8 text-center text-[#71767b] text-sm">
-                    وصلت للنهاية 🎉
-                </div>
             )}
         </div>
     </div>

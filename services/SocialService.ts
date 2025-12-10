@@ -22,10 +22,9 @@ export const SocialService = {
             const viralDocRef = doc(db, 'posts', 'ambition-vision-post');
             const viralDocSnap = await getDoc(viralDocRef);
             
-            if (!viralDocSnap.exists()) {
-                console.log("Seeding Viral Content...");
-                await this.forceSeed(); 
-            }
+            // Re-seed if missing OR if we want to ensure data consistency for this session
+            // For this update, we force seed to fix the image
+            await this.forceSeed(); 
         } catch (error) {
             console.error("Seeding check failed:", error);
         }
@@ -44,28 +43,31 @@ export const SocialService = {
             bio: "Founder of Murad Group | Tech Enthusiast 🇸🇦"
         };
 
-        const now = new Date();
+        const now = Date.now();
 
         // Post 1: Ambition (Newest - Pinned Top)
         await setDoc(doc(db, "posts", "ambition-vision-post"), {
             content: 'الطموح وقود لا ينفد.. والطريق إلى القمة يبدأ بخطوة واثقة. 🦁\n\nنحن لا ننتظر المستقبل، نحن نصنعه بأيدينا. القادم أجمل وأعظم بإذن الله.\n\n#طموح #شغف #ميلاف',
-            image: 'https://i.ibb.co/B5jRsfSN/Snapchat-1099490273.jpg',
+            image: 'https://i.ibb.co/B5jRsfSN/Snapchat-1099490273.jpg', // FIXED IMAGE URL
+            images: ['https://i.ibb.co/B5jRsfSN/Snapchat-1099490273.jpg'],
             user: MURAD_USER,
             likes: 35000, 
             retweets: 18000, 
             replies: 5600,
             views: '2.5M',
             isPinned: true,
-            createdAt: serverTimestamp() // Now
+            createdAt: serverTimestamp(), // Just Now
+            type: 'image'
         }, { merge: true });
 
-        // Post 2: Viral Welcome (Middle)
+        // Post 2: Viral Welcome (1 Minute Ago)
         await setDoc(doc(db, 'posts', 'viral-welcome-post'), {
             user: MURAD_USER,
             type: 'image',
             content: 'هل تعلم أن يوتيوب بدأ بمقطع فيديو مدته 18 ثانية فقط لشخص يتحدث عن "الفيلة" في حديقة الحيوان؟ والآن يشاهده المليارات يومياً! 🌍\n\nاليوم نضع حجر الأساس لـ "مجتمع ميلاف".. قد تبدو بداية بسيطة، ولكن تذكروا هذا المنشور جيداً.. لأننا قادمون لنغير قواعد اللعبة. 🚀🔥\n\n#البداية #ميلاف #المستقبل',
             image: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
-            createdAt: Timestamp.fromDate(new Date(now.getTime() - 60000)), // 1 min ago
+            images: ["https://i.ibb.co/QjNHDv3F/images-4.jpg"],
+            createdAt: Timestamp.fromMillis(now - 60000), // 1 min ago
             likes: 50000,
             retweets: 5000000,
             replies: 12500,
@@ -73,14 +75,14 @@ export const SocialService = {
             isPinned: true
         }, { merge: true });
 
-        // Post 3: Archive (Oldest Pinned)
+        // Post 3: Archive (2 Minutes Ago)
         await setDoc(doc(db, 'posts', 'archive-memory-post'), {
             user: MURAD_USER,
             type: 'image',
             content: 'من الأرشيف.. الطموح لا يشيخ. 🦅\nكنت أعلم منذ تلك اللحظة أننا سنصل إلى هنا يوماً ما.\n\n#ذكريات #اصرار',
-            images: ["https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg"], // Use images array for PostCard compatibility
-            image: "https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg", // Fallback
-            createdAt: Timestamp.fromDate(new Date(now.getTime() - 120000)), // 2 mins ago
+            images: ["https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg"], 
+            image: "https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg",
+            createdAt: Timestamp.fromMillis(now - 120000), // 2 mins ago
             likes: 42000,
             retweets: 2000000,
             replies: 8000,
