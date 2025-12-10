@@ -7,7 +7,7 @@ import {
     query, 
     orderBy, 
     serverTimestamp
-} from '../src/lib/firebase'; // Updated import source
+} from 'firebase/firestore'; 
 import { SocialPost, SocialUser } from '../dummyData';
 
 export const SocialService = {
@@ -40,48 +40,56 @@ export const SocialService = {
             const snapshot = await getDocs(postsRef);
             
             if (snapshot.docs.length === 0) {
-                console.log("Seeding Database with Official Murad Content...");
-                
-                const MURAD_USER = {
-                    name: "Murad Aljohani",
-                    handle: "@IpMurad",
-                    avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
-                    verified: true,
-                    isGold: true,
-                    bio: "Founder of Murad Group | Tech Enthusiast 🇸🇦"
-                };
-
-                // Post 2: The Archive (Added first so it appears below the viral one)
-                await addDoc(postsRef, {
-                    user: MURAD_USER,
-                    type: 'image',
-                    content: 'من الأرشيف.. الطموح لا يشيخ. 🦅\nكنت أعلم منذ تلك اللحظة أننا سنصل إلى هنا يوماً ما.\n\n#ذكريات #اصرار',
-                    images: ["https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg"],
-                    createdAt: new Date(Date.now() - 86400000), // 1 day ago
-                    likes: 42000,
-                    retweets: 2000000,
-                    replies: 8000,
-                    views: '10M'
-                });
-
-                // Post 1: The Viral Welcome (Added second so it appears on top)
-                await addDoc(postsRef, {
-                    user: MURAD_USER,
-                    type: 'image',
-                    content: 'هل تعلم أن يوتيوب بدأ بمقطع فيديو مدته 18 ثانية فقط لشخص يتحدث عن "الفيلة" في حديقة الحيوان؟ والآن يشاهده المليارات يومياً! 🌍\n\nاليوم نضع حجر الأساس لـ "مجتمع ميلاف".. قد تبدو بداية بسيطة، ولكن تذكروا هذا المنشور جيداً.. لأننا قادمون لنغير قواعد اللعبة. 🚀🔥\n\n#البداية #ميلاف #المستقبل',
-                    images: ["https://i.ibb.co/QjNHDv3F/images-4.jpg"],
-                    createdAt: serverTimestamp(), // Now
-                    likes: 50000,
-                    retweets: 5000000,
-                    replies: 12000,
-                    views: '15M'
-                });
-                
-                console.log("Seeding Complete.");
+                // Auto-seed disabled to prevent race conditions during debugging
+                // Use the manual button instead
+                // await this.forceSeed(); 
             }
         } catch (error) {
-            console.error("Seeding failed:", error);
+            console.error("Seeding check failed:", error);
         }
+    },
+
+    // Manual Force Seed
+    async forceSeed(): Promise<void> {
+        console.log("STARTING FORCE SEED...");
+        const postsRef = collection(db, 'social_posts');
+        
+        const MURAD_USER = {
+            name: "Murad Aljohani",
+            handle: "@IpMurad",
+            avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
+            verified: true,
+            isGold: true,
+            bio: "Founder of Murad Group | Tech Enthusiast 🇸🇦"
+        };
+
+        // Post 2: The Archive (Added first so it appears below the viral one)
+        await addDoc(postsRef, {
+            user: MURAD_USER,
+            type: 'image',
+            content: 'من الأرشيف.. الطموح لا يشيخ. 🦅\nكنت أعلم منذ تلك اللحظة أننا سنصل إلى هنا يوماً ما.\n\n#ذكريات #اصرار',
+            images: ["https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg"],
+            createdAt: new Date(Date.now() - 86400000), // 1 day ago
+            likes: 42000,
+            retweets: 2000000,
+            replies: 8000,
+            views: '10M'
+        });
+
+        // Post 1: The Viral Welcome (Added second so it appears on top)
+        await addDoc(postsRef, {
+            user: MURAD_USER,
+            type: 'image',
+            content: 'هل تعلم أن يوتيوب بدأ بمقطع فيديو مدته 18 ثانية فقط لشخص يتحدث عن "الفيلة" في حديقة الحيوان؟ والآن يشاهده المليارات يومياً! 🌍\n\nاليوم نضع حجر الأساس لـ "مجتمع ميلاف".. قد تبدو بداية بسيطة، ولكن تذكروا هذا المنشور جيداً.. لأننا قادمون لنغير قواعد اللعبة. 🚀🔥\n\n#البداية #ميلاف #المستقبل',
+            images: ["https://i.ibb.co/QjNHDv3F/images-4.jpg"],
+            createdAt: serverTimestamp(), // Now
+            likes: 50000,
+            retweets: 5000000,
+            replies: 12000,
+            views: '15M'
+        });
+        
+        console.log("Force Seed Complete.");
     },
 
     // Create a new post

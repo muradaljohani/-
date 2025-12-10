@@ -7,7 +7,7 @@ import {
     Calendar, MapPin, Check, ChevronLeft, Mic, Paperclip, Lock, 
     BarChart2, Play, Pause, Wallet, TrendingUp, Hash, Award, Crown,
     Film, ShieldAlert, EyeOff, Coins, Trophy, Download, Smartphone,
-    Loader2
+    Loader2, AlertTriangle, RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { conversations, stories, SocialPost } from '../../dummyData';
@@ -42,6 +42,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
     const [posts, setPosts] = useState<SocialPost[]>([]);
     const [isLoadingPosts, setIsLoadingPosts] = useState(false);
     const [isPosting, setIsPosting] = useState(false);
+    const [isSeeding, setIsSeeding] = useState(false);
 
     // Fetch Posts & Seed
     const loadPosts = async () => {
@@ -84,6 +85,20 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
             alert("فشل النشر، حاول مرة أخرى");
         }
         setIsPosting(false);
+    };
+
+    const handleManualSeed = async () => {
+        if (!confirm("Are you sure you want to add the viral posts manually?")) return;
+        setIsSeeding(true);
+        try {
+            await SocialService.forceSeed();
+            alert("✅ Success! Posts created. Refresh the page.");
+            loadPosts();
+        } catch (error: any) {
+            alert("❌ Error: " + error.message);
+        } finally {
+            setIsSeeding(false);
+        }
     };
 
     // Sound FX (Using generic URLs for demo)
@@ -297,7 +312,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                     {post.images && post.images.length > 0 && (
                         <div className={`mt-3 overflow-hidden border-slate-800 ${post.images.length > 1 ? 'grid grid-cols-2 gap-0.5' : ''} -mx-4 md:mx-0 md:rounded-2xl rounded-none w-[calc(100%+2rem)] md:w-full border-y md:border`}>
                             {post.images.map((img, i) => (
-                                <img key={i} src={img} className="w-full h-auto object-cover max-h-[500px]" loading="lazy" />
+                                <img key={i} src={img} className="w-full h-full object-cover" loading="lazy" style={{ maxHeight: '500px' }} />
                             ))}
                         </div>
                     )}
@@ -348,6 +363,21 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 {isIncognito && <EyeOff className="w-4 h-4 text-gray-500"/>}
                 <div className="md:hidden" onClick={onBack}><ArrowLeft className="w-5 h-5 text-white rtl:rotate-180"/></div>
             </div>
+            
+            {/* --- EMERGENCY SEED BUTTON --- */}
+            {posts.length === 0 && !isLoadingPosts && (
+                <div className="p-4 bg-red-900/20 border-b border-red-500/20">
+                    <button 
+                        onClick={handleManualSeed}
+                        disabled={isSeeding}
+                        className="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all active:scale-95 animate-pulse"
+                    >
+                        {isSeeding ? <Loader2 className="w-6 h-6 animate-spin"/> : <AlertTriangle className="w-6 h-6"/>}
+                        {isSeeding ? "جاري النشر..." : "اضغط هنا لإصلاح المشكلة ونشر التغريدات"}
+                    </button>
+                    <p className="text-center text-xs text-red-400 mt-2">Emergency Force Seed Protocol</p>
+                </div>
+            )}
 
             <StoriesRail />
             
