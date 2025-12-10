@@ -48,17 +48,20 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     const postsRef = collection(db, "posts");
 
     if (activeTab === 'foryou') {
+        // QUERY STRATEGY:
+        // We ONLY sort by createdAt on the server to avoid Composite Index errors.
+        // We will handle 'isPinned' sorting on the client side.
         q = query(
           postsRef, 
-          orderBy("isPinned", "desc"),
           orderBy("createdAt", "desc")
         );
     } else {
         if (user) {
+            // Filter by user, sort by time client-side or add simple index if needed.
+            // For now, simple filtering is safest without custom indexes.
             q = query(
               postsRef,
-              where("user.uid", "==", user.id),
-              orderBy("createdAt", "desc")
+              where("user.uid", "==", user.id)
             );
         } else {
             setPosts([]);
@@ -68,19 +71,37 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const livePosts = snapshot.docs.map((doc) => {
+      let livePosts = snapshot.docs.map((doc) => {
           const data = doc.data();
           return {
             id: doc.id,
             ...data
-            // Timestamp handling is done in PostCard or via util
           };
       });
+
+      // CLIENT-SIDE SORTING
+      // 1. Pinned posts first
+      // 2. Newest posts second
+      livePosts.sort((a: any, b: any) => {
+          if (activeTab === 'foryou') {
+              const pinA = a.isPinned ? 1 : 0;
+              const pinB = b.isPinned ? 1 : 0;
+              if (pinA !== pinB) return pinB - pinA;
+          }
+          
+          // Handle various timestamp formats (Firestore Timestamp vs Date vs String)
+          const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (new Date(a.createdAt || 0).getTime());
+          const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (new Date(b.createdAt || 0).getTime());
+          
+          return timeB - timeA;
+      });
+
       setPosts(livePosts);
       setLoading(false);
     }, (err) => {
         console.error("Feed Error:", err);
         setLoading(false);
+        if (showToast) showToast("جاري إعادة المحاولة...", "error");
     });
 
     return () => unsubscribe();
@@ -115,7 +136,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           type: imageUrls.length > 0 ? 'image' : 'text',
           images: imageUrls,
           image: imageUrls[0] || null, // Backward compatibility
-          createdAt: serverTimestamp(),
+          createdAt: serverTimestamp(), // Standardized field name
           likes: 0,
           retweets: 0,
           replies: 0,

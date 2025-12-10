@@ -198,16 +198,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         const count = images.length;
         let gridLayout = '';
         
-        // Tailwind Grid Logic for X/Twitter style layout
+        // CSS Grid Classes
         if (count === 1) gridLayout = 'grid-cols-1 aspect-[16/9]';
         else if (count === 2) gridLayout = 'grid-cols-2 aspect-[16/9]';
-        else if (count === 3) gridLayout = 'grid-cols-2 aspect-[16/9]';
-        else gridLayout = 'grid-cols-2 aspect-[16/9]';
+        else if (count === 3) gridLayout = 'grid-cols-2 grid-rows-2 aspect-[16/9]';
+        else gridLayout = 'grid-cols-2 grid-rows-2 aspect-[16/9]';
 
         return (
             <div className={`mt-3 rounded-2xl overflow-hidden border border-[#2f3336] grid gap-0.5 ${gridLayout} bg-[#16181c]`}>
                 {images.slice(0, 4).map((img: string, i: number) => {
-                     // For 3 images: First image spans 2 rows on the left, other two stacked on right
+                     // For 3 images: First image spans 2 rows on the left
                      const isThreeLayout = count === 3;
                      const isFirstOfThree = isThreeLayout && i === 0;
                      
