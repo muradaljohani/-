@@ -197,6 +197,43 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         });
     };
 
+    const renderImages = () => {
+        if (!post.images || post.images.length === 0) return null;
+        
+        const count = post.images.length;
+        let gridClass = '';
+        
+        if (count === 1) gridClass = 'grid-cols-1';
+        else if (count === 2) gridClass = 'grid-cols-2';
+        else if (count === 3) gridClass = 'grid-cols-2'; // Needs specific cell styling
+        else gridClass = 'grid-cols-2';
+
+        return (
+            <div className={`mt-3 rounded-2xl overflow-hidden border border-[#2f3336] grid gap-0.5 ${gridClass} aspect-[16/9] bg-[#16181c]`}>
+                {post.images.slice(0, 4).map((img: string, i: number) => {
+                     // Logic for 3 images: First one takes full height on left col
+                     const isThreeLayout = count === 3;
+                     const isFirstInThree = isThreeLayout && i === 0;
+                     
+                     return (
+                        <div 
+                            key={i} 
+                            className={`relative bg-[#16181c] overflow-hidden cursor-pointer ${isFirstInThree ? 'row-span-2' : ''}`}
+                            onClick={(e) => handleLightbox(e, img)}
+                        >
+                            <img src={img} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
+                            {count > 4 && i === 3 && (
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold text-xl">
+                                    +{count - 4}
+                                </div>
+                            )}
+                        </div>
+                     );
+                })}
+            </div>
+        );
+    };
+
     if (post.type === 'repost') {
         return (
             <div className="p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors cursor-pointer" onClick={onClick} dir="rtl">
@@ -303,23 +340,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                     </div>
                 )}
 
-                {post.images && post.images.length > 0 && (
-                    <div className={`mt-3 rounded-2xl overflow-hidden border border-[#2f3336] relative ${
-                        post.images.length > 1 ? 'grid grid-cols-2 gap-0.5' : ''
-                    }`}>
-                        {post.images.slice(0, 4).map((img: string, i: number) => (
-                            <div 
-                                key={i} 
-                                className={`relative bg-[#16181c] overflow-hidden ${
-                                    post.images?.length === 3 && i === 0 ? 'row-span-2 h-full' : 'aspect-[16/9]'
-                                }`}
-                                onClick={(e) => handleLightbox(e, img)}
-                            >
-                                <img src={img} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
-                            </div>
-                        ))}
-                    </div>
-                )}
+                {/* Enhanced Image Grid */}
+                {renderImages()}
 
                 <div className="flex justify-between items-center mt-3 text-[#71767b] max-w-md">
                     <button className="flex items-center gap-1 group transition-colors hover:text-[#1d9bf0]" onClick={(e) => e.stopPropagation()}>

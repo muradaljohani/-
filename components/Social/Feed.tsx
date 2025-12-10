@@ -15,13 +15,14 @@ import { Image, BarChart2, Smile, Loader2, Wand2, Eye, EyeOff, X, Feather, Plus 
 import { uploadImage } from '../../src/services/storageService';
 import { useAuth } from '../../context/AuthContext';
 import { SocialService } from '../../services/SocialService';
+import { StoriesBar } from '../Stories/StoriesBar';
 
 interface FeedProps {
     onOpenLightbox?: (src: string) => void;
     showToast?: (msg: string, type: 'success'|'error') => void;
     onBack?: () => void;
     onPostClick?: (postId: string) => void;
-    onUserClick?: (userId: string) => void; // New Prop
+    onUserClick?: (userId: string) => void; 
 }
 
 export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostClick, onUserClick }) => {
@@ -184,6 +185,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   return (
     <div className="w-full min-h-screen bg-black text-[#e7e9ea] relative">
         
+        {/* Header Tabs */}
         <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-[#2f3336]">
             <div className="flex justify-around items-center h-[53px]">
                 <div 
@@ -210,85 +212,97 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             </div>
         </div>
 
-        {user && !isFocusMode && (
-        <div className="hidden md:block px-4 py-3 border-b border-[#2f3336] max-w-2xl mx-auto">
-            <div className="flex gap-4">
-                <img 
-                    src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
-                    className="w-10 h-10 rounded-full object-cover" 
-                    alt="User"
-                />
-                <div className="flex-1">
-                    <textarea 
-                        className="w-full bg-transparent text-lg text-[#e7e9ea] placeholder-[#71767b] outline-none resize-none min-h-[50px]"
-                        placeholder="ماذا يحدث؟"
-                        value={newPostText}
-                        onChange={(e) => setNewPostText(e.target.value)}
+        <div className="w-full max-w-2xl mx-auto">
+            {/* Stories Section */}
+            {!isFocusMode && (
+                <div className="border-b border-[#2f3336]">
+                    <StoriesBar />
+                </div>
+            )}
+
+            {/* Desktop Composer */}
+            {user && !isFocusMode && (
+            <div className="hidden md:block px-4 py-3 border-b border-[#2f3336]">
+                <div className="flex gap-4">
+                    <img 
+                        src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
+                        className="w-10 h-10 rounded-full object-cover" 
+                        alt="User"
                     />
-                    
-                    {previewUrl && (
-                        <div className="relative mt-2 mb-4">
-                            <img src={previewUrl} className="rounded-2xl max-h-80 w-auto object-cover border border-[#2f3336]" />
-                            <button onClick={removeImage} className="absolute top-2 left-2 bg-black/70 hover:bg-black/90 text-white p-1 rounded-full backdrop-blur-sm transition-all">
-                                <X className="w-4 h-4"/>
+                    <div className="flex-1">
+                        <textarea 
+                            className="w-full bg-transparent text-lg text-[#e7e9ea] placeholder-[#71767b] outline-none resize-none min-h-[50px]"
+                            placeholder="ماذا يحدث؟"
+                            value={newPostText}
+                            onChange={(e) => setNewPostText(e.target.value)}
+                        />
+                        
+                        {previewUrl && (
+                            <div className="relative mt-2 mb-4">
+                                <img src={previewUrl} className="rounded-2xl max-h-80 w-auto object-cover border border-[#2f3336]" />
+                                <button onClick={removeImage} className="absolute top-2 left-2 bg-black/70 hover:bg-black/90 text-white p-1 rounded-full backdrop-blur-sm transition-all">
+                                    <X className="w-4 h-4"/>
+                                </button>
+                            </div>
+                        )}
+
+                        <div className="flex justify-between items-center mt-2 border-t border-[#2f3336] pt-3">
+                            <div className="flex gap-1 text-[#1d9bf0]">
+                                <div className="p-2 hover:bg-[#1d9bf0]/10 rounded-full cursor-pointer transition-colors relative">
+                                    <Image className="w-5 h-5"/>
+                                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
+                                </div>
+                                <div 
+                                    className={`p-2 hover:bg-[#1d9bf0]/10 rounded-full cursor-pointer transition-colors ${isEnhancing ? 'animate-pulse text-purple-500' : ''}`}
+                                    onClick={handleAIEnhance}
+                                >
+                                    <Wand2 className="w-5 h-5"/>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={handlePost}
+                                disabled={(!newPostText.trim() && !selectedFile) || isUploading}
+                                className="bg-[#1d9bf0] hover:opacity-90 text-white font-bold px-5 py-1.5 rounded-full text-sm disabled:opacity-50 transition-all flex items-center gap-2"
+                            >
+                                {isUploading && <Loader2 className="w-4 h-4 animate-spin"/>}
+                                نشر
                             </button>
                         </div>
-                    )}
-
-                    <div className="flex justify-between items-center mt-2 border-t border-[#2f3336] pt-3">
-                        <div className="flex gap-1 text-[#1d9bf0]">
-                             <div className="p-2 hover:bg-[#1d9bf0]/10 rounded-full cursor-pointer transition-colors relative">
-                                <Image className="w-5 h-5"/>
-                                <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
-                             </div>
-                             <div 
-                                className={`p-2 hover:bg-[#1d9bf0]/10 rounded-full cursor-pointer transition-colors ${isEnhancing ? 'animate-pulse text-purple-500' : ''}`}
-                                onClick={handleAIEnhance}
-                             >
-                                <Wand2 className="w-5 h-5"/>
-                             </div>
-                        </div>
-                        <button 
-                            onClick={handlePost}
-                            disabled={(!newPostText.trim() && !selectedFile) || isUploading}
-                            className="bg-[#1d9bf0] hover:opacity-90 text-white font-bold px-5 py-1.5 rounded-full text-sm disabled:opacity-50 transition-all flex items-center gap-2"
-                        >
-                            {isUploading && <Loader2 className="w-4 h-4 animate-spin"/>}
-                            نشر
-                        </button>
                     </div>
                 </div>
             </div>
-        </div>
-        )}
-
-        <div className="min-h-screen pb-32 w-full max-w-2xl mx-auto">
-            {loading ? (
-                <div className="flex justify-center p-8">
-                    <Loader2 className="w-8 h-8 text-[#1d9bf0] animate-spin" />
-                </div>
-            ) : posts.length === 0 ? (
-                <div className="flex flex-col items-center justify-center p-12 text-[#71767b]">
-                    <div className="w-20 h-20 bg-[#16181c] rounded-full flex items-center justify-center mb-4">
-                        <Smile className="w-10 h-10 text-[#2f3336]" />
-                    </div>
-                    <p className="text-lg font-bold text-[#e7e9ea]">لا توجد منشورات حتى الآن</p>
-                    <p className="text-sm">كن أول من ينشر في مجتمع ميلاف!</p>
-                </div>
-            ) : (
-                posts.map((post) => (
-                    <PostCard 
-                        key={post.id} 
-                        post={post} 
-                        onOpenLightbox={onOpenLightbox} 
-                        onClick={() => onPostClick && onPostClick(post.id)}
-                        onUserClick={onUserClick}
-                        isFocusMode={isFocusMode}
-                    />
-                ))
             )}
+
+            {/* Feed Content */}
+            <div className="min-h-screen pb-32">
+                {loading ? (
+                    <div className="flex justify-center p-8">
+                        <Loader2 className="w-8 h-8 text-[#1d9bf0] animate-spin" />
+                    </div>
+                ) : posts.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center p-12 text-[#71767b]">
+                        <div className="w-20 h-20 bg-[#16181c] rounded-full flex items-center justify-center mb-4">
+                            <Smile className="w-10 h-10 text-[#2f3336]" />
+                        </div>
+                        <p className="text-lg font-bold text-[#e7e9ea]">لا توجد منشورات حتى الآن</p>
+                        <p className="text-sm">كن أول من ينشر في مجتمع ميلاف!</p>
+                    </div>
+                ) : (
+                    posts.map((post) => (
+                        <PostCard 
+                            key={post.id} 
+                            post={post} 
+                            onOpenLightbox={onOpenLightbox} 
+                            onClick={() => onPostClick && onPostClick(post.id)}
+                            onUserClick={onUserClick}
+                            isFocusMode={isFocusMode}
+                        />
+                    ))
+                )}
+            </div>
         </div>
 
+        {/* Mobile Floating Action Button */}
         {!isComposeOpen && user && (
             <button 
                 onClick={() => setIsComposeOpen(true)}
@@ -298,6 +312,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             </button>
         )}
 
+        {/* Mobile Compose Modal */}
         {isComposeOpen && (
             <div className="fixed inset-0 z-[6000] bg-black flex flex-col md:hidden animate-in slide-in-from-bottom duration-300">
                 <div className="flex justify-between items-center px-4 py-3 border-b border-[#2f3336]">
