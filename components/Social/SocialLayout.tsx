@@ -47,11 +47,13 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
     const handlePostClick = (postId: string) => {
         setSelectedPostId(postId);
         setView('post-detail');
+        window.scrollTo(0, 0);
     };
 
     const handleChatClick = (chatId: string) => {
         setSelectedChatId(chatId);
         setView('chat');
+        window.scrollTo(0, 0);
     };
 
     const handleBackToFeed = () => {
@@ -117,6 +119,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 </div>
             )}
 
+            {/* Sidebar Desktop */}
             <div className={`hidden md:flex flex-col w-20 xl:w-72 h-screen sticky top-0 px-2 xl:px-4 border-l border-[var(--border-color)] justify-between py-4 z-50 bg-[var(--bg-primary)]`}>
                 <div className="space-y-1">
                     <div className="px-3 py-3 w-fit mb-2 hover:bg-[var(--bg-secondary)] rounded-full cursor-pointer transition-colors" onClick={onBack}>
@@ -168,8 +171,10 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 </div>
             </div>
 
+            {/* Main Content Area */}
             <main className={`flex-1 max-w-[600px] w-full min-h-screen pb-20 md:pb-0 relative border-r border-[var(--border-color)] bg-[var(--bg-primary)]`}>
                 
+                {/* Mobile Top Bar */}
                 {(view === 'feed' || view === 'profile' || view === 'messages') && (
                     <div className="md:hidden sticky top-0 z-30 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border-color)] px-4 py-3 flex justify-between items-center">
                         <div onClick={() => setIsSidebarOpen(true)} className="cursor-pointer">
@@ -184,6 +189,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                     </div>
                 )}
 
+                {/* VIEWS */}
                 {view === 'feed' && (
                     <Feed 
                         onOpenLightbox={setLightboxSrc} 
@@ -230,10 +236,14 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 
                 {view === 'messages' && (
                     <div className="min-h-screen">
-                        <div className="p-4 border-b border-[var(--border-color)] font-bold text-xl">الرسائل</div>
+                        <div className="p-4 border-b border-[var(--border-color)] font-bold text-xl flex justify-between items-center">
+                            <span>الرسائل</span>
+                            <Mail className="w-5 h-5"/>
+                        </div>
+                        {/* Mock Chat List */}
                         {[1, 2, 3].map(id => (
-                            <div key={id} onClick={() => handleChatClick(id.toString())} className="flex gap-3 p-4 hover:bg-[var(--bg-secondary)] cursor-pointer transition-colors">
-                                <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${id}`} className="w-12 h-12 rounded-full"/>
+                            <div key={id} onClick={() => handleChatClick(id.toString())} className="flex gap-3 p-4 hover:bg-[var(--bg-secondary)] cursor-pointer transition-colors border-b border-[var(--border-color)]">
+                                <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${id}`} className="w-12 h-12 rounded-full border border-[var(--border-color)]"/>
                                 <div className="flex-1">
                                     <div className="flex justify-between">
                                         <span className="font-bold text-[var(--text-primary)]">مستخدم {id}</span>
@@ -247,6 +257,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 )}
             </main>
 
+            {/* Right Sidebar Desktop */}
             <div className="hidden lg:block w-80 xl:w-96 h-screen sticky top-0 px-6 py-4 border-r border-[var(--border-color)] z-40 bg-[var(--bg-primary)]">
                 <div className="relative mb-6 group">
                     <input 
@@ -276,6 +287,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 </div>
             </div>
 
+            {/* Mobile Bottom Nav */}
             {view !== 'post-detail' && view !== 'chat' && (
                 <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)]/90 backdrop-blur-xl border-t border-[var(--border-color)] flex justify-around p-3 pb-safe z-50">
                     <NavButton icon={Home} active={view === 'feed'} onClick={() => setView('feed')} />
