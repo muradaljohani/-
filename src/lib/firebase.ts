@@ -1,66 +1,23 @@
 
-// Mocking Firebase SDK to prevent build errors when 'firebase' package is missing.
-// In a real environment with 'npm install firebase', these would be real imports.
+// Re-export real Firebase functions to bridge the app to the actual SDK
+import { initializeApp, getApps, getApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, FacebookAuthProvider, TwitterAuthProvider, GithubAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { getFirestore, doc, collection, setDoc, getDoc, addDoc, updateDoc, getDocs, query, orderBy, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getAnalytics } from 'firebase/analytics';
+import { db, auth, storage, analytics, app } from '../../firebaseConfig';
 
-// Mock Implementations
-const initializeApp = (config: any) => ({ name: '[DEFAULT]' });
-const getApps = () => [];
-const getApp = () => ({ name: '[DEFAULT]' });
-const getAuth = (app?: any) => ({ currentUser: null });
-const getFirestore = (app?: any) => ({});
-const getStorage = (app?: any) => ({});
-const getAnalytics = (app?: any) => ({ logEvent: (name: string, params?: any) => console.log('[Analytics Mock]', name, params) });
+// Export Singleton Instances from the real config
+export { app, auth, db, storage, analytics };
 
-// Auth Providers
-class GoogleAuthProvider {}
-class FacebookAuthProvider {}
-class TwitterAuthProvider {}
-class GithubAuthProvider {}
+// Export Providers
+export const googleProvider = new GoogleAuthProvider();
+export const facebookProvider = new FacebookAuthProvider();
+export const twitterProvider = new TwitterAuthProvider();
+export const githubProvider = new GithubAuthProvider();
 
-// Auth Functions
-const signInWithPopup = async (auth: any, provider: any) => {
-    console.log("Mock signInWithPopup called");
-    throw new Error("Firebase not connected (Mock Mode). Check console for details.");
-};
-const signOut = async (auth: any) => {
-    console.log("Mock signOut called");
-};
-const onAuthStateChanged = (auth: any, callback: any) => {
-    // Immediately return null user to simulate signed out or allow manual sign in via context
-    callback(null);
-    return () => {}; // Unsubscribe
-};
-
-// Firestore Functions
-const doc = (db: any, col: string, id: string, ...pathSegments: string[]) => ({ path: `${col}/${id}` });
-const collection = (db: any, path: string) => ({ path });
-const setDoc = async (ref: any, data: any, options?: any) => {};
-const getDoc = async (ref: any) => ({ exists: () => false, data: () => ({}) });
-const addDoc = async (ref: any, data: any) => ({ id: 'mock-doc-id' });
-const updateDoc = async (ref: any, data: any) => {};
-const getDocs = async (query: any) => ({ docs: [] });
-const query = (ref: any, ...constraints: any[]) => ref;
-const orderBy = (field: string, direction?: string) => ({ type: 'orderBy', field, direction });
-const serverTimestamp = () => new Date().toISOString();
-
-// Storage Functions
-const ref = (storage: any, path: string) => ({ path });
-const uploadBytes = async (ref: any, file: any) => ({ ref });
-const getDownloadURL = async (ref: any) => "https://via.placeholder.com/300";
-
-// Exports
+// Export Functions
 export {
-    initializeApp,
-    getApps,
-    getApp,
-    getAuth,
-    getFirestore,
-    getStorage,
-    getAnalytics,
-    GoogleAuthProvider,
-    FacebookAuthProvider,
-    TwitterAuthProvider,
-    GithubAuthProvider,
     signInWithPopup,
     signOut,
     onAuthStateChanged,
@@ -74,23 +31,19 @@ export {
     query,
     orderBy,
     serverTimestamp,
+    onSnapshot,
     ref,
     uploadBytes,
-    getDownloadURL
+    getDownloadURL,
+    initializeApp,
+    getApps,
+    getApp,
+    getAuth,
+    getFirestore,
+    getStorage,
+    getAnalytics,
+    GoogleAuthProvider,
+    FacebookAuthProvider,
+    TwitterAuthProvider,
+    GithubAuthProvider
 };
-
-// Singleton Instances (Mock)
-const app = initializeApp({});
-const auth = getAuth(app);
-const db = getFirestore(app);
-const storage = getStorage(app);
-const analytics = getAnalytics(app);
-
-// Provider Instances
-const googleProvider = new GoogleAuthProvider();
-const facebookProvider = new FacebookAuthProvider();
-const twitterProvider = new TwitterAuthProvider();
-const githubProvider = new GithubAuthProvider();
-
-// Final Export including analytics
-export { app, auth, db, storage, analytics, googleProvider, facebookProvider, twitterProvider, githubProvider };
