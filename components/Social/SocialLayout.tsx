@@ -213,7 +213,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
         const renderBadge = () => {
             if (post.user.isGold) return <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 ml-1" />;
             if (post.user.isPremium) return <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500 ml-1" />;
-            if (post.user.verified) return <CheckCircle2 className="w-3.5 h-3.5 text-slate-400 fill-slate-800 ml-1" />;
+            if (post.user.verified) return <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500 ml-1" />;
             return null;
         };
 
@@ -235,7 +235,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 <div className="shrink-0">
                     <img 
                         src={post.user.avatar} 
-                        className="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity" 
+                        className="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity bg-slate-700" 
                         alt={post.user.name} 
                         onClick={(e) => { e.stopPropagation(); setView('profile'); }}
                     />
