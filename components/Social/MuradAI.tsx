@@ -112,6 +112,7 @@ export const MuradAI: React.FC<Props> = ({ isOpen, onClose }) => {
         
         {/* Background Logo */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.02]">
+          {/* Placeholder for Mylaf Logo */}
           <Sparkles className="w-96 h-96 text-white" />
         </div>
 

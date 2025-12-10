@@ -27,7 +27,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     const [retweeted, setRetweeted] = useState(false);
     const [retweetCount, setRetweetCount] = useState(post.retweets || 0);
 
-    const isOwner = user?.id && post.user?.uid ? user.id === post.user.uid : false;
+    // --- STRICT SECURITY LOGIC ---
+    // 1. Check Ownership
+    const isOwner = user && post.user?.uid ? user.id === post.user.uid : false;
+    
+    // 2. Determine Permission (Owner OR Admin)
     const canDelete = isOwner || isAdmin;
 
     // --- YOUTUBE LOGIC ---
@@ -39,7 +43,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
 
     const youtubeId = post.content ? getYouTubeId(post.content) : null;
     
-    // Clean content for display (remove the raw YouTube link if we are showing the player)
+    // Clean content for display
     const displayContent = youtubeId && post.content
         ? post.content.replace(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11}).*/, '').trim()
         : post.content;
@@ -56,21 +60,23 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         audio.play().catch(() => {});
     };
 
+    // --- DELETE ACTION ---
     const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
 
         if (!canDelete) return;
 
         const confirmMessage = isAdmin && !isOwner 
-            ? "ADMIN OVERRIDE: Are you sure you want to delete this user's post?" 
-            : "Are you sure you want to delete this post? This action cannot be undone.";
+            ? "تنبيه إداري: هل أنت متأكد من حذف منشور هذا العضو؟" 
+            : "هل أنت متأكد من حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.";
 
         if (window.confirm(confirmMessage)) {
             try {
                 await deleteDoc(doc(db, 'posts', post.id));
+                // Toast notification should be handled by parent or context if available
             } catch (err) {
                 console.error("Error deleting post:", err);
-                alert("Failed to delete post.");
+                alert("حدث خطأ أثناء محاولة الحذف.");
             }
         }
     };
@@ -199,11 +205,13 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                         <Repeat className="w-3 h-3"/>
                         <span onClick={(e) => handleUserClick(e, post.user?.uid)} className="hover:underline cursor-pointer">{post.user?.name} أعاد النشر</span>
                     </div>
+                    
+                    {/* Security Check: Show delete ONLY if allowed */}
                     {canDelete && (
                         <button 
-                            className="text-gray-500 hover:text-red-500 transition-colors p-1 rounded-full hover:bg-red-500/10"
+                            className="text-gray-500 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-500/10"
                             onClick={handleDelete}
-                            title="Delete Repost"
+                            title="حذف المنشور"
                         >
                             <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -259,11 +267,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                     </div>
                     
                     <div className="flex items-center gap-2">
+                        {/* Security Check: Show delete ONLY if allowed */}
                         {canDelete && (
                             <button 
                                 className="p-1.5 -mr-1 rounded-full text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"
                                 onClick={handleDelete}
-                                title={isAdmin && !isOwner ? "Admin Delete" : "Delete Post"}
+                                title={isAdmin && !isOwner ? "حذف إداري" : "حذف المنشور"}
                             >
                                 <Trash2 className="w-4 h-4"/>
                             </button>
