@@ -7,13 +7,13 @@ import {
   onSnapshot, 
   addDoc, 
   serverTimestamp, 
-  where,
-  db
-} from '../../src/lib/firebase';
-import { PostCard } from './PostCard';
-import { Image, BarChart2, Smile, Loader2, Wand2, Eye, EyeOff, X, Feather, Plus } from 'lucide-react';
-import { uploadImage } from '../../src/services/storageService';
+  where
+} from 'firebase/firestore';
+import { db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { PostCard } from './PostCard';
+import { Image, BarChart2, Smile, MapPin, Loader2, X, Wand2, Feather } from 'lucide-react';
+import { uploadImage } from '../../src/services/storageService';
 import { SocialService } from '../../services/SocialService';
 import { StoriesBar } from '../Stories/StoriesBar';
 
@@ -36,71 +36,62 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isComposeOpen, setIsComposeOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const mobileFileInputRef = useRef<HTMLInputElement>(null);
-  
   const [isEnhancing, setIsEnhancing] = useState(false);
-  const [isFocusMode, setIsFocusMode] = useState(false);
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!db) return;
+    // Ensure viral content exists
+    SocialService.checkAndSeed();
 
-    const initFeed = async () => {
-        await SocialService.checkAndSeed();
+    let q;
+    const postsRef = collection(db, "posts");
 
-        let q;
-        if (activeTab === 'foryou') {
+    if (activeTab === 'foryou') {
+        q = query(
+          postsRef, 
+          orderBy("isPinned", "desc"),
+          orderBy("createdAt", "desc")
+        );
+    } else {
+        if (user) {
             q = query(
-              collection(db, "posts"), 
-              orderBy("isPinned", "desc"),
+              postsRef,
+              where("user.uid", "==", user.id),
               orderBy("createdAt", "desc")
             );
         } else {
-            if (user) {
-                q = query(
-                  collection(db, "posts"),
-                  where("user.uid", "==", user.id),
-                  orderBy("createdAt", "desc")
-                );
-            } else {
-                setPosts([]);
-                setLoading(false);
-                return;
-            }
+            setPosts([]);
+            setLoading(false);
+            return;
         }
+    }
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-          const fetchedPosts = snapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-                id: doc.id,
-                ...data,
-                timestamp: data.createdAt ? SocialService.formatDate(data.createdAt) : 'Just now'
-            };
-          });
-          setPosts(fetchedPosts);
-          setLoading(false);
-        }, (error) => {
-          console.error("Feed snapshot error:", error);
-          setLoading(false);
-        });
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const livePosts = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data
+            // Timestamp handling is done in PostCard or via util
+          };
+      });
+      setPosts(livePosts);
+      setLoading(false);
+    }, (err) => {
+        console.error("Feed Error:", err);
+        setLoading(false);
+    });
 
-        return () => unsubscribe();
-    };
-
-    const unsubscribePromise = initFeed();
-    return () => { unsubscribePromise.then(unsub => unsub && unsub()); };
-
+    return () => unsubscribe();
   }, [activeTab, user]);
 
   const handlePost = async () => {
     if ((!newPostText.trim() && !selectedFile) || !user) return;
-    
-    try {
-      setIsUploading(true);
-      let imageUrls: string[] = [];
+    setIsUploading(true);
 
+    try {
+      let imageUrls: string[] = [];
       if (selectedFile) {
          const path = `posts/${user.id}/${Date.now()}_${selectedFile.name}`;
          const url = await uploadImage(selectedFile, path);
@@ -123,7 +114,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           content: newPostText,
           type: imageUrls.length > 0 ? 'image' : 'text',
           images: imageUrls,
-          image: imageUrls[0] || null,
+          image: imageUrls[0] || null, // Backward compatibility
           createdAt: serverTimestamp(),
           likes: 0,
           retweets: 0,
@@ -134,7 +125,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
 
       setNewPostText("");
       removeImage();
-      setIsComposeOpen(false);
+      
       if(showToast) showToast('تم إرسال المنشور!', 'success');
 
     } catch (error) {
@@ -179,201 +170,124 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     setSelectedFile(null);
     setPreviewUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = '';
-    if (mobileFileInputRef.current) mobileFileInputRef.current.value = '';
   };
 
   return (
-    <div className="w-full min-h-screen bg-black text-[#e7e9ea] relative">
+    <div className="flex-1 min-h-screen bg-black text-[#e7e9ea] pb-20 md:pb-0 font-sans" dir="rtl">
+      
+      {/* Header & Tabs */}
+      <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-[#2f3336]">
+        <div className="pt-3 pb-2 px-4 md:hidden">
+          <h1 className="text-center text-lg font-bold text-white tracking-wide">
+            مراد سوشل <span className="text-[#1d9bf0]">|</span> Murad Social
+          </h1>
+        </div>
+        <div className="flex justify-around mt-2">
+          <button 
+            onClick={() => setActiveTab('foryou')}
+            className={`flex-1 text-center py-3 font-bold text-sm transition-all relative ${
+              activeTab === 'foryou' ? 'text-white' : 'text-[#71767b] hover:bg-white/5'
+            }`}
+          >
+            لك
+            {activeTab === 'foryou' && <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-14 h-1 bg-[#1d9bf0] rounded-full"></div>}
+          </button>
+          <button 
+            onClick={() => setActiveTab('following')}
+            className={`flex-1 text-center py-3 font-bold text-sm transition-all relative ${
+              activeTab === 'following' ? 'text-white' : 'text-[#71767b] hover:bg-white/5'
+            }`}
+          >
+            منشوراتي
+            {activeTab === 'following' && <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-[#1d9bf0] rounded-full"></div>}
+          </button>
+        </div>
+      </div>
+
+      {/* Stories Rail */}
+      <div className="border-b border-[#2f3336]">
+          <StoriesBar />
+      </div>
+
+      {/* Composer (Desktop) */}
+      <div className="hidden md:block border-b border-[#2f3336] p-4 bg-black">
+        <div className="flex gap-4">
+          <img 
+            src={user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
+            className="w-10 h-10 rounded-full object-cover" 
+            alt="me"
+          />
+          <div className="flex-1">
+            <textarea
+              className="w-full bg-transparent text-lg placeholder-[#71767b] text-[#e7e9ea] border-none focus:ring-0 resize-none min-h-[50px] outline-none"
+              placeholder="ماذا يحدث؟"
+              value={newPostText}
+              onChange={(e) => setNewPostText(e.target.value)}
+            />
+            {previewUrl && (
+              <div className="relative mt-2 mb-2">
+                <img src={previewUrl} className="rounded-xl w-auto max-h-[300px] object-cover border border-[#2f3336]" alt="preview" />
+                <button onClick={removeImage} className="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1 hover:bg-gray-800">
+                    <X className="w-4 h-4"/>
+                </button>
+              </div>
+            )}
+            <div className="flex justify-between items-center mt-2 border-t border-[#2f3336] pt-3">
+              <div className="flex gap-2 text-[#1d9bf0]">
+                <label className="cursor-pointer hover:bg-[#1d9bf0]/10 p-2 rounded-full transition">
+                  <input type="file" hidden accept="image/*" onChange={handleFileSelect} ref={fileInputRef} />
+                  <Image className="w-5 h-5" />
+                </label>
+                <div onClick={handleAIEnhance} className={`cursor-pointer hover:bg-[#1d9bf0]/10 p-2 rounded-full transition ${isEnhancing ? 'animate-pulse text-purple-500' : ''}`}>
+                    <Wand2 className="w-5 h-5" />
+                </div>
+                <div className="cursor-pointer hover:bg-[#1d9bf0]/10 p-2 rounded-full transition"><BarChart2 className="w-5 h-5" /></div>
+                <div className="cursor-pointer hover:bg-[#1d9bf0]/10 p-2 rounded-full transition"><Smile className="w-5 h-5" /></div>
+                <div className="cursor-pointer hover:bg-[#1d9bf0]/10 p-2 rounded-full transition opacity-50"><MapPin className="w-5 h-5" /></div>
+              </div>
+              <button 
+                onClick={handlePost}
+                disabled={(!newPostText.trim() && !selectedFile) || isUploading}
+                className="bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold py-1.5 px-5 rounded-full disabled:opacity-50 transition-all text-sm flex items-center gap-2"
+              >
+                {isUploading && <Loader2 className="w-4 h-4 animate-spin"/>}
+                نشر
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Feed Stream */}
+      <div className="w-full">
+        {loading ? (
+          <div className="p-8 text-center text-[#71767b] animate-pulse flex flex-col items-center">
+              <Loader2 className="w-8 h-8 animate-spin mb-4 text-[#1d9bf0]"/>
+              جاري الاتصال بالمجتمع...
+          </div>
+        ) : posts.length === 0 ? (
+             <div className="p-12 text-center text-[#71767b]">
+                 <div className="w-16 h-16 bg-[#16181c] rounded-full flex items-center justify-center mx-auto mb-4">
+                     <Feather className="w-8 h-8 text-gray-500"/>
+                 </div>
+                 <p className="font-bold mb-1">لا توجد منشورات</p>
+                 <p className="text-sm">كن أول من يشارك في هذا القسم!</p>
+             </div>
+        ) : (
+          posts.map((post) => (
+            <PostCard 
+                key={post.id} 
+                post={post} 
+                onOpenLightbox={onOpenLightbox}
+                onClick={() => onPostClick && onPostClick(post.id)}
+                onUserClick={onUserClick}
+            />
+          ))
+        )}
         
-        {/* Header Tabs */}
-        <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-[#2f3336]">
-            <div className="flex justify-around items-center h-[53px]">
-                <div 
-                    className={`flex-1 h-full flex items-center justify-center cursor-pointer hover:bg-[#181818] transition-colors relative ${activeTab === 'foryou' ? 'font-bold text-white' : 'font-medium text-[#71767b]'}`}
-                    onClick={() => setActiveTab('foryou')}
-                >
-                    لك
-                    {activeTab === 'foryou' && <div className="absolute bottom-0 w-14 h-1 bg-[#1d9bf0] rounded-full"></div>}
-                </div>
-                <div 
-                    className={`flex-1 h-full flex items-center justify-center cursor-pointer hover:bg-[#181818] transition-colors relative ${activeTab === 'following' ? 'font-bold text-white' : 'font-medium text-[#71767b]'}`}
-                    onClick={() => setActiveTab('following')}
-                >
-                    منشوراتي
-                    {activeTab === 'following' && <div className="absolute bottom-0 w-16 h-1 bg-[#1d9bf0] rounded-full"></div>}
-                </div>
-                <div 
-                    className="w-[53px] h-full flex items-center justify-center cursor-pointer hover:bg-[#181818] transition-colors text-[#71767b] hover:text-white"
-                    onClick={() => setIsFocusMode(!isFocusMode)}
-                    title="Focus Mode"
-                >
-                    {isFocusMode ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
-                </div>
-            </div>
-        </div>
-
-        <div className="w-full max-w-2xl mx-auto">
-            {/* Stories Section */}
-            {!isFocusMode && (
-                <div className="border-b border-[#2f3336]">
-                    <StoriesBar />
-                </div>
-            )}
-
-            {/* Desktop Composer */}
-            {user && !isFocusMode && (
-            <div className="hidden md:block px-4 py-3 border-b border-[#2f3336]">
-                <div className="flex gap-4">
-                    <img 
-                        src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
-                        className="w-10 h-10 rounded-full object-cover" 
-                        alt="User"
-                    />
-                    <div className="flex-1">
-                        <textarea 
-                            className="w-full bg-transparent text-lg text-[#e7e9ea] placeholder-[#71767b] outline-none resize-none min-h-[50px]"
-                            placeholder="ماذا يحدث؟"
-                            value={newPostText}
-                            onChange={(e) => setNewPostText(e.target.value)}
-                        />
-                        
-                        {previewUrl && (
-                            <div className="relative mt-2 mb-4">
-                                <img src={previewUrl} className="rounded-2xl max-h-80 w-auto object-cover border border-[#2f3336]" />
-                                <button onClick={removeImage} className="absolute top-2 left-2 bg-black/70 hover:bg-black/90 text-white p-1 rounded-full backdrop-blur-sm transition-all">
-                                    <X className="w-4 h-4"/>
-                                </button>
-                            </div>
-                        )}
-
-                        <div className="flex justify-between items-center mt-2 border-t border-[#2f3336] pt-3">
-                            <div className="flex gap-1 text-[#1d9bf0]">
-                                <div className="p-2 hover:bg-[#1d9bf0]/10 rounded-full cursor-pointer transition-colors relative">
-                                    <Image className="w-5 h-5"/>
-                                    <input type="file" ref={fileInputRef} onChange={handleFileSelect} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
-                                </div>
-                                <div 
-                                    className={`p-2 hover:bg-[#1d9bf0]/10 rounded-full cursor-pointer transition-colors ${isEnhancing ? 'animate-pulse text-purple-500' : ''}`}
-                                    onClick={handleAIEnhance}
-                                >
-                                    <Wand2 className="w-5 h-5"/>
-                                </div>
-                            </div>
-                            <button 
-                                onClick={handlePost}
-                                disabled={(!newPostText.trim() && !selectedFile) || isUploading}
-                                className="bg-[#1d9bf0] hover:opacity-90 text-white font-bold px-5 py-1.5 rounded-full text-sm disabled:opacity-50 transition-all flex items-center gap-2"
-                            >
-                                {isUploading && <Loader2 className="w-4 h-4 animate-spin"/>}
-                                نشر
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            )}
-
-            {/* Feed Content */}
-            <div className="min-h-screen pb-32">
-                {loading ? (
-                    <div className="flex justify-center p-8">
-                        <Loader2 className="w-8 h-8 text-[#1d9bf0] animate-spin" />
-                    </div>
-                ) : posts.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center p-12 text-[#71767b]">
-                        <div className="w-20 h-20 bg-[#16181c] rounded-full flex items-center justify-center mb-4">
-                            <Smile className="w-10 h-10 text-[#2f3336]" />
-                        </div>
-                        <p className="text-lg font-bold text-[#e7e9ea]">لا توجد منشورات حتى الآن</p>
-                        <p className="text-sm">كن أول من ينشر في مجتمع ميلاف!</p>
-                    </div>
-                ) : (
-                    posts.map((post) => (
-                        <PostCard 
-                            key={post.id} 
-                            post={post} 
-                            onOpenLightbox={onOpenLightbox} 
-                            onClick={() => onPostClick && onPostClick(post.id)}
-                            onUserClick={onUserClick}
-                            isFocusMode={isFocusMode}
-                        />
-                    ))
-                )}
-            </div>
-        </div>
-
-        {/* Mobile Floating Action Button */}
-        {!isComposeOpen && user && (
-            <button 
-                onClick={() => setIsComposeOpen(true)}
-                className="md:hidden fixed bottom-24 right-5 z-40 w-14 h-14 bg-[#1d9bf0] rounded-full shadow-lg shadow-blue-500/30 flex items-center justify-center text-white active:scale-95 transition-transform"
-            >
-                <Plus className="w-7 h-7" />
-            </button>
-        )}
-
-        {/* Mobile Compose Modal */}
-        {isComposeOpen && (
-            <div className="fixed inset-0 z-[6000] bg-black flex flex-col md:hidden animate-in slide-in-from-bottom duration-300">
-                <div className="flex justify-between items-center px-4 py-3 border-b border-[#2f3336]">
-                    <button onClick={() => setIsComposeOpen(false)} className="text-white text-base">إلغاء</button>
-                    <button 
-                        onClick={handlePost}
-                        disabled={(!newPostText.trim() && !selectedFile) || isUploading}
-                        className="bg-[#1d9bf0] text-white font-bold px-5 py-1.5 rounded-full text-sm disabled:opacity-50"
-                    >
-                        {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : 'نشر'}
-                    </button>
-                </div>
-
-                <div className="flex-1 p-4 flex flex-col">
-                    <div className="flex gap-3 mb-4">
-                        <img src={user?.avatar} className="w-10 h-10 rounded-full object-cover" />
-                        <div className="flex-1 pt-2">
-                             <textarea 
-                                className="w-full bg-transparent text-xl text-[#e7e9ea] placeholder-[#71767b] outline-none resize-none min-h-[150px]"
-                                placeholder="ماذا يحدث؟"
-                                value={newPostText}
-                                onChange={(e) => setNewPostText(e.target.value)}
-                                autoFocus
-                            />
-                        </div>
-                    </div>
-
-                    {previewUrl && (
-                        <div className="relative mb-4 rounded-xl overflow-hidden border border-[#2f3336] max-h-[300px]">
-                            <img src={previewUrl} className="w-full h-full object-cover" />
-                            <button 
-                                onClick={removeImage}
-                                className="absolute top-2 left-2 bg-black/60 p-1 rounded-full text-white"
-                            >
-                                <X className="w-5 h-5"/>
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                <div className="border-t border-[#2f3336] px-4 py-3 bg-black pb-safe">
-                     <div className="flex gap-6 text-[#1d9bf0]">
-                         <div className="relative">
-                            <Image className="w-6 h-6"/>
-                            <input 
-                                type="file" 
-                                ref={mobileFileInputRef}
-                                onChange={handleFileSelect} 
-                                className="absolute inset-0 opacity-0"
-                                accept="image/*"
-                            />
-                         </div>
-                         <div onClick={handleAIEnhance} className={`${isEnhancing ? 'animate-pulse' : ''}`}>
-                             <Wand2 className="w-6 h-6"/>
-                         </div>
-                         <BarChart2 className="w-6 h-6 opacity-50"/>
-                         <Smile className="w-6 h-6 opacity-50"/>
-                     </div>
-                </div>
-            </div>
-        )}
+        {/* Spacer */}
+        <div className="h-40"></div>
+      </div>
     </div>
   );
 };

@@ -3,19 +3,12 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Heart, MessageCircle, Share2, Music, UserPlus, Play, Pause } from 'lucide-react';
 import { reels, Reel } from '../../dummyData';
 
-export const ReelsFeed: React.FC = () => {
-    const [currentReelIndex, setCurrentReelIndex] = useState(0);
+interface ReelItemProps {
+    reel: Reel;
+    isActive: boolean;
+}
 
-    return (
-        <div className="h-full w-full bg-black overflow-y-scroll snap-y snap-mandatory scrollbar-hide relative rounded-xl">
-            {reels.map((reel, index) => (
-                <ReelItem key={reel.id} reel={reel} isActive={index === currentReelIndex} />
-            ))}
-        </div>
-    );
-};
-
-const ReelItem = ({ reel, isActive }: { reel: Reel, isActive: boolean }) => {
+const ReelItem: React.FC<ReelItemProps> = ({ reel, isActive }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [liked, setLiked] = useState(false);
@@ -109,6 +102,18 @@ const ReelItem = ({ reel, isActive }: { reel: Reel, isActive: boolean }) => {
 
             {/* Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/60 pointer-events-none"></div>
+        </div>
+    );
+};
+
+export const ReelsFeed: React.FC = () => {
+    const [currentReelIndex, setCurrentReelIndex] = useState(0);
+
+    return (
+        <div className="h-full w-full bg-black overflow-y-scroll snap-y snap-mandatory scrollbar-hide relative rounded-xl">
+            {reels.map((reel, index) => (
+                <ReelItem key={reel.id} reel={reel} isActive={index === currentReelIndex} />
+            ))}
         </div>
     );
 };

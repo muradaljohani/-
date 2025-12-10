@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { 
     MessageCircle, Repeat, Heart, Share2, MoreHorizontal, 
-    CheckCircle2, Crown, Pin, BarChart2, Bookmark, Trash2 
+    CheckCircle2, Crown, Pin, BarChart2, Bookmark, Trash2, X
 } from 'lucide-react';
 import { doc, updateDoc, increment, addDoc, collection, serverTimestamp, db, deleteDoc } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -23,18 +23,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     const [likeCount, setLikeCount] = useState(post.likes || 0);
     const [isAnimating, setIsAnimating] = useState(false);
     
-    // Retweet State
     const [retweeted, setRetweeted] = useState(false);
     const [retweetCount, setRetweetCount] = useState(post.retweets || 0);
 
-    // --- STRICT SECURITY LOGIC ---
-    // 1. Check Ownership
     const isOwner = user && post.user?.uid ? user.id === post.user.uid : false;
-    
-    // 2. Determine Permission (Owner OR Admin)
     const canDelete = isOwner || isAdmin;
 
-    // --- YOUTUBE LOGIC ---
     const getYouTubeId = (text: string) => {
         const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
         const match = text.match(regex);
@@ -43,7 +37,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
 
     const youtubeId = post.content ? getYouTubeId(post.content) : null;
     
-    // Clean content for display
     const displayContent = youtubeId && post.content
         ? post.content.replace(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11}).*/, '').trim()
         : post.content;
@@ -60,10 +53,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         audio.play().catch(() => {});
     };
 
-    // --- DELETE ACTION ---
     const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
-
         if (!canDelete) return;
 
         const confirmMessage = isAdmin && !isOwner 
@@ -73,7 +64,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         if (window.confirm(confirmMessage)) {
             try {
                 await deleteDoc(doc(db, 'posts', post.id));
-                // Toast notification should be handled by parent or context if available
             } catch (err) {
                 console.error("Error deleting post:", err);
                 alert("حدث خطأ أثناء محاولة الحذف.");
@@ -197,33 +187,45 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         });
     };
 
+    // --- IMPROVED IMAGE GRID LOGIC ---
     const renderImages = () => {
-        if (!post.images || post.images.length === 0) return null;
+        let images = post.images || [];
+        // Compatibility with legacy single image posts
+        if (!images.length && post.image) images = [post.image];
         
-        const count = post.images.length;
-        let gridClass = '';
+        if (images.length === 0) return null;
         
-        if (count === 1) gridClass = 'grid-cols-1';
-        else if (count === 2) gridClass = 'grid-cols-2';
-        else if (count === 3) gridClass = 'grid-cols-2'; // Needs specific cell styling
-        else gridClass = 'grid-cols-2';
+        const count = images.length;
+        let gridLayout = '';
+        
+        // Tailwind Grid Logic for X/Twitter style layout
+        if (count === 1) gridLayout = 'grid-cols-1 aspect-[16/9]';
+        else if (count === 2) gridLayout = 'grid-cols-2 aspect-[16/9]';
+        else if (count === 3) gridLayout = 'grid-cols-2 aspect-[16/9]';
+        else gridLayout = 'grid-cols-2 aspect-[16/9]';
 
         return (
-            <div className={`mt-3 rounded-2xl overflow-hidden border border-[#2f3336] grid gap-0.5 ${gridClass} aspect-[16/9] bg-[#16181c]`}>
-                {post.images.slice(0, 4).map((img: string, i: number) => {
-                     // Logic for 3 images: First one takes full height on left col
+            <div className={`mt-3 rounded-2xl overflow-hidden border border-[#2f3336] grid gap-0.5 ${gridLayout} bg-[#16181c]`}>
+                {images.slice(0, 4).map((img: string, i: number) => {
+                     // For 3 images: First image spans 2 rows on the left, other two stacked on right
                      const isThreeLayout = count === 3;
-                     const isFirstInThree = isThreeLayout && i === 0;
+                     const isFirstOfThree = isThreeLayout && i === 0;
                      
                      return (
                         <div 
                             key={i} 
-                            className={`relative bg-[#16181c] overflow-hidden cursor-pointer ${isFirstInThree ? 'row-span-2' : ''}`}
+                            className={`relative bg-[#16181c] overflow-hidden cursor-pointer ${isFirstOfThree ? 'row-span-2' : ''}`}
                             onClick={(e) => handleLightbox(e, img)}
                         >
-                            <img src={img} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" loading="lazy" />
+                            <img 
+                                src={img} 
+                                className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" 
+                                loading="lazy" 
+                                alt="Post content"
+                            />
+                            {/* Overlay for +N images */}
                             {count > 4 && i === 3 && (
-                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold text-xl">
+                                <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold text-xl backdrop-blur-sm">
                                     +{count - 4}
                                 </div>
                             )}
@@ -242,13 +244,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                         <Repeat className="w-3 h-3"/>
                         <span onClick={(e) => handleUserClick(e, post.user?.uid)} className="hover:underline cursor-pointer">{post.user?.name} أعاد النشر</span>
                     </div>
-                    
-                    {/* Security Check: Show delete ONLY if allowed */}
                     {canDelete && (
                         <button 
                             className="text-gray-500 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-500/10"
                             onClick={handleDelete}
-                            title="حذف المنشور"
                         >
                             <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -304,12 +303,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                     </div>
                     
                     <div className="flex items-center gap-2">
-                        {/* Security Check: Show delete ONLY if allowed */}
                         {canDelete && (
                             <button 
                                 className="p-1.5 -mr-1 rounded-full text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"
                                 onClick={handleDelete}
-                                title={isAdmin && !isOwner ? "حذف إداري" : "حذف المنشور"}
                             >
                                 <Trash2 className="w-4 h-4"/>
                             </button>
@@ -324,7 +321,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                     {highlightText(displayContent || '')}
                 </div>
 
-                {/* Smart YouTube Player */}
                 {youtubeId && (
                     <div className="mt-3 rounded-2xl overflow-hidden border border-[#2f3336] aspect-video w-full bg-black">
                         <iframe
@@ -340,7 +336,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                     </div>
                 )}
 
-                {/* Enhanced Image Grid */}
                 {renderImages()}
 
                 <div className="flex justify-between items-center mt-3 text-[#71767b] max-w-md">
