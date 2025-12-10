@@ -2,40 +2,44 @@
 export const formatRelativeTime = (timestamp: any): string => {
   if (!timestamp) return 'Just now';
 
-  // Return the string as-is if it's already a formatted string (e.g. from dummy data "2m")
-  if (typeof timestamp === 'string' && timestamp.length < 5) return timestamp;
+  // 1. Handle dummy data strings (e.g. "2m", "1h") - Prevent 'Invalid Date' crash
+  if (typeof timestamp === 'string') {
+      // If it's short (likely dummy relative time), just return it
+      if (timestamp.length < 6 && !timestamp.includes(':') && !timestamp.includes('-')) {
+         return timestamp;
+      }
+  }
 
   let date: Date;
-  
+
   try {
-    // Handle Firestore Timestamp
+    // 2. Handle Firestore Timestamp
     if (timestamp?.toDate && typeof timestamp.toDate === 'function') {
         date = timestamp.toDate();
+    } else if (timestamp instanceof Date) {
+        date = timestamp;
     } else {
-        // Handle JS Date or ISO string
+        // 3. Handle ISO string or other date strings
         date = new Date(timestamp);
+    }
+
+    // 4. Validate Date
+    if (isNaN(date.getTime())) {
+        // If parsing failed (e.g. invalid string), fallback
+        return typeof timestamp === 'string' ? timestamp : 'Just now';
     }
   } catch (e) {
     return 'Just now';
   }
 
-  // Safety Check for Invalid Date
-  if (isNaN(date.getTime())) {
-      // If original was a string, return it, otherwise default
-      return typeof timestamp === 'string' ? timestamp : 'Just now';
-  }
-
+  // 5. Calculate diff
   const now = new Date();
-  const diff = (now.getTime() - date.getTime()) / 1000; // difference in seconds
+  const diff = (now.getTime() - date.getTime()) / 1000; // seconds
 
-  if (diff < 60) {
-    return 'Just now';
-  } else if (diff < 3600) {
-    return `${Math.floor(diff / 60)}m`;
-  } else if (diff < 86400) {
-    return `${Math.floor(diff / 3600)}h`;
-  } else {
-    // Return formatted date (e.g., "Dec 10")
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
+  if (diff < 60) return 'Just now';
+  if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+  if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
+
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };

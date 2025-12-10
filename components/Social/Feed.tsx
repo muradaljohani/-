@@ -8,13 +8,13 @@ import {
   addDoc, 
   serverTimestamp, 
   auth,
-  db,
-  onAuthStateChanged
+  db
 } from '../../src/lib/firebase';
 import { PostCard } from './PostCard';
-import { Image, BarChart2, Smile, Calendar, Loader2, Wand2, Eye, EyeOff, X } from 'lucide-react';
+import { Image, BarChart2, Smile, Loader2, Wand2, Eye, EyeOff, X } from 'lucide-react';
 import { uploadImage } from '../../src/services/storageService';
 import { useAuth } from '../../context/AuthContext';
+import { SocialService } from '../../services/SocialService';
 
 interface FeedProps {
     onOpenLightbox?: (src: string) => void;
@@ -24,7 +24,7 @@ interface FeedProps {
 }
 
 export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostClick }) => {
-  const { user } = useAuth(); // Use Global Auth Context
+  const { user } = useAuth();
   const [posts, setPosts] = useState<any[]>([]);
   const [newPostText, setNewPostText] = useState("");
   const [loading, setLoading] = useState(true);
@@ -42,14 +42,18 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
 
-  // --- REAL-TIME FEED LISTENER ---
+  // --- INITIALIZATION & REAL-TIME FEED LISTENER ---
   useEffect(() => {
     if (!db) return;
 
+    // 1. Ensure Viral Content Exists
+    SocialService.checkAndSeed();
+
+    // 2. Setup Real-time Listener
     const q = query(
       collection(db, "posts"), 
-      orderBy("isPinned", "desc"),
-      orderBy("createdAt", "desc")
+      orderBy("isPinned", "desc"), // Pinned first
+      orderBy("createdAt", "desc") // Then newest
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -58,7 +62,8 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         return {
             id: doc.id,
             ...data,
-            timestamp: data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString('ar-SA') : 'الآن'
+            // Convert timestamp dynamically for display
+            timestamp: SocialService.formatDate(data.createdAt)
         };
       });
       setPosts(fetchedPosts);
@@ -74,17 +79,17 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   // --- AI WRITING ASSISTANT ---
   const handleAIEnhance = () => {
     if (!newPostText.trim()) {
-      alert("Write something first!");
+      if(showToast) showToast("اكتب شيئاً أولاً ليتم تحسينه", 'error');
       return;
     }
     setIsEnhancing(true);
     setTimeout(() => {
       let enhancedText = newPostText;
       const lower = enhancedText.toLowerCase();
-      if (lower.includes('code') || lower.includes('dev')) {
-        enhancedText += "\n\n#Tech #Coding #Developer";
+      if (lower.includes('code') || lower.includes('dev') || lower.includes('برمجة')) {
+        enhancedText += "\n\n#Tech #Coding #برمجة";
       } else {
-         enhancedText += "\n\n#Community #MuradSocial";
+         enhancedText += "\n\n#مجتمع_ميلاف #السعودية";
       }
       enhancedText += " ✨";
       setNewPostText(enhancedText);
@@ -97,7 +102,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       
-      // Validate Image
       if (!file.type.startsWith('image/')) {
         if (showToast) showToast('يرجى اختيار ملف صورة صحيح', 'error');
         return;
@@ -118,8 +122,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   // --- POST SUBMISSION ---
   const handlePost = async () => {
     if ((!newPostText.trim() && !selectedFile) || !user) return;
-    if (!db) return;
-
+    
     try {
       setIsUploading(true);
       let imageUrls: string[] = [];
@@ -131,9 +134,14 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
          imageUrls.push(url);
       }
 
-      // 2. Save Post Data
+      // 2. Save Post Data via Service (Centralized logic)
       const postData = {
         content: newPostText,
+        type: imageUrls.length > 0 ? 'image' : 'text',
+        images: imageUrls,
+        // User data construction is handled in SocialService.createPost, 
+        // but since we have image logic here, we'll construct the object and save directly
+        // to maintain the specific image array structure.
         user: {
             name: user.name,
             handle: user.username ? `@${user.username}` : `@${user.id.slice(0,8)}`,
@@ -147,9 +155,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         retweets: 0,
         replies: 0,
         views: '0',
-        isPinned: false,
-        type: imageUrls.length > 0 ? 'image' : 'text',
-        images: imageUrls
+        isPinned: false
       };
 
       await addDoc(collection(db, "posts"), postData);
@@ -171,7 +177,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   // --- FILTER LOGIC ---
   const displayedPosts = activeTab === 'foryou' 
     ? posts 
-    : posts.filter(p => user?.following?.includes(p.user.uid));
+    : posts.filter(p => user?.following?.includes(p.user.uid) || p.user.uid === user?.id);
 
   return (
     <div className="flex-1 min-h-screen pb-20 md:pb-0 bg-[var(--bg-primary)]">
@@ -184,7 +190,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           <h1 className="text-xl font-extrabold text-[var(--text-primary)] font-arabic tracking-wide hidden md:block">
             الرئيسية
           </h1>
-          <div className="md:hidden font-black text-lg">M</div>
+          <div className="md:hidden font-black text-lg text-[var(--text-primary)]">M</div>
           
           <button 
             onClick={() => setIsFocusMode(!isFocusMode)}
@@ -206,14 +212,14 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                 className={`flex-1 py-3 text-sm font-bold transition-colors hover:bg-[var(--bg-secondary)] ${activeTab === 'foryou' ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}
             >
                 لك (For You)
-                {activeTab === 'foryou' && <div className="absolute bottom-0 left-[0%] w-1/2 h-1 bg-[var(--accent-color)] rounded-full transition-all duration-300"></div>}
+                {activeTab === 'foryou' && <div className="absolute bottom-0 left-[25%] w-1/2 h-1 bg-[var(--accent-color)] rounded-full transition-all duration-300 transform -translate-x-1/2 left-1/2"></div>}
             </button>
             <button 
                 onClick={() => setActiveTab('following')}
                 className={`flex-1 py-3 text-sm font-bold transition-colors hover:bg-[var(--bg-secondary)] ${activeTab === 'following' ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}
             >
                 متابعة (Following)
-                {activeTab === 'following' && <div className="absolute bottom-0 left-[50%] w-1/2 h-1 bg-[var(--accent-color)] rounded-full transition-all duration-300"></div>}
+                {activeTab === 'following' && <div className="absolute bottom-0 left-[25%] w-1/2 h-1 bg-[var(--accent-color)] rounded-full transition-all duration-300 transform -translate-x-1/2 left-1/2"></div>}
             </button>
         </div>
       </div>
@@ -317,7 +323,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         ) : displayedPosts.length === 0 ? (
             <div className="py-20 text-center text-[var(--text-secondary)]">
                 {activeTab === 'following' 
-                    ? 'أنت لا تتابع أحداً بعد. استكشف المنصة وتابع المبدعين!' 
+                    ? 'أنت لا تتابع أحداً بعد أو لم ينشروا شيئاً.' 
                     : 'لا توجد منشورات حالياً.'}
             </div>
         ) : (

@@ -2,45 +2,27 @@
 import { db } from '../firebaseConfig';
 import { 
     collection, 
-    addDoc, 
     getDocs, 
     query, 
     orderBy, 
-    serverTimestamp
+    serverTimestamp,
+    doc,
+    setDoc,
+    getDoc,
+    addDoc
 } from 'firebase/firestore'; 
-import { SocialPost, SocialUser } from '../dummyData';
+import { SocialPost } from '../dummyData';
 
 export const SocialService = {
-    // Fetch posts from Firestore
-    async getPosts(): Promise<SocialPost[]> {
-        try {
-            const postsRef = collection(db, 'social_posts');
-            const q = query(postsRef, orderBy('isPinned', 'desc'), orderBy('createdAt', 'desc')); // Order by Pinned first
-            const snapshot = await getDocs(q);
-            
-            return snapshot.docs.map((doc: any) => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    ...data,
-                    // Convert Firestore Timestamp to string for UI
-                    timestamp: data.createdAt ? this.formatDate(data.createdAt) : 'Just now'
-                } as SocialPost;
-            });
-        } catch (error) {
-            console.error("Error fetching posts:", error);
-            return [];
-        }
-    },
-
-    // Check if DB is empty and AUTOMATICALLY seed the specific Murad posts
+    // Check if specific viral posts exist, if not, create them
     async checkAndSeed(): Promise<void> {
         try {
-            const postsRef = collection(db, 'social_posts');
-            const snapshot = await getDocs(postsRef);
+            // Check for the main viral post by ID to avoid duplicates
+            const viralDocRef = doc(db, 'posts', 'viral-welcome-post');
+            const viralDocSnap = await getDoc(viralDocRef);
             
-            if (snapshot.empty) {
-                console.log("Database empty. Executing Auto-Seed...");
+            if (!viralDocSnap.exists()) {
+                console.log("Seeding Viral Content...");
                 await this.forceSeed(); 
             }
         } catch (error) {
@@ -48,10 +30,8 @@ export const SocialService = {
         }
     },
 
-    // Manual Force Seed - THE REPAIR FUNCTION
+    // Manual Force Seed - Creates the specific Murad posts
     async forceSeed(): Promise<void> {
-        console.log("STARTING FORCE SEED...");
-        const postsRef = collection(db, 'social_posts');
         
         const MURAD_USER = {
             name: "Murad Aljohani",
@@ -59,11 +39,26 @@ export const SocialService = {
             avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
             verified: true,
             isGold: true,
+            uid: "admin-murad-id", // Fixed ID for the owner
             bio: "Founder of Murad Group | Tech Enthusiast 🇸🇦"
         };
 
-        // Post 2: The Archive (Normal Post)
-        await addDoc(postsRef, {
+        // Post 1: The Viral Welcome (Pinned) - ID: viral-welcome-post
+        await setDoc(doc(db, 'posts', 'viral-welcome-post'), {
+            user: MURAD_USER,
+            type: 'image',
+            content: 'هل تعلم أن يوتيوب بدأ بمقطع فيديو مدته 18 ثانية فقط لشخص يتحدث عن "الفيلة" في حديقة الحيوان؟ والآن يشاهده المليارات يومياً! 🌍\n\nاليوم نضع حجر الأساس لـ "مجتمع ميلاف".. قد تبدو بداية بسيطة، ولكن تذكروا هذا المنشور جيداً.. لأننا قادمون لنغير قواعد اللعبة. 🚀🔥\n\n#البداية #ميلاف #المستقبل',
+            images: ["https://i.ibb.co/QjNHDv3F/images-4.jpg"],
+            createdAt: serverTimestamp(),
+            likes: 50000,
+            retweets: 5000000,
+            replies: 12500,
+            views: '15M',
+            isPinned: true
+        }, { merge: true });
+
+        // Post 2: The Archive (Normal Post) - ID: archive-memory-post
+        await setDoc(doc(db, 'posts', 'archive-memory-post'), {
             user: MURAD_USER,
             type: 'image',
             content: 'من الأرشيف.. الطموح لا يشيخ. 🦅\nكنت أعلم منذ تلك اللحظة أننا سنصل إلى هنا يوماً ما.\n\n#ذكريات #اصرار',
@@ -73,30 +68,16 @@ export const SocialService = {
             retweets: 2000000,
             replies: 8000,
             views: '10M',
-            isPinned: false
-        });
-
-        // Post 1: The Viral Welcome (Pinned)
-        await addDoc(postsRef, {
-            user: MURAD_USER,
-            type: 'image',
-            content: 'هل تعلم أن يوتيوب بدأ بمقطع فيديو مدته 18 ثانية فقط لشخص يتحدث عن "الفيلة" في حديقة الحيوان؟ والآن يشاهده المليارات يومياً! 🌍\n\nاليوم نضع حجر الأساس لـ "مجتمع ميلاف".. قد تبدو بداية بسيطة، ولكن تذكروا هذا المنشور جيداً.. لأننا قادمون لنغير قواعد اللعبة. 🚀🔥\n\n#البداية #ميلاف #المستقبل',
-            images: ["https://i.ibb.co/QjNHDv3F/images-4.jpg"],
-            createdAt: serverTimestamp(), // Now
-            likes: 50000,
-            retweets: 5000000,
-            replies: 12000,
-            views: '15M',
-            isPinned: true
-        });
+            isPinned: false // Pinned under the main one visually via sort
+        }, { merge: true });
         
-        console.log("Force Seed Complete.");
+        console.log("Viral Content Seeded Successfully.");
     },
 
     // Create a new post
     async createPost(user: any, content: string, type: string = 'text'): Promise<boolean> {
         try {
-            const postsRef = collection(db, 'social_posts');
+            const postsRef = collection(db, 'posts');
             
             // Construct dynamic user data from Auth Context User
             const userData = {
@@ -104,9 +85,8 @@ export const SocialService = {
                 handle: user.username ? `@${user.username}` : (user.email ? `@${user.email.split('@')[0]}` : `@${user.id.substr(0,8)}`),
                 avatar: user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User",
                 verified: user.isIdentityVerified || false,
-                isGold: user.isGold || false,
-                isPremium: user.isPremium || false,
-                bio: user.bio || ""
+                isGold: user.primeSubscription?.status === 'active',
+                uid: user.id
             };
 
             await addDoc(postsRef, {
@@ -135,11 +115,11 @@ export const SocialService = {
         const now = new Date();
         const diff = (now.getTime() - date.getTime()) / 1000; // seconds
 
-        if (diff < 60) return 'Just now';
-        if (diff < 3600) return `${Math.floor(diff / 60)}m`;
-        if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
-        if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
+        if (diff < 60) return 'الآن';
+        if (diff < 3600) return `منذ ${Math.floor(diff / 60)} دقيقة`;
+        if (diff < 86400) return `منذ ${Math.floor(diff / 3600)} ساعة`;
+        if (diff < 604800) return `منذ ${Math.floor(diff / 86400)} يوم`;
         
-        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        return date.toLocaleDateString('ar-SA', { month: 'short', day: 'numeric' });
     }
 };
