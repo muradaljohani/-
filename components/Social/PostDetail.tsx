@@ -2,17 +2,19 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowRight, MoreHorizontal, MessageCircle, Repeat, Heart, Share2, 
-  Image as ImageIcon, BarChart2, MapPin, X, Calendar, Gift
+  Image as ImageIcon, BarChart2, MapPin, X, Calendar, Gift, Trash2
 } from 'lucide-react';
 import { doc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { formatRelativeTime } from '../../utils';
 
 interface Props {
     postId: string;
     onBack: () => void;
+    onUserClick?: (userId: string) => void;
 }
 
-export const PostDetail: React.FC<Props> = ({ postId, onBack }) => {
+export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => {
     const { user } = useAuth();
     const [post, setPost] = useState<any>(null);
     const [replies, setReplies] = useState<any[]>([]);
@@ -62,7 +64,8 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack }) => {
                 user: {
                     name: user.name,
                     handle: user.username ? `@${user.username}` : `@${user.id.slice(0,5)}`,
-                    avatar: user.avatar
+                    avatar: user.avatar,
+                    uid: user.id
                 },
                 timestamp: serverTimestamp(),
                 likes: 0
@@ -95,10 +98,16 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack }) => {
                         <img 
                             src={post.user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
                             alt={post.user?.name} 
-                            className="w-10 h-10 rounded-full object-cover border border-[#2f3336]"
+                            className="w-10 h-10 rounded-full object-cover border border-[#2f3336] cursor-pointer hover:opacity-80"
+                            onClick={() => onUserClick && post.user?.uid && onUserClick(post.user.uid)}
                         />
                         <div className="flex flex-col leading-tight">
-                            <span className="font-bold text-[15px] text-[#e7e9ea]">{post.user?.name}</span>
+                            <span 
+                                className="font-bold text-[15px] text-[#e7e9ea] cursor-pointer hover:underline"
+                                onClick={() => onUserClick && post.user?.uid && onUserClick(post.user.uid)}
+                            >
+                                {post.user?.name}
+                            </span>
                             <span className="text-[#71767b] text-[14px] dir-ltr text-right">{post.user?.handle}</span>
                         </div>
                     </div>
@@ -161,12 +170,21 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack }) => {
             <div>
                 {replies.map((reply) => (
                     <div key={reply.id} className="flex gap-3 p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors">
-                        <img src={reply.user.avatar} className="w-10 h-10 rounded-full object-cover border border-[#2f3336]" />
+                        <img 
+                            src={reply.user.avatar} 
+                            className="w-10 h-10 rounded-full object-cover border border-[#2f3336] cursor-pointer hover:opacity-80" 
+                            onClick={() => onUserClick && reply.user.uid && onUserClick(reply.user.uid)}
+                        />
                         <div className="flex-1">
                             <div className="flex items-center gap-2 text-[15px] mb-0.5">
-                                <span className="font-bold text-[#e7e9ea]">{reply.user.name}</span>
+                                <span 
+                                    className="font-bold text-[#e7e9ea] cursor-pointer hover:underline"
+                                    onClick={() => onUserClick && reply.user.uid && onUserClick(reply.user.uid)}
+                                >
+                                    {reply.user.name}
+                                </span>
                                 <span className="text-[#71767b] dir-ltr text-sm">{reply.user.handle}</span>
-                                <span className="text-[#71767b] text-sm">· {new Date(reply.timestamp?.toDate ? reply.timestamp.toDate() : Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                <span className="text-[#71767b] text-sm">· {formatRelativeTime(reply.timestamp)}</span>
                             </div>
                             <div className="text-[#e7e9ea] text-[15px] leading-relaxed">
                                 {reply.text}

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Camera, Save, Loader2, Link as LinkIcon, MapPin } from 'lucide-react';
+import { X, Camera, Save, Loader2, Link as LinkIcon, MapPin, Youtube } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { uploadImage } from '../../src/services/storageService';
 
@@ -19,6 +19,7 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
     bio: '',
     location: '',
     website: '',
+    youtube: '',
     photoURL: '',
     bannerURL: ''
   });
@@ -35,6 +36,7 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
         bio: user.bio || '',
         location: user.address || '',
         website: user.customFormFields?.website || '',
+        youtube: user.customFormFields?.youtube || '',
         photoURL: user.avatar || '',
         bannerURL: user.coverImage || ''
       });
@@ -56,7 +58,8 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
         coverImage: formData.bannerURL,
         customFormFields: {
             ...user.customFormFields,
-            website: formData.website
+            website: formData.website,
+            youtube: formData.youtube
         }
       });
       onClose();
@@ -194,6 +197,20 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
                     placeholder="https://example.com"
                 />
                 <LinkIcon className="absolute left-3 top-3.5 w-5 h-5 text-slate-500"/>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-slate-500 text-xs font-bold px-1">قناة يوتيوب</label>
+              <div className="relative">
+                <input 
+                    type="text" 
+                    value={formData.youtube} 
+                    onChange={e => setFormData({...formData, youtube: e.target.value})}
+                    className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-white focus:border-red-500 focus:outline-none transition-colors font-mono text-sm dir-ltr"
+                    placeholder="https://youtube.com/@channel"
+                />
+                <Youtube className="absolute left-3 top-3.5 w-5 h-5 text-red-500 opacity-70"/>
               </div>
             </div>
 

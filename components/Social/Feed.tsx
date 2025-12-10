@@ -21,9 +21,10 @@ interface FeedProps {
     showToast?: (msg: string, type: 'success'|'error') => void;
     onBack?: () => void;
     onPostClick?: (postId: string) => void;
+    onUserClick?: (userId: string) => void; // New Prop
 }
 
-export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostClick }) => {
+export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostClick, onUserClick }) => {
   const { user } = useAuth();
   const [posts, setPosts] = useState<any[]>([]);
   const [newPostText, setNewPostText] = useState("");
@@ -31,23 +32,20 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   
   const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou');
   
-  // Post Creation State
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [isComposeOpen, setIsComposeOpen] = useState(false); // Controls Mobile Modal
+  const [isComposeOpen, setIsComposeOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mobileFileInputRef = useRef<HTMLInputElement>(null);
   
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [isFocusMode, setIsFocusMode] = useState(false);
 
-  // --- 1. Real-Time Feed Listener ---
   useEffect(() => {
     if (!db) return;
 
     const initFeed = async () => {
-        // Ensure viral posts are seeded (Admin/System level)
         await SocialService.checkAndSeed();
 
         let q;
@@ -59,9 +57,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             );
         } else {
             if (user) {
-                // Simple "Following" simulation: For now, show own posts + posts where user is tagged (mock logic)
-                // In a real app, you'd filter by 'following' array. 
-                // For this demo, we'll show User's own posts in this tab.
                 q = query(
                   collection(db, "posts"),
                   where("user.uid", "==", user.id),
@@ -80,7 +75,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             return {
                 id: doc.id,
                 ...data,
-                // Ensure timestamp doesn't break if null (latency)
                 timestamp: data.createdAt ? SocialService.formatDate(data.createdAt) : 'Just now'
             };
           });
@@ -99,7 +93,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
 
   }, [activeTab, user]);
 
-  // --- 2. Post Logic ---
   const handlePost = async () => {
     if ((!newPostText.trim() && !selectedFile) || !user) return;
     
@@ -107,7 +100,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
       setIsUploading(true);
       let imageUrls: string[] = [];
 
-      // 1. Upload Image if exists
       if (selectedFile) {
          const path = `posts/${user.id}/${Date.now()}_${selectedFile.name}`;
          const url = await uploadImage(selectedFile, path);
@@ -116,7 +108,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
 
       const postsRef = collection(db, 'posts');
       
-      // 2. Prepare User Data (Snapshot for the post)
       const userData = {
           name: user.name,
           handle: user.username ? `@${user.username}` : `@${user.id.substr(0,8)}`,
@@ -126,7 +117,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           uid: user.id
       };
 
-      // 3. Save to Firestore
       await addDoc(postsRef, {
           user: userData,
           content: newPostText,
@@ -141,10 +131,9 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           isPinned: false
       });
 
-      // 4. Cleanup
       setNewPostText("");
       removeImage();
-      setIsComposeOpen(false); // Close mobile modal
+      setIsComposeOpen(false);
       if(showToast) showToast('تم إرسال المنشور!', 'success');
 
     } catch (error) {
@@ -155,7 +144,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     }
   };
 
-  // --- Helpers ---
   const handleAIEnhance = () => {
     if (!newPostText.trim()) return;
     setIsEnhancing(true);
@@ -196,7 +184,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   return (
     <div className="w-full min-h-screen bg-black text-[#e7e9ea] relative">
         
-        {/* --- HEADER --- */}
         <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-[#2f3336]">
             <div className="flex justify-around items-center h-[53px]">
                 <div 
@@ -223,7 +210,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             </div>
         </div>
 
-        {/* --- DESKTOP COMPOSE AREA (Hidden on Mobile) --- */}
         {user && !isFocusMode && (
         <div className="hidden md:block px-4 py-3 border-b border-[#2f3336] max-w-2xl mx-auto">
             <div className="flex gap-4">
@@ -276,7 +262,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         </div>
         )}
 
-        {/* --- POSTS FEED --- */}
         <div className="min-h-screen pb-32 w-full max-w-2xl mx-auto">
             {loading ? (
                 <div className="flex justify-center p-8">
@@ -297,13 +282,13 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                         post={post} 
                         onOpenLightbox={onOpenLightbox} 
                         onClick={() => onPostClick && onPostClick(post.id)}
+                        onUserClick={onUserClick}
                         isFocusMode={isFocusMode}
                     />
                 ))
             )}
         </div>
 
-        {/* --- MOBILE FAB (Floating Compose Button) --- */}
         {!isComposeOpen && user && (
             <button 
                 onClick={() => setIsComposeOpen(true)}
@@ -313,11 +298,8 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             </button>
         )}
 
-        {/* --- MOBILE COMPOSE MODAL --- */}
         {isComposeOpen && (
             <div className="fixed inset-0 z-[6000] bg-black flex flex-col md:hidden animate-in slide-in-from-bottom duration-300">
-                
-                {/* Modal Header */}
                 <div className="flex justify-between items-center px-4 py-3 border-b border-[#2f3336]">
                     <button onClick={() => setIsComposeOpen(false)} className="text-white text-base">إلغاء</button>
                     <button 
@@ -329,7 +311,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                     </button>
                 </div>
 
-                {/* Modal Body */}
                 <div className="flex-1 p-4 flex flex-col">
                     <div className="flex gap-3 mb-4">
                         <img src={user?.avatar} className="w-10 h-10 rounded-full object-cover" />
@@ -344,7 +325,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                         </div>
                     </div>
 
-                    {/* Image Preview */}
                     {previewUrl && (
                         <div className="relative mb-4 rounded-xl overflow-hidden border border-[#2f3336] max-h-[300px]">
                             <img src={previewUrl} className="w-full h-full object-cover" />
@@ -358,7 +338,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                     )}
                 </div>
 
-                {/* Modal Toolbar (Above Keyboard) */}
                 <div className="border-t border-[#2f3336] px-4 py-3 bg-black pb-safe">
                      <div className="flex gap-6 text-[#1d9bf0]">
                          <div className="relative">

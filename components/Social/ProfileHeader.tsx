@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { MapPin, Link as LinkIcon, Calendar, CheckCircle2 } from 'lucide-react';
+import { MapPin, Link as LinkIcon, Calendar, CheckCircle2, Youtube } from 'lucide-react';
 import { User } from '../../types';
 import { EditProfileModal } from './EditProfileModal';
 
@@ -13,6 +13,7 @@ export const ProfileHeader: React.FC<Props> = ({ user, isOwnProfile }) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   const website = user.customFormFields?.website || user.businessProfile?.website;
+  const youtube = user.customFormFields?.youtube;
   const joinDate = user.joinDate ? new Date(user.joinDate).toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' }) : 'يناير 2025';
 
   return (
@@ -81,6 +82,14 @@ export const ProfileHeader: React.FC<Props> = ({ user, isOwnProfile }) => {
                 <LinkIcon className="w-4 h-4" />
                 <a href={website} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline truncate max-w-[200px]">
                   {website.replace(/^https?:\/\//, '')}
+                </a>
+              </div>
+            )}
+            {youtube && (
+              <div className="flex items-center gap-1">
+                <Youtube className="w-4 h-4 text-red-600" />
+                <a href={youtube} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline truncate max-w-[200px]">
+                  YouTube
                 </a>
               </div>
             )}

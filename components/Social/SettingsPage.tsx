@@ -6,16 +6,13 @@ import {
 } from 'lucide-react';
 
 interface Props {
-  isOpen: boolean;
-  onClose: () => void;
+  onBack: () => void;
 }
 
 type SettingsView = 'main' | 'terms' | 'privacy_policy';
 
-export const SettingsPage: React.FC<Props> = ({ isOpen, onClose }) => {
+export const SettingsPage: React.FC<Props> = ({ onBack }) => {
   const [currentView, setCurrentView] = useState<SettingsView>('main');
-
-  if (!isOpen) return null;
 
   // --- SUB-COMPONENT: SETTINGS ITEM ---
   const SettingsItem = ({ icon: Icon, title, desc, onClick }: any) => (
@@ -81,7 +78,7 @@ export const SettingsPage: React.FC<Props> = ({ isOpen, onClose }) => {
       {/* Header */}
       <div className="flex flex-col px-4 pt-2 pb-2 sticky top-0 bg-black z-10">
         <div className="flex items-center gap-4 h-12">
-          <button onClick={onClose} className="p-2 -mr-2 rounded-full hover:bg-[#18191c]">
+          <button onClick={onBack} className="p-2 -mr-2 rounded-full hover:bg-[#18191c]">
             <ArrowRight className="w-5 h-5 text-[#e7e9ea]" />
           </button>
           <h2 className="text-xl font-bold text-[#e7e9ea]">الإعدادات</h2>
