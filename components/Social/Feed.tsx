@@ -21,35 +21,33 @@ interface FeedProps {
     onOpenLightbox?: (src: string) => void;
     showToast?: (msg: string, type: 'success'|'error') => void;
     onBack?: () => void;
+    onPostClick?: (postId: string) => void;
 }
 
-export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
+export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostClick }) => {
   const [posts, setPosts] = useState<any[]>([]);
   const [newPostText, setNewPostText] = useState("");
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
 
-  // 1. Listen to Auth State
   useEffect(() => {
-    // Correct modular usage
+    if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, (user: any) => {
       setCurrentUser(user);
     });
     return () => unsubscribe();
   }, []);
 
-  // 2. SELF-HEALING SEEDING LOGIC (Persistence Fix)
   useEffect(() => {
     const seedDatabase = async () => {
+      if (!db) return;
+
       try {
         const userUid = currentUser?.uid || "admin-murad-id";
         
-        // --- Viral Post 1: YouTube Story (PINNED) ---
         const viralPostRef = doc(db, "posts", "viral-youtube-story");
-        
         await setDoc(viralPostRef, {
             content: 'هل تعلم أن يوتيوب بدأ بمقطع فيديو مدته 18 ثانية فقط لشخص يتحدث عن "الفيلة" في حديقة الحيوان؟ والآن يشاهده المليارات يومياً! 🌍\n\nاليوم نضع حجر الأساس لـ "مجتمع ميلاف".. قد تبدو بداية بسيطة، ولكن تذكروا هذا المنشور جيداً.. لأننا قادمون لنغير قواعد اللعبة. 🚀🔥\n\n#البداية #ميلاف #المستقبل',
-            // Data Structure Adaptation for PostCard compatibility
             images: ['https://i.ibb.co/QjNHDv3F/images-4.jpg'],
             user: { 
                 name: "Murad Aljohani", 
@@ -68,9 +66,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
             createdAt: serverTimestamp()
         }, { merge: true });
 
-        // --- Viral Post 2: Archive Memory (Fixed ID) ---
         const archivePostRef = doc(db, "posts", "viral-archive-memory");
-        
         await setDoc(archivePostRef, {
             content: 'من الأرشيف.. الطموح لا يشيخ. 🦅\nكنت أعلم منذ تلك اللحظة أننا سنصل إلى هنا يوماً ما.\n\n#ذكريات #اصرار',
             images: ['https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg'],
@@ -95,13 +91,12 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
         console.error("Error seeding posts:", error);
       }
     };
-
-    // Run seed whenever user logs in or component mounts
     seedDatabase();
   }, [currentUser]);
 
-  // 3. FETCH & DISPLAY LOGIC
   useEffect(() => {
+    if (!db) return;
+
     const q = query(
       collection(db, "posts"), 
       orderBy("isPinned", "desc"),
@@ -114,23 +109,22 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
         return {
             id: doc.id,
             ...data,
-            // Safe timestamp conversion
             timestamp: data.createdAt?.toDate ? data.createdAt.toDate().toLocaleDateString('ar-SA') : 'الآن'
         };
       });
       setPosts(fetchedPosts);
       setLoading(false);
     }, (error) => {
-        console.error("Feed snapshot error:", error);
-        setLoading(false);
+      console.error("Feed snapshot error:", error);
+      setLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
-  // 4. HANDLE NEW USER POSTS
   const handlePost = async () => {
     if (!newPostText.trim()) return;
+    if (!db) return;
 
     try {
       const postUser = {
@@ -158,21 +152,19 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
       setNewPostText("");
       if(showToast) showToast('تم النشر', 'success');
     } catch (error: any) {
+      console.error("Error posting:", error);
       if(showToast) showToast('فشل النشر: ' + error.message, 'error');
     }
   };
 
   return (
     <div className="flex-1 min-h-screen pb-20 md:pb-0 bg-[var(--bg-primary)]">
-      
-      {/* 0. HEADER BRANDING (Text Only) */}
       <div className="sticky top-0 z-50 bg-[var(--bg-primary)]/90 backdrop-blur-md border-b border-[var(--border-color)] py-4 mb-2">
         <h1 className="text-center text-xl font-extrabold text-[var(--text-primary)] font-arabic tracking-wide">
           مراد سوشل ميديا <span className="text-[var(--accent-color)] mx-2">|</span> Murad Social
         </h1>
       </div>
 
-      {/* 1. COMPOSE AREA */}
       <div className="border-b border-[var(--border-color)] p-4 bg-[var(--bg-primary)]">
         <div className="flex gap-4">
           <img 
@@ -183,7 +175,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
           <div className="flex-1">
             <textarea
               className="w-full bg-transparent text-lg placeholder-[var(--text-secondary)] text-[var(--text-primary)] border-none focus:ring-0 resize-none h-12"
-              placeholder="What is happening?!"
+              placeholder="ماذا يحدث ؟ اخبارك ؟ افكارك ؟ مجتمع ميلاف سعداء بك"
               value={newPostText}
               onChange={(e) => setNewPostText(e.target.value)}
             />
@@ -206,7 +198,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
         </div>
       </div>
 
-      {/* 2. FEED LIST */}
       <div className="divide-y divide-[var(--border-color)]">
         {loading ? (
           <div className="py-20 flex justify-center">
@@ -219,6 +210,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast }) => {
                 post={post} 
                 onOpenLightbox={onOpenLightbox || (() => {})} 
                 onShare={() => {}} 
+                onClick={() => onPostClick?.(post.id)}
             />
           ))
         )}

@@ -1,37 +1,67 @@
 
 import React, { useState } from 'react';
 import { 
-    Home, Search, Bell, Mail, User, Plus, X, Image as ImageIcon, Video, 
-    MoreHorizontal, ArrowLeft, Moon, Sun, Monitor
+    Home, Search, Bell, Mail, User, Plus, Image as ImageIcon, Video, 
+    MoreHorizontal, ArrowLeft, Moon, Sun, Monitor, X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../App';
+import { useTheme } from '../../context/ThemeContext';
 import { Feed } from './Feed';
 import { ReelsFeed } from './ReelsFeed';
 import { SocialAdmin } from './SocialAdmin';
 import { InstallPrompt } from '../Mobile/InstallPrompt';
 import { SocialService } from '../../services/SocialService';
 import { ProfileHeader } from './ProfileHeader';
+import { MobileSidebar } from './MobileSidebar';
+import { PostDetail } from './PostDetail';
+import { ChatWindow } from './ChatWindow';
 
 interface Props {
     onBack: () => void;
 }
 
-export type ViewState = 'feed' | 'reels' | 'admin' | 'messages' | 'profile';
+export type ViewState = 'feed' | 'reels' | 'admin' | 'messages' | 'profile' | 'post-detail' | 'chat';
 
 export const SocialLayout: React.FC<Props> = ({ onBack }) => {
     const { user } = useAuth();
     const { theme, cycleTheme } = useTheme();
     const [view, setView] = useState<ViewState>('feed');
+    
+    // Navigation Params
+    const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+    const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
+
     const [isComposeOpen, setIsComposeOpen] = useState(false);
     const [composeText, setComposeText] = useState('');
     const [toastMsg, setToastMsg] = useState<{msg: string, type: 'success'|'error'} | null>(null);
     const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     // Global Toast Handler
     const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
         setToastMsg({ msg, type });
         setTimeout(() => setToastMsg(null), 3000);
+    };
+
+    // --- NAVIGATION HANDLERS ---
+    const handlePostClick = (postId: string) => {
+        setSelectedPostId(postId);
+        setView('post-detail');
+    };
+
+    const handleChatClick = (chatId: string) => {
+        setSelectedChatId(chatId);
+        setView('chat');
+    };
+
+    const handleBackToFeed = () => {
+        setView('feed');
+        setSelectedPostId(null);
+    };
+
+    const handleBackToMessages = () => {
+        setView('messages');
+        setSelectedChatId(null);
     };
 
     // Handle Post
@@ -56,13 +86,14 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
     const ThemeIcon = () => {
         if (theme === 'light') return <Sun className="w-6 h-6" />;
         if (theme === 'dim') return <Moon className="w-6 h-6" />;
-        return <Monitor className="w-6 h-6" />; // Lights out
+        return <Monitor className="w-6 h-6" />; 
     };
 
     return (
         <div className={`min-h-screen font-sans flex justify-center selection:bg-[var(--accent-color)] selection:text-white bg-[var(--bg-primary)] text-[var(--text-primary)]`} dir="rtl">
             
-            {/* --- GLOBAL TOAST --- */}
+            <MobileSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
             {toastMsg && (
                 <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[6000] animate-fade-in-up">
                     <div className={`px-6 py-3 rounded-full shadow-2xl font-bold text-sm flex items-center gap-2 ${
@@ -73,7 +104,6 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 </div>
             )}
 
-            {/* --- LIGHTBOX OVERLAY --- */}
             {lightboxSrc && (
                 <div className="fixed inset-0 z-[7000] bg-black/95 flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setLightboxSrc(null)}>
                     <button className="absolute top-4 right-4 p-2 bg-white/10 rounded-full text-white hover:bg-white/20">
@@ -87,10 +117,8 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 </div>
             )}
 
-            {/* --- LEFT SIDEBAR (Desktop Only) --- */}
-            <div className="hidden md:flex flex-col w-20 xl:w-72 h-screen sticky top-0 px-2 xl:px-4 border-l border-[var(--border-color)] justify-between py-4 z-50 bg-[var(--bg-primary)]">
+            <div className={`hidden md:flex flex-col w-20 xl:w-72 h-screen sticky top-0 px-2 xl:px-4 border-l border-[var(--border-color)] justify-between py-4 z-50 bg-[var(--bg-primary)]`}>
                 <div className="space-y-1">
-                    {/* BRAND LOGO */}
                     <div className="px-3 py-3 w-fit mb-2 hover:bg-[var(--bg-secondary)] rounded-full cursor-pointer transition-colors" onClick={onBack}>
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 bg-[var(--text-primary)] rounded-full flex items-center justify-center">
@@ -118,7 +146,6 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 <div className="space-y-2">
                      <InstallPrompt />
                      
-                     {/* THEME TOGGLE */}
                      <div 
                         onClick={cycleTheme}
                         className="flex items-center gap-3 p-3 rounded-full hover:bg-[var(--bg-secondary)] cursor-pointer xl:w-full transition-colors group"
@@ -141,20 +168,51 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 </div>
             </div>
 
-            {/* --- CENTER CONTENT --- */}
             <main className={`flex-1 max-w-[600px] w-full min-h-screen pb-20 md:pb-0 relative border-r border-[var(--border-color)] bg-[var(--bg-primary)]`}>
+                
+                {(view === 'feed' || view === 'profile' || view === 'messages') && (
+                    <div className="md:hidden sticky top-0 z-30 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border-color)] px-4 py-3 flex justify-between items-center">
+                        <div onClick={() => setIsSidebarOpen(true)} className="cursor-pointer">
+                            <img 
+                                src={user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
+                                className="w-8 h-8 rounded-full object-cover" 
+                                alt="Menu"
+                            />
+                        </div>
+                        <div className="font-black text-lg">M</div>
+                        <div className="w-8"></div>
+                    </div>
+                )}
+
                 {view === 'feed' && (
                     <Feed 
                         onOpenLightbox={setLightboxSrc} 
                         showToast={showToast} 
                         onBack={onBack}
+                        onPostClick={handlePostClick}
                     />
                 )}
+                
+                {view === 'post-detail' && selectedPostId && (
+                    <PostDetail 
+                        postId={selectedPostId} 
+                        onBack={handleBackToFeed} 
+                    />
+                )}
+
+                {view === 'chat' && selectedChatId && (
+                    <ChatWindow 
+                        chatId={selectedChatId} 
+                        onBack={handleBackToMessages} 
+                    />
+                )}
+
                 {view === 'reels' && <ReelsFeed />}
                 {view === 'admin' && <SocialAdmin />}
+                
                 {view === 'profile' && user && (
                     <div className="min-h-screen">
-                        <div className="sticky top-0 z-30 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border-color)] px-4 py-3 flex items-center gap-6">
+                        <div className="sticky top-0 z-30 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border-color)] px-4 py-3 flex items-center gap-6 hidden md:flex">
                             <button onClick={() => setView('feed')} className="hover:bg-[var(--bg-secondary)] p-2 rounded-full transition-colors">
                                 <ArrowLeft className="w-5 h-5 rtl:rotate-180"/>
                             </button>
@@ -169,10 +227,26 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                         </div>
                     </div>
                 )}
-                {view === 'messages' && <div className="p-10 text-center text-[var(--text-secondary)]">الرسائل (قيد التطوير)</div>}
+                
+                {view === 'messages' && (
+                    <div className="min-h-screen">
+                        <div className="p-4 border-b border-[var(--border-color)] font-bold text-xl">الرسائل</div>
+                        {[1, 2, 3].map(id => (
+                            <div key={id} onClick={() => handleChatClick(id.toString())} className="flex gap-3 p-4 hover:bg-[var(--bg-secondary)] cursor-pointer transition-colors">
+                                <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${id}`} className="w-12 h-12 rounded-full"/>
+                                <div className="flex-1">
+                                    <div className="flex justify-between">
+                                        <span className="font-bold text-[var(--text-primary)]">مستخدم {id}</span>
+                                        <span className="text-xs text-[var(--text-secondary)]">10:00 AM</span>
+                                    </div>
+                                    <p className="text-[var(--text-secondary)] text-sm truncate">مرحباً، هل الخدمة متاحة؟</p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
             </main>
 
-            {/* --- RIGHT SIDEBAR (Desktop Only - Trending) --- */}
             <div className="hidden lg:block w-80 xl:w-96 h-screen sticky top-0 px-6 py-4 border-r border-[var(--border-color)] z-40 bg-[var(--bg-primary)]">
                 <div className="relative mb-6 group">
                     <input 
@@ -187,7 +261,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                     <div className="p-4">
                         <h3 className="font-black text-lg text-[var(--text-primary)]">المتداول لك</h3>
                     </div>
-                    <div className="">
+                    <div>
                         {[
                             { tag: '#مجتمع_ميلاف', posts: '15.4K' },
                             { tag: '#رؤية_2030', posts: '89.2K' },
@@ -202,21 +276,21 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 </div>
             </div>
 
-            {/* --- MOBILE BOTTOM NAVIGATION --- */}
-            <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)]/90 backdrop-blur-xl border-t border-[var(--border-color)] flex justify-around p-3 pb-safe z-50">
-                <NavButton icon={Home} active={view === 'feed'} onClick={() => setView('feed')} />
-                <NavButton icon={Search} active={false} onClick={() => {}} />
-                <button 
-                    onClick={() => setIsComposeOpen(true)}
-                    className="bg-[var(--accent-color)] text-white p-3 rounded-full shadow-lg transform -translate-y-4 border-4 border-[var(--bg-primary)] active:scale-95 transition-transform"
-                >
-                    <Plus className="w-6 h-6"/>
-                </button>
-                <NavButton icon={Bell} active={false} onClick={() => {}} notify />
-                <NavButton icon={Mail} active={view === 'messages'} onClick={() => setView('messages')} />
-            </div>
+            {view !== 'post-detail' && view !== 'chat' && (
+                <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)]/90 backdrop-blur-xl border-t border-[var(--border-color)] flex justify-around p-3 pb-safe z-50">
+                    <NavButton icon={Home} active={view === 'feed'} onClick={() => setView('feed')} />
+                    <NavButton icon={Search} active={false} onClick={() => {}} />
+                    <button 
+                        onClick={() => setIsComposeOpen(true)}
+                        className="bg-[var(--accent-color)] text-white p-3 rounded-full shadow-lg transform -translate-y-4 border-4 border-[var(--bg-primary)] active:scale-95 transition-transform"
+                    >
+                        <Plus className="w-6 h-6"/>
+                    </button>
+                    <NavButton icon={Bell} active={false} onClick={() => {}} notify />
+                    <NavButton icon={Mail} active={view === 'messages'} onClick={() => setView('messages')} />
+                </div>
+            )}
 
-            {/* --- COMPOSE MODAL --- */}
             {isComposeOpen && (
                 <div className="fixed inset-0 z-[100] bg-[var(--bg-primary)] flex flex-col p-4 animate-in slide-in-from-bottom-10 duration-200">
                     <div className="flex justify-between items-center mb-6">
