@@ -8,7 +8,6 @@ import {
     orderBy, 
     serverTimestamp
 } from '../src/lib/firebase'; // Updated import source
-// Removed Timestamp import as it's not exported by shim yet, assuming formatDate handles raw objects or strings
 import { SocialPost, SocialUser } from '../dummyData';
 
 export const SocialService = {
@@ -31,6 +30,38 @@ export const SocialService = {
         } catch (error) {
             console.error("Error fetching posts:", error);
             return [];
+        }
+    },
+
+    // Check if DB is empty and seed the Welcome Post
+    async checkAndSeed(): Promise<void> {
+        try {
+            const postsRef = collection(db, 'social_posts');
+            const snapshot = await getDocs(postsRef);
+            
+            if (snapshot.docs.length === 0) {
+                console.log("Seeding Database with Viral Welcome Post...");
+                await addDoc(postsRef, {
+                    user: {
+                        name: 'Murad Al-Juhani',
+                        handle: '@IpMurad',
+                        avatar: 'https://ui-avatars.com/api/?name=Murad+Aljohani&background=0D8ABC&color=fff',
+                        verified: true,
+                        isGold: true, 
+                        bio: 'Founder of Murad Group | Tech Enthusiast 🇸🇦',
+                    },
+                    type: 'image',
+                    content: '🚀 The future of #SocialMedia is here.\n\nBuilding the next digital empire to compete with the giants. 🦅\n\n#Vision2030 #Tech #MuradSocial',
+                    images: ['https://i.ibb.co/QjNHDv3F/images-4.jpg'], // Viral Image
+                    createdAt: serverTimestamp(),
+                    likes: 85000,
+                    retweets: 5000,
+                    replies: 1420,
+                    views: '1.2M'
+                });
+            }
+        } catch (error) {
+            console.error("Seeding failed:", error);
         }
     },
 

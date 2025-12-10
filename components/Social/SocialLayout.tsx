@@ -43,9 +43,12 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
     const [isLoadingPosts, setIsLoadingPosts] = useState(false);
     const [isPosting, setIsPosting] = useState(false);
 
-    // Fetch Posts
+    // Fetch Posts & Seed
     const loadPosts = async () => {
         setIsLoadingPosts(true);
+        // 1. Check & Seed if empty
+        await SocialService.checkAndSeed();
+        // 2. Fetch sorted posts
         const data = await SocialService.getPosts();
         setPosts(data);
         setIsLoadingPosts(false);
@@ -107,10 +110,10 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
 
     const StoriesRail = () => {
         return (
-            <div className="flex gap-4 overflow-x-auto pt-4 pb-2 px-4 scrollbar-hide border-b border-slate-800 bg-black/40 backdrop-blur-md sticky top-[53px] z-20">
+            <div className="flex gap-3 overflow-x-auto pt-4 pb-2 px-4 scrollbar-hide border-b border-slate-800 bg-black/40 backdrop-blur-md sticky top-[53px] z-20">
                 {/* Add Story */}
-                <div className="flex flex-col items-center gap-1 cursor-pointer min-w-[64px]">
-                    <div className="w-16 h-16 rounded-full border-2 border-slate-700 p-0.5 relative">
+                <div className="flex flex-col items-center gap-1 cursor-pointer min-w-[60px]">
+                    <div className="w-[60px] h-[60px] rounded-full border border-slate-800 relative">
                         <img 
                             src={user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
                             className="w-full h-full rounded-full object-cover opacity-60"
@@ -119,12 +122,12 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                             <Plus className="w-3 h-3"/>
                         </div>
                     </div>
-                    <span className="text-[10px] text-slate-400">قصتك</span>
+                    <span className="text-[10px] text-slate-500">قصتك</span>
                 </div>
 
                 {stories.map((story) => (
-                    <div key={story.id} className="flex flex-col items-center gap-1 cursor-pointer min-w-[64px] group">
-                        <div className={`w-16 h-16 rounded-full p-[2px] ${story.isViewed ? 'bg-slate-700' : 'bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600'}`}>
+                    <div key={story.id} className="flex flex-col items-center gap-1 cursor-pointer min-w-[60px] group">
+                        <div className={`w-[64px] h-[64px] rounded-full p-[2px] ${story.isViewed ? 'bg-slate-800' : 'bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600'}`}>
                             <div className="w-full h-full bg-black rounded-full p-0.5 border-2 border-black">
                                 <img 
                                     src={story.user.avatar} 
@@ -197,8 +200,10 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
         );
     };
 
+    // --- TWITTER STYLE POST CARD (Mobile Optimized) ---
     const PostCard = ({ post, detailed = false }: { post: SocialPost, detailed?: boolean }) => {
         const [liked, setLiked] = useState(false);
+        
         const formatNumber = (num: number) => {
             if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
             if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
@@ -206,9 +211,9 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
         };
 
         const renderBadge = () => {
-            if (post.user.isGold) return <Crown className="w-4 h-4 text-amber-400 fill-amber-400" />;
-            if (post.user.isPremium) return <CheckCircle2 className="w-4 h-4 text-blue-500 fill-blue-500" />;
-            if (post.user.verified) return <CheckCircle2 className="w-4 h-4 text-slate-400 fill-slate-800" />;
+            if (post.user.isGold) return <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 ml-1" />;
+            if (post.user.isPremium) return <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500 ml-1" />;
+            if (post.user.verified) return <CheckCircle2 className="w-3.5 h-3.5 text-slate-400 fill-slate-800 ml-1" />;
             return null;
         };
 
@@ -216,166 +221,119 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
             if (!text) return null;
             return text.split(/(\s+)/).map((word, i) => {
                 if (word.startsWith('#')) return <span key={i} className="text-blue-400 hover:underline cursor-pointer">{word}</span>;
-                if (word.startsWith('@')) return <span key={i} className="text-amber-400 hover:underline cursor-pointer">{word}</span>;
+                if (word.startsWith('@')) return <span key={i} className="text-blue-400 hover:underline cursor-pointer">{word}</span>;
                 return word;
             });
         };
 
         return (
             <div 
-                className={`border-b border-slate-800 hover:bg-slate-900/30 transition-colors cursor-pointer ${post.isPinned ? 'bg-slate-900/10' : ''} ${detailed ? 'p-0 border-none hover:bg-transparent' : 'p-4'}`}
+                className={`flex gap-3 p-4 border-b border-slate-800 hover:bg-white/[0.02] transition-colors cursor-pointer ${post.isPinned ? 'bg-slate-900/20' : ''}`}
                 onClick={() => !detailed && setActivePostId(post.id)}
             >
-                {post.isPinned && !detailed && (
-                    <div className="flex items-center gap-2 text-xs font-bold text-slate-500 mb-2 mr-12">
-                        <Pin className="w-3 h-3 fill-current" /> <span>منشور مثبت</span>
+                {/* Avatar Column */}
+                <div className="shrink-0">
+                    <img 
+                        src={post.user.avatar} 
+                        className="w-10 h-10 rounded-full object-cover hover:opacity-90 transition-opacity" 
+                        alt={post.user.name} 
+                        onClick={(e) => { e.stopPropagation(); setView('profile'); }}
+                    />
+                </div>
+
+                {/* Content Column */}
+                <div className="flex-1 min-w-0">
+                    
+                    {/* Header Row */}
+                    <div className="flex items-center justify-between text-slate-500 text-[15px] leading-tight mb-1">
+                        <div className="flex items-center gap-1 overflow-hidden">
+                            <span className="font-bold text-white truncate hover:underline">{post.user.name}</span>
+                            {renderBadge()}
+                            <span className="truncate ltr text-slate-500 ml-1" dir="ltr">{post.user.handle}</span>
+                            <span className="text-slate-600 px-1">·</span>
+                            <span className="text-slate-500 whitespace-nowrap">{post.timestamp}</span>
+                        </div>
+                        <button className="text-slate-500 hover:text-blue-400 p-1 -mr-2 rounded-full hover:bg-blue-500/10 transition-colors group">
+                            <MoreHorizontal className="w-4 h-4"/>
+                        </button>
                     </div>
-                )}
-                
-                <div className={`flex gap-3 ${detailed ? 'flex-col' : ''}`}>
-                    {!detailed && (
-                        <div className="shrink-0">
-                            <img 
-                                src={post.user.avatar} 
-                                className="w-10 h-10 rounded-full bg-slate-800 object-cover ring-2 ring-transparent group-hover:ring-slate-700" 
-                                alt={post.user.name} 
-                                onClick={(e) => { e.stopPropagation(); setView('profile'); }}
-                            />
+
+                    {/* Post Text */}
+                    <div className="text-[15px] text-white whitespace-pre-wrap leading-normal mt-0.5 dir-auto" style={{ wordBreak: 'break-word' }}>
+                        {post.type === 'premium_locked' ? (
+                            <div className="mt-2 relative rounded-xl overflow-hidden border border-amber-500/30 bg-slate-900/50 p-4">
+                                <div className="filter blur-sm select-none opacity-50 text-sm">
+                                    هذا المحتوى حصري للمشتركين. يرجى الترقية للوصول الكامل.
+                                </div>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[1px]">
+                                    <div className="flex items-center gap-2 text-amber-500 font-bold mb-2">
+                                        <Lock className="w-4 h-4"/> محتوى حصري
+                                    </div>
+                                    <button className="px-4 py-1.5 bg-white text-black text-xs font-bold rounded-full hover:bg-gray-200">
+                                        اشتراك
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            highlightText(post.content || '')
+                        )}
+                    </div>
+
+                    {/* Media / Special Content - EDGE TO EDGE ON MOBILE */}
+                    {post.type === 'poll' && post.pollOptions && (
+                        <div className="mt-3 space-y-2">
+                           {post.pollOptions.map((opt) => (
+                               <div key={opt.id} className="relative h-8 rounded border border-slate-700 overflow-hidden">
+                                   <div className="absolute inset-0 flex items-center px-3 z-10 text-sm font-bold text-slate-200 justify-between">
+                                       <span>{opt.text}</span>
+                                       <span>{Math.floor(Math.random() * 100)}%</span>
+                                   </div>
+                                   <div className="h-full bg-slate-800 w-[40%]"></div>
+                               </div>
+                           ))}
                         </div>
                     )}
                     
-                    <div className="flex-1 min-w-0">
-                        {/* Header */}
-                        <div className="flex justify-between items-start">
-                            {detailed ? (
-                                <div className="flex gap-3 mb-4">
-                                     <img src={post.user.avatar} className="w-12 h-12 rounded-full bg-slate-800 object-cover" alt={post.user.name} />
-                                     <div>
-                                         <div className="flex items-center gap-1">
-                                             <span className="font-bold text-white text-base">{post.user.name}</span>
-                                             {renderBadge()}
-                                         </div>
-                                         <div className="text-slate-500 text-sm ltr" dir="ltr">{post.user.handle}</div>
-                                     </div>
-                                </div>
-                            ) : (
-                                <div className="flex items-center gap-1 mb-0.5">
-                                    <span className="font-bold text-white hover:underline truncate">{post.user.name}</span>
-                                    {renderBadge()}
-                                    <span className="text-slate-500 text-sm truncate ltr ml-1" dir="ltr">{post.user.handle}</span>
-                                    <span className="text-slate-500 text-sm">· {post.timestamp}</span>
-                                </div>
-                            )}
-                            {!detailed && (
-                                <button className="text-slate-500 hover:text-blue-400 p-1 rounded-full hover:bg-blue-500/10 transition-colors">
-                                    <MoreHorizontal className="w-4 h-4"/>
-                                </button>
-                            )}
+                    {post.images && post.images.length > 0 && (
+                        <div className={`mt-3 overflow-hidden border-slate-800 ${post.images.length > 1 ? 'grid grid-cols-2 gap-0.5' : ''} -mx-4 md:mx-0 md:rounded-2xl rounded-none w-[calc(100%+2rem)] md:w-full border-y md:border`}>
+                            {post.images.map((img, i) => (
+                                <img key={i} src={img} className="w-full h-auto object-cover max-h-[500px]" loading="lazy" />
+                            ))}
                         </div>
+                    )}
 
-                        {/* Content Body */}
-                        <div className={`text-slate-200 whitespace-pre-wrap leading-relaxed ${detailed ? 'text-xl' : 'text-sm md:text-base'}`}>
-                            {post.type === 'premium_locked' ? (
-                                <div className="mt-3 relative rounded-xl overflow-hidden border border-amber-500/30 bg-slate-900/50">
-                                    <div className="p-4 filter blur-sm select-none opacity-50">
-                                        <p className="text-slate-300">هذا النص مشفر للمشتركين المميزين فقط. يحتوي على معلومات حصرية وتحليلات خاصة بالسوق.</p>
-                                        <p className="text-slate-300 mt-2">لا يمكن قراءة هذا المحتوى إلا بعد الاشتراك في الباقة الذهبية.</p>
-                                    </div>
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px]">
-                                        <div className="p-3 bg-amber-500/20 rounded-full mb-3 border border-amber-500 text-amber-500">
-                                            <Lock className="w-6 h-6"/>
-                                        </div>
-                                        <h4 className="text-white font-bold mb-1">محتوى حصري</h4>
-                                        <button className="px-6 py-2 bg-amber-500 hover:bg-amber-600 text-black font-bold rounded-full text-sm transition-colors shadow-lg shadow-amber-500/20">
-                                            اشترك لفتح المحتوى
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <>
-                                    <p className="mb-2">{highlightText(post.content || '')}</p>
-                                    
-                                    {post.type === 'poll' && post.pollOptions && (
-                                         <div className="mt-3 space-y-2">
-                                            {post.pollOptions.map((opt) => {
-                                                const totalVotes = post.pollOptions!.reduce((acc, curr) => acc + curr.votes, 0);
-                                                const percent = Math.round((opt.votes / totalVotes) * 100) || 0;
-                                                return (
-                                                    <div key={opt.id} className="relative h-10 rounded-lg overflow-hidden bg-slate-800/50 cursor-pointer hover:bg-slate-800 transition-colors border border-slate-700">
-                                                        <div 
-                                                            className="absolute top-0 left-0 h-full bg-blue-500/20 transition-all duration-500" 
-                                                            style={{ width: `${percent}%` }}
-                                                        ></div>
-                                                        <div className="absolute inset-0 flex items-center justify-between px-4 z-10">
-                                                            <span className="text-sm font-bold text-slate-200">{opt.text}</span>
-                                                            <span className="text-xs font-mono text-blue-300">{percent}%</span>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                    
-                                    {post.type === 'voice' && post.voiceDuration && (
-                                         <div className="mt-3 flex items-center gap-3 bg-slate-800/50 p-3 rounded-xl border border-slate-700 w-fit pr-6">
-                                            <button className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white hover:bg-blue-600 transition-colors">
-                                                <Play className="w-4 h-4 fill-current ml-0.5"/>
-                                            </button>
-                                            <div className="flex items-center gap-0.5 h-6">
-                                                {[...Array(20)].map((_, i) => (
-                                                    <div 
-                                                        key={i} 
-                                                        className="w-1 bg-slate-500 rounded-full animate-pulse" 
-                                                        style={{ height: `${Math.random() * 100}%`, animationDelay: `${i * 0.05}s` }}
-                                                    ></div>
-                                                ))}
-                                            </div>
-                                            <span className="text-xs font-mono text-slate-400">{post.voiceDuration}</span>
-                                        </div>
-                                    )}
-                                    
-                                    {post.images && (
-                                        <div className={`mt-3 rounded-2xl overflow-hidden border border-slate-800 ${post.images.length > 1 ? 'grid grid-cols-2 gap-0.5' : ''}`}>
-                                            {post.images.map((img, i) => (
-                                                <img key={i} src={img} className="w-full h-full object-cover max-h-[400px]" />
-                                            ))}
-                                        </div>
-                                    )}
-                                </>
-                            )}
+                    {/* Action Bar */}
+                    <div className="flex justify-between items-center mt-3 text-slate-500 max-w-md pr-2">
+                        <div className="flex items-center gap-1 group cursor-pointer hover:text-blue-400 transition-colors">
+                            <div className="p-2 rounded-full group-hover:bg-blue-500/10 -ml-2"><MessageCircle className="w-4.5 h-4.5"/></div>
+                            <span className="text-xs">{post.replies > 0 ? formatNumber(post.replies) : ''}</span>
                         </div>
-
-                        {detailed && (
-                            <div className="py-4 border-y border-slate-800 my-4 text-slate-500 text-sm flex gap-4">
-                                <span><span className="font-bold text-white">{post.views || '1K'}</span> Views</span>
-                                <span>{post.timestamp}</span>
+                        
+                        <div className="flex items-center gap-1 group cursor-pointer hover:text-green-400 transition-colors">
+                            <div className="p-2 rounded-full group-hover:bg-green-500/10 -ml-2"><Repeat className="w-4.5 h-4.5"/></div>
+                            <span className="text-xs">{post.retweets > 0 ? formatNumber(post.retweets) : ''}</span>
+                        </div>
+                        
+                        <div 
+                            className={`flex items-center gap-1 group cursor-pointer transition-colors ${liked ? 'text-pink-600' : 'hover:text-pink-600'}`}
+                            onClick={(e) => { e.stopPropagation(); setLiked(!liked); playPop(); }}
+                        >
+                            <div className="p-2 rounded-full group-hover:bg-pink-600/10 -ml-2 relative">
+                                <Heart className={`w-4.5 h-4.5 ${liked ? 'fill-current' : ''}`}/>
                             </div>
-                        )}
+                            <span className="text-xs">{post.likes > 0 ? formatNumber(post.likes + (liked ? 1 : 0)) : ''}</span>
+                        </div>
 
-                        {/* Actions */}
-                        <div className={`flex justify-between text-slate-500 ${detailed ? 'border-b border-slate-800 pb-4' : 'max-w-md mt-3'}`}>
-                            <button className="flex items-center gap-2 hover:text-blue-400 transition-colors group">
-                                <div className="p-2 rounded-full group-hover:bg-blue-500/10"><MessageCircle className="w-4 h-4"/></div>
-                                <span className="text-xs">{detailed ? '' : formatNumber(post.replies)}</span>
-                            </button>
-                            <button className="flex items-center gap-2 hover:text-green-400 transition-colors group">
-                                <div className="p-2 rounded-full group-hover:bg-green-500/10"><Repeat className="w-4 h-4"/></div>
-                                <span className="text-xs">{detailed ? '' : formatNumber(post.retweets)}</span>
-                            </button>
-                            <button 
-                                onClick={(e) => { e.stopPropagation(); setLiked(!liked); playPop(); }}
-                                className={`flex items-center gap-2 transition-colors group ${liked ? 'text-pink-500' : 'hover:text-pink-400'}`}
-                            >
-                                <div className="p-2 rounded-full group-hover:bg-pink-500/10 relative">
-                                    <Heart className={`w-4 h-4 ${liked ? 'fill-current animate-bounce' : ''}`}/>
-                                </div>
-                                <span className="text-xs">{detailed ? '' : formatNumber(post.likes + (liked ? 1 : 0))}</span>
-                            </button>
-                            <button className="flex items-center gap-2 hover:text-blue-400 transition-colors group">
-                                <div className="p-2 rounded-full group-hover:bg-blue-500/10"><Share2 className="w-4 h-4"/></div>
-                            </button>
+                        <div className="flex items-center gap-1 group cursor-pointer hover:text-blue-400 transition-colors">
+                            <div className="p-2 rounded-full group-hover:bg-blue-500/10 -ml-2"><BarChart2 className="w-4.5 h-4.5"/></div>
+                            <span className="text-xs">{post.views}</span>
+                        </div>
+
+                        <div className="flex items-center gap-1 group cursor-pointer hover:text-blue-400 transition-colors">
+                            <div className="p-2 rounded-full group-hover:bg-blue-500/10 -ml-2"><Share2 className="w-4.5 h-4.5"/></div>
                         </div>
                     </div>
+
                 </div>
             </div>
         );
@@ -385,7 +343,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
 
     const FeedView = () => (
         <div className="flex-1 min-h-screen border-x border-slate-800 max-w-[600px] w-full bg-black">
-            <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex justify-between items-center cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+            <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex justify-between items-center cursor-pointer h-[53px]" onClick={() => window.scrollTo(0,0)}>
                 <h2 className="text-lg font-bold text-white">الرئيسية</h2>
                 {isIncognito && <EyeOff className="w-4 h-4 text-gray-500"/>}
                 <div className="md:hidden" onClick={onBack}><ArrowLeft className="w-5 h-5 text-white rtl:rotate-180"/></div>
@@ -395,18 +353,18 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
             
             {/* Compose */}
             <div className="p-4 border-b border-slate-800 hidden md:block">
-                <div className="flex gap-4">
-                    <img src={user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-10 h-10 rounded-full bg-slate-800" />
+                <div className="flex gap-3">
+                    <img src={user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-10 h-10 rounded-full bg-slate-800 object-cover" />
                     <div className="flex-1">
                         <textarea 
                             id="compose-area"
                             value={composeText}
                             onChange={handleComposeChange}
                             placeholder="ماذا يحدث؟" 
-                            className="w-full bg-transparent text-xl text-white placeholder-slate-500 outline-none resize-none min-h-[50px]"
+                            className="w-full bg-transparent text-xl text-white placeholder-slate-500 outline-none resize-none min-h-[50px] mt-2"
                         />
                         <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-800">
-                            <div className="flex gap-2 text-blue-400">
+                            <div className="flex gap-0.5 text-blue-400">
                                 <button className="p-2 hover:bg-blue-500/10 rounded-full"><ImageIcon className="w-5 h-5"/></button>
                                 <button className="p-2 hover:bg-blue-500/10 rounded-full"><BarChart2 className="w-5 h-5"/></button>
                                 <button className="p-2 hover:bg-blue-500/10 rounded-full"><Mic className="w-5 h-5"/></button>
@@ -415,7 +373,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                             <button 
                                 onClick={handlePostSubmit}
                                 disabled={!composeText || isPosting} 
-                                className="px-5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-full disabled:opacity-50 text-sm flex items-center gap-2"
+                                className="px-5 py-1.5 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-full disabled:opacity-50 text-sm flex items-center gap-2 transition-colors"
                             >
                                 {isPosting ? <Loader2 className="w-4 h-4 animate-spin"/> : 'نشر'}
                             </button>
@@ -605,7 +563,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 {view === 'leaderboard' && <LeaderboardPage />}
                 {view === 'admin' && <SocialAdmin />}
                 {view === 'messages' && <ChatSystem />}
-                {activePostId && <FeedView />} {/* Reusing feedview logic for now but filtered */}
+                {activePostId && <FeedView />} 
                 {view === 'profile' && <div className="p-8 text-center text-slate-500 mt-20 font-bold bg-black h-full">الملف الشخصي (قيد التطوير)</div>}
             </main>
 
