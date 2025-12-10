@@ -26,6 +26,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     const [retweeted, setRetweeted] = useState(false);
     const [retweetCount, setRetweetCount] = useState(post.retweets || 0);
 
+    // Owner Check logic for deletion
     const isOwner = user?.id === post.user?.uid;
 
     const formatNumber = (num: number) => {
@@ -119,7 +120,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                     handle: user.username ? `@${user.username}` : `@${user.id.slice(0,5)}`,
                     avatar: user.avatar,
                     verified: user.isIdentityVerified,
-                    isGold: user.primeSubscription?.status === 'active'
+                    isGold: user.primeSubscription?.status === 'active',
+                    uid: user.id
                 },
                 createdAt: serverTimestamp(),
                 likes: 0,

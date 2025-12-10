@@ -14,6 +14,7 @@ export const formatRelativeTime = (timestamp: any): string => {
   } else if (diff < 86400) {
     return `${Math.floor(diff / 3600)}h`;
   } else {
+    // Return formatted date (e.g., "Dec 10")
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   }
 };
