@@ -187,10 +187,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         });
     };
 
-    // --- IMPROVED IMAGE GRID LOGIC ---
     const renderImages = () => {
         let images = post.images || [];
-        // Compatibility with legacy single image posts
         if (!images.length && post.image) images = [post.image];
         
         if (images.length === 0) return null;
@@ -198,16 +196,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         const count = images.length;
         let gridLayout = '';
         
-        // CSS Grid Classes
         if (count === 1) gridLayout = 'grid-cols-1 aspect-[16/9]';
         else if (count === 2) gridLayout = 'grid-cols-2 aspect-[16/9]';
         else if (count === 3) gridLayout = 'grid-cols-2 grid-rows-2 aspect-[16/9]';
         else gridLayout = 'grid-cols-2 grid-rows-2 aspect-[16/9]';
 
         return (
-            <div className={`mt-3 rounded-2xl overflow-hidden border border-[#2f3336] grid gap-0.5 ${gridLayout} bg-[#16181c]`}>
+            <div className={`mt-3 rounded-2xl overflow-hidden border border-[#2f3336] grid gap-0.5 ${gridLayout} bg-[#16181c]`} onClick={(e) => e.stopPropagation()}>
                 {images.slice(0, 4).map((img: string, i: number) => {
-                     // For 3 images: First image spans 2 rows on the left
                      const isThreeLayout = count === 3;
                      const isFirstOfThree = isThreeLayout && i === 0;
                      
@@ -223,7 +219,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                                 loading="lazy" 
                                 alt="Post content"
                             />
-                            {/* Overlay for +N images */}
                             {count > 4 && i === 3 && (
                                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white font-bold text-xl backdrop-blur-sm">
                                     +{count - 4}

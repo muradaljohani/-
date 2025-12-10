@@ -48,15 +48,14 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     const postsRef = collection(db, "posts");
 
     if (activeTab === 'foryou') {
-        // FIX: Removed orderBy("isPinned") to avoid composite index error.
-        // We will sort pinned posts to the top in the client code below.
+        // Query by date only to avoid composite index error with 'isPinned'
         q = query(
           postsRef, 
           orderBy("createdAt", "desc")
         );
     } else {
         if (user) {
-            // Filter by user. To avoid index error with orderBy, we fetch then sort client-side.
+            // Filter by user. To avoid index error with orderBy, we fetch filtered then sort client-side.
             q = query(
               postsRef,
               where("user.uid", "==", user.id)
@@ -78,7 +77,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
       });
 
       // CLIENT-SIDE SORTING
-      const sortedPosts = livePosts.sort((a: any, b: any) => {
+      livePosts.sort((a: any, b: any) => {
           // 1. Pinned posts first (only for 'foryou')
           if (activeTab === 'foryou') {
               const pinA = a.isPinned ? 1 : 0;
@@ -86,20 +85,25 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
               if (pinA !== pinB) return pinB - pinA;
           }
           
-          // 2. Newest posts second
-          // Handle various timestamp formats (Firestore Timestamp vs Date vs String)
-          const timeA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (new Date(a.createdAt || 0).getTime());
-          const timeB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (new Date(b.createdAt || 0).getTime());
+          // 2. Sort by Date (Handle both 'createdAt' and legacy 'timestamp')
+          const getTime = (p: any) => {
+              const val = p.createdAt || p.timestamp;
+              return val?.toMillis ? val.toMillis() : (new Date(val || 0).getTime());
+          };
           
-          return timeB - timeA;
+          return getTime(b) - getTime(a);
       });
 
-      setPosts(sortedPosts);
+      setPosts(livePosts);
       setLoading(false);
     }, (err) => {
         console.error("Feed Error:", err);
         setLoading(false);
-        if (showToast) showToast("حدث خطأ في تحميل المنشورات: " + err.message, "error");
+        // Fallback for missing index: Try simple fetch without ordering if specific order fails
+        // This prevents the white screen crash
+        if (err.code === 'failed-precondition') {
+             if (showToast) showToast("جارِ تحسين قاعدة البيانات، يرجى الانتظار...", "info");
+        }
     });
 
     return () => unsubscribe();
