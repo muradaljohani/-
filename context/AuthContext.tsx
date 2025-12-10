@@ -1,10 +1,13 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Notification, LoginProvider } from '../types';
-import { auth, db, storage, googleProvider, facebookProvider, twitterProvider, githubProvider } from '../src/lib/firebase';
-import { signInWithPopup, signOut, onAuthStateChanged, AuthProvider as FirebaseAuthProvider } from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, addDoc, updateDoc } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { 
+    auth, db, storage, 
+    googleProvider, facebookProvider, twitterProvider, githubProvider,
+    signInWithPopup, signOut, onAuthStateChanged,
+    doc, setDoc, getDoc, collection, addDoc, updateDoc,
+    ref, uploadBytes, getDownloadURL
+} from '../src/lib/firebase'; // Use local shim
 import { WalletSystem } from '../services/Economy/WalletSystem';
 import { SubscriptionCore } from '../services/Subscription/SubscriptionCore';
 
@@ -174,7 +177,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     if (auth) {
         try {
-            const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+            const unsubscribe = onAuthStateChanged(auth, async (firebaseUser: any) => {
                 if (firebaseUser) {
                      if (db) {
                          try {
@@ -236,13 +239,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log(`Initiating ${providerName} Sign-In...`);
       
-      // Explicitly check if auth is available
-      if (!auth) {
-        console.warn("Firebase Auth not initialized, falling back to demo mode.");
-        throw new Error("Firebase Auth not initialized");
-      }
-      
-      let provider: FirebaseAuthProvider | null = null;
+      let provider: any = null;
       switch (providerName) {
         case 'google': provider = googleProvider; break;
         case 'facebook': provider = facebookProvider; break;
@@ -250,7 +247,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         case 'github': provider = githubProvider; break;
       }
 
-      if (provider) {
+      if (provider && auth) {
         await signInWithPopup(auth, provider);
       } else {
          throw new Error(`Provider ${providerName} not supported via Firebase.`);
