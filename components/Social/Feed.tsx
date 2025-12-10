@@ -48,9 +48,8 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     const postsRef = collection(db, "posts");
 
     if (activeTab === 'foryou') {
-        // QUERY STRATEGY:
-        // Use only orderBy createdAt to avoid composite index error with isPinned.
-        // We handle pinning sort on the client.
+        // FIX: Removed orderBy("isPinned") to avoid composite index error.
+        // We will sort pinned posts to the top in the client code below.
         q = query(
           postsRef, 
           orderBy("createdAt", "desc")
@@ -100,7 +99,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     }, (err) => {
         console.error("Feed Error:", err);
         setLoading(false);
-        if (showToast) showToast("حدث خطأ في تحميل المنشورات", "error");
+        if (showToast) showToast("حدث خطأ في تحميل المنشورات: " + err.message, "error");
     });
 
     return () => unsubscribe();
