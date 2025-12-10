@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { SocialPost, stories } from '../../dummyData';
 import { SocialService } from '../../services/SocialService';
 import { PostCard } from './PostCard';
-import { ArrowUp, Loader2, Sparkles, Plus, EyeOff, ArrowLeft } from 'lucide-react';
+import { ArrowUp, Loader2, Sparkles, Plus, ArrowLeft, Image as ImageIcon, Send } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 interface FeedProps {
@@ -18,7 +18,10 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onBack })
     const [isLoading, setIsLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [showScrollTop, setShowScrollTop] = useState(false);
-    const [activePostId, setActivePostId] = useState<string | null>(null);
+    
+    // Posting State
+    const [newPostText, setNewPostText] = useState('');
+    const [isPosting, setIsPosting] = useState(false);
 
     // --- DATA LOADING ---
     const loadData = async () => {
@@ -54,6 +57,38 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onBack })
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
+    // --- HANDLE POST (Dynamic User) ---
+    const handlePost = async () => {
+        if (!newPostText.trim()) return;
+
+        // 1. Authentication Check
+        if (!user) {
+            alert("يرجى تسجيل الدخول لنشر منشور جديد.");
+            return;
+        }
+
+        setIsPosting(true);
+
+        try {
+            // 2. Call Service with Dynamic User Data
+            const success = await SocialService.createPost(user, newPostText);
+            
+            if (success) {
+                showToast('تم النشر بنجاح!', 'success');
+                setNewPostText('');
+                // Refresh feed to show new post
+                loadData();
+            } else {
+                showToast('فشل النشر، حاول مرة أخرى', 'error');
+            }
+        } catch (error) {
+            console.error("Posting error:", error);
+            showToast('حدث خطأ غير متوقع', 'error');
+        } finally {
+            setIsPosting(false);
+        }
+    };
+
     // --- PULL TO REFRESH (Simulated) ---
     const handlePullRefresh = () => {
         setIsRefreshing(true);
@@ -73,7 +108,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onBack })
                     <button onClick={onBack} className="text-white"><ArrowLeft className="w-5 h-5 rtl:rotate-180"/></button>
                 </div>
 
-                {/* --- THE WELCOME BANNER (PACK 0) --- */}
+                {/* --- THE WELCOME BANNER --- */}
                 <div className="bg-gradient-to-r from-indigo-900 via-purple-900 to-black px-4 py-3 border-b border-white/5 relative overflow-hidden">
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10"></div>
                     <div className="relative z-10 flex items-center justify-between">
@@ -84,9 +119,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onBack })
                                  <p className="text-[10px] text-purple-200">المنصة الاجتماعية الأولى للمبدعين</p>
                              </div>
                          </div>
-                         <button className="text-[10px] bg-white/10 hover:bg-white/20 px-3 py-1 rounded-full font-bold text-white transition-colors">
-                             اكتشف المزيد
-                         </button>
                     </div>
                 </div>
 
@@ -130,10 +162,39 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onBack })
                 ))}
             </div>
 
-            {/* 3. POSTS FEED */}
-            <div className="pb-32"> {/* Extra padding for bottom nav */}
+            {/* 3. NEW POST INPUT (Feed Header) */}
+            <div className="p-4 border-b border-slate-800 bg-black hidden md:block">
+                <div className="flex gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-800 overflow-hidden shrink-0">
+                        <img src={user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=Guest"} className="w-full h-full object-cover"/>
+                    </div>
+                    <div className="flex-1">
+                        <textarea
+                            value={newPostText}
+                            onChange={(e) => setNewPostText(e.target.value)}
+                            placeholder={user ? "ماذا يدور في ذهنك؟" : "سجل دخولك لتشاركنا أفكارك..."}
+                            className="w-full bg-transparent text-white text-lg placeholder-slate-500 outline-none resize-none h-20 scrollbar-hide"
+                            disabled={!user || isPosting}
+                        />
+                        <div className="flex justify-between items-center mt-2 border-t border-slate-800 pt-3">
+                            <div className="flex gap-2 text-blue-500">
+                                <button className="p-2 hover:bg-blue-500/10 rounded-full transition-colors"><ImageIcon className="w-5 h-5"/></button>
+                            </div>
+                            <button 
+                                onClick={handlePost}
+                                disabled={!newPostText.trim() || isPosting || !user}
+                                className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-1.5 rounded-full font-bold text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 transition-all"
+                            >
+                                {isPosting ? <Loader2 className="w-4 h-4 animate-spin"/> : 'نشر'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* 4. POSTS FEED */}
+            <div className="pb-32">
                 {isLoading ? (
-                    // --- SKELETON LOADING (PACK 3) ---
                     <div className="space-y-4 p-4">
                         {[1, 2, 3].map(i => (
                             <div key={i} className="animate-pulse flex gap-4">
@@ -168,7 +229,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onBack })
                 )}
             </div>
 
-            {/* 4. SCROLL TO TOP FAB */}
+            {/* 5. SCROLL TO TOP FAB */}
             {showScrollTop && (
                 <button 
                     onClick={scrollToTop}

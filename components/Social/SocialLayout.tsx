@@ -10,6 +10,7 @@ import { ReelsFeed } from './ReelsFeed';
 import { SocialAdmin } from './SocialAdmin';
 import { InstallPrompt } from '../Mobile/InstallPrompt';
 import { SocialService } from '../../services/SocialService';
+import { ProfileHeader } from './ProfileHeader';
 
 interface Props {
     onBack: () => void;
@@ -33,14 +34,20 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
 
     // Handle Post
     const handlePostSubmit = async () => {
-        if (!composeText.trim() || !user) return;
+        if (!composeText.trim()) return;
+
+        // AUTH CHECK
+        if (!user) {
+            alert("يرجى تسجيل الدخول لنشر منشور.");
+            return;
+        }
         
         const success = await SocialService.createPost(user, composeText);
         if (success) {
             showToast('تم النشر بنجاح!', 'success');
             setComposeText('');
             setIsComposeOpen(false);
-            // Trigger refresh in Feed via event or context (simplified here by relying on Feed's auto-refresh)
+            // Optionally force feed refresh via context or event if needed
         } else {
             showToast('فشل النشر، حاول مرة أخرى', 'error');
         }
@@ -129,7 +136,25 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 )}
                 {view === 'reels' && <ReelsFeed />}
                 {view === 'admin' && <SocialAdmin />}
-                {view === 'profile' && <div className="p-10 text-center text-slate-500">الملف الشخصي (قيد التطوير)</div>}
+                {view === 'profile' && user && (
+                    <div className="min-h-screen">
+                         {/* Header with back button for mobile */}
+                        <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md border-b border-slate-800 px-4 py-3 flex items-center gap-6">
+                            <button onClick={() => setView('feed')} className="hover:bg-slate-800 p-2 rounded-full transition-colors">
+                                <ArrowLeft className="w-5 h-5 rtl:rotate-180"/>
+                            </button>
+                            <div>
+                                <h2 className="font-bold text-lg">{user.name}</h2>
+                                <p className="text-xs text-slate-500">{user.publisherStats?.totalSales || 0} منشور</p>
+                            </div>
+                        </div>
+                        <ProfileHeader user={user} isOwnProfile={true} />
+                        {/* Placeholder posts */}
+                        <div className="p-10 text-center text-slate-500 text-sm">
+                            لا توجد منشورات بعد.
+                        </div>
+                    </div>
+                )}
                 {view === 'messages' && <div className="p-10 text-center text-slate-500">الرسائل (قيد التطوير)</div>}
             </main>
 

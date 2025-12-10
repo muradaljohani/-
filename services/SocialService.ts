@@ -94,18 +94,23 @@ export const SocialService = {
     },
 
     // Create a new post
-    async createPost(user: SocialUser | any, content: string, type: string = 'text'): Promise<boolean> {
+    async createPost(user: any, content: string, type: string = 'text'): Promise<boolean> {
         try {
             const postsRef = collection(db, 'social_posts');
+            
+            // Construct dynamic user data from Auth Context User
+            const userData = {
+                name: user.name || "Anonymous User",
+                handle: user.username ? `@${user.username}` : (user.email ? `@${user.email.split('@')[0]}` : `@${user.id.substr(0,8)}`),
+                avatar: user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User",
+                verified: user.isIdentityVerified || false,
+                isGold: user.isGold || false,
+                isPremium: user.isPremium || false,
+                bio: user.bio || ""
+            };
+
             await addDoc(postsRef, {
-                user: {
-                    name: user.name,
-                    handle: user.username ? `@${user.username}` : `@${user.name.replace(/\s+/g, '')}`,
-                    avatar: user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User",
-                    verified: user.isIdentityVerified || false,
-                    isGold: user.isGold || false,
-                    isPremium: user.isPremium || false
-                },
+                user: userData,
                 type,
                 content,
                 createdAt: serverTimestamp(),
