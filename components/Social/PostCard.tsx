@@ -2,10 +2,11 @@
 import React, { useState } from 'react';
 import { 
     MessageCircle, Repeat, Heart, Share2, MoreHorizontal, 
-    CheckCircle2, Crown, Pin, BarChart2, Bookmark 
+    CheckCircle2, Crown, Pin, BarChart2, Bookmark, Trash2 
 } from 'lucide-react';
-import { doc, updateDoc, increment, addDoc, collection, serverTimestamp, db } from '../../src/lib/firebase';
+import { doc, updateDoc, increment, addDoc, collection, serverTimestamp, db, deleteDoc } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { formatRelativeTime } from '../../utils';
 
 interface PostCardProps {
     post: any; // Using any for flexibility with Firestore data
@@ -25,6 +26,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     const [retweeted, setRetweeted] = useState(false);
     const [retweetCount, setRetweetCount] = useState(post.retweets || 0);
 
+    const isOwner = user?.id === post.user?.uid;
+
     const formatNumber = (num: number) => {
         if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
         if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
@@ -35,6 +38,18 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3'); 
         audio.volume = 0.2;
         audio.play().catch(() => {});
+    };
+
+    const handleDelete = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (window.confirm("Are you sure you want to delete this post? This action cannot be undone.")) {
+            try {
+                await deleteDoc(doc(db, 'posts', post.id));
+            } catch (err) {
+                console.error("Error deleting post:", err);
+                alert("Failed to delete post.");
+            }
+        }
     };
 
     const handleLike = async (e: React.MouseEvent) => {
@@ -155,9 +170,20 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     if (post.type === 'repost') {
         return (
             <div className="p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors cursor-pointer" onClick={onClick} dir="rtl">
-                <div className="flex items-center gap-2 text-[#71767b] text-xs font-bold mb-2">
-                    <Repeat className="w-3 h-3"/>
-                    <span>{post.user?.name} أعاد النشر</span>
+                <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2 text-[#71767b] text-xs font-bold">
+                        <Repeat className="w-3 h-3"/>
+                        <span>{post.user?.name} أعاد النشر</span>
+                    </div>
+                    {isOwner && (
+                        <button 
+                            onClick={handleDelete}
+                            className="text-gray-500 hover:text-red-500 transition-colors p-1"
+                            title="Delete Repost"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                    )}
                 </div>
                 {/* Render the inner original post style (simplified) */}
                 <div className="border border-[#2f3336] rounded-2xl p-3 mt-1 hover:bg-[#16181c] transition-colors">
@@ -206,11 +232,22 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                         {renderBadge(post.user)}
                         <span className="truncate ltr text-[#71767b] ml-1 text-sm" dir="ltr">{post.user?.handle}</span>
                         <span className="text-[#71767b] px-1">·</span>
-                        <span className="text-[#71767b] text-sm">{post.timestamp}</span>
+                        <span className="text-[#71767b] text-sm hover:underline">{formatRelativeTime(post.createdAt)}</span>
                     </div>
-                    <button className="p-1 -mr-2 rounded-full hover:bg-[#1d9bf0]/10 hover:text-[#1d9bf0] transition-colors" onClick={(e) => e.stopPropagation()}>
-                        <MoreHorizontal className="w-4 h-4"/>
-                    </button>
+                    <div className="flex items-center gap-2">
+                        {isOwner && (
+                            <button 
+                                className="p-1.5 -mr-1 rounded-full text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                                onClick={handleDelete}
+                                title="Delete Post"
+                            >
+                                <Trash2 className="w-4 h-4"/>
+                            </button>
+                        )}
+                        <button className="p-1 -mr-2 rounded-full hover:bg-[#1d9bf0]/10 hover:text-[#1d9bf0] transition-colors" onClick={(e) => e.stopPropagation()}>
+                            <MoreHorizontal className="w-4 h-4"/>
+                        </button>
+                    </div>
                 </div>
 
                 <div className="text-[15px] text-[#e7e9ea] whitespace-pre-wrap leading-relaxed mt-0.5" style={{ wordBreak: 'break-word' }}>
