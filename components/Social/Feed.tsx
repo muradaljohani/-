@@ -7,9 +7,9 @@ import {
   onSnapshot, 
   addDoc, 
   serverTimestamp, 
-  where
-} from 'firebase/firestore';
-import { db } from '../../src/lib/firebase';
+  where,
+  db
+} from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
 import { Image, BarChart2, Smile, MapPin, Loader2, X, Wand2, Feather } from 'lucide-react';
@@ -68,41 +68,44 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      let livePosts = snapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data
-          };
-      });
+      try {
+        let livePosts = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data
+            };
+        });
 
-      // CLIENT-SIDE SORTING
-      livePosts.sort((a: any, b: any) => {
-          // 1. Pinned posts first (only for 'foryou')
-          if (activeTab === 'foryou') {
-              const pinA = a.isPinned ? 1 : 0;
-              const pinB = b.isPinned ? 1 : 0;
-              if (pinA !== pinB) return pinB - pinA;
-          }
-          
-          // 2. Sort by Date (Handle both 'createdAt' and legacy 'timestamp')
-          const getTime = (p: any) => {
-              const val = p.createdAt || p.timestamp;
-              return val?.toMillis ? val.toMillis() : (new Date(val || 0).getTime());
-          };
-          
-          return getTime(b) - getTime(a);
-      });
+        // CLIENT-SIDE SORTING
+        livePosts.sort((a: any, b: any) => {
+            // 1. Pinned posts first (only for 'foryou')
+            if (activeTab === 'foryou') {
+                const pinA = a.isPinned ? 1 : 0;
+                const pinB = b.isPinned ? 1 : 0;
+                if (pinA !== pinB) return pinB - pinA;
+            }
+            
+            // 2. Sort by Date (Handle both 'createdAt' and legacy 'timestamp')
+            const getTime = (p: any) => {
+                const val = p.createdAt || p.timestamp;
+                return val?.toMillis ? val.toMillis() : (new Date(val || 0).getTime());
+            };
+            
+            return getTime(b) - getTime(a);
+        });
 
-      setPosts(livePosts);
-      setLoading(false);
-    }, (err) => {
-        console.error("Feed Error:", err);
+        setPosts(livePosts);
         setLoading(false);
-        // Fallback for missing index: Try simple fetch without ordering if specific order fails
-        // This prevents the white screen crash
-        if (err.code === 'failed-precondition') {
-             if (showToast) showToast("جارِ تحسين قاعدة البيانات، يرجى الانتظار...", "info");
+      } catch (e) {
+          console.error("Error processing posts snapshot", e);
+          setLoading(false);
+      }
+    }, (err) => {
+        console.error("Feed Query Error:", err);
+        setLoading(false);
+        if (showToast && err.code === 'failed-precondition') {
+             showToast("جارِ تحسين قاعدة البيانات، يرجى الانتظار...", "error");
         }
     });
 

@@ -20,11 +20,14 @@ interface PostCardProps {
 export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShare, onClick, isFocusMode = false, onUserClick }) => {
     const { user, isAdmin } = useAuth();
     const [liked, setLiked] = useState(false);
-    const [likeCount, setLikeCount] = useState(post.likes || 0);
+    const [likeCount, setLikeCount] = useState(post?.likes || 0);
     const [isAnimating, setIsAnimating] = useState(false);
     
     const [retweeted, setRetweeted] = useState(false);
-    const [retweetCount, setRetweetCount] = useState(post.retweets || 0);
+    const [retweetCount, setRetweetCount] = useState(post?.retweets || 0);
+
+    // Safeguard for missing post or user data
+    if (!post || !post.user) return null;
 
     const isOwner = user && post.user?.uid ? user.id === post.user.uid : false;
     const canDelete = isOwner || isAdmin;
