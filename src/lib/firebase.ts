@@ -9,7 +9,7 @@ const getApp = () => ({ name: '[DEFAULT]' });
 const getAuth = (app?: any) => ({ currentUser: null });
 const getFirestore = (app?: any) => ({});
 const getStorage = (app?: any) => ({});
-const getAnalytics = (app?: any) => ({});
+const getAnalytics = (app?: any) => ({ logEvent: (name: string, params?: any) => console.log('[Analytics Mock]', name, params) });
 
 // Auth Providers
 class GoogleAuthProvider {}
@@ -20,7 +20,7 @@ class GithubAuthProvider {}
 // Auth Functions
 const signInWithPopup = async (auth: any, provider: any) => {
     console.log("Mock signInWithPopup called");
-    throw new Error("Firebase not connected (Mock Mode)");
+    throw new Error("Firebase not connected (Mock Mode). Check console for details.");
 };
 const signOut = async (auth: any) => {
     console.log("Mock signOut called");
@@ -84,6 +84,7 @@ const app = initializeApp({});
 const auth = getAuth(app);
 const db = getFirestore(app);
 const storage = getStorage(app);
+const analytics = getAnalytics(app);
 
 // Provider Instances
 const googleProvider = new GoogleAuthProvider();
@@ -91,4 +92,5 @@ const facebookProvider = new FacebookAuthProvider();
 const twitterProvider = new TwitterAuthProvider();
 const githubProvider = new GithubAuthProvider();
 
-export { app, auth, db, storage, googleProvider, facebookProvider, twitterProvider, githubProvider };
+// Final Export including analytics
+export { app, auth, db, storage, analytics, googleProvider, facebookProvider, twitterProvider, githubProvider };
