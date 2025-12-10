@@ -180,24 +180,24 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     : posts.filter(p => user?.following?.includes(p.user.uid) || p.user.uid === user?.id);
 
   return (
-    <div className="flex-1 min-h-screen pb-20 md:pb-0 bg-[var(--bg-primary)]">
+    <div className="flex-1 min-h-screen pb-20 md:pb-0 bg-transparent">
       
       {/* 1. Sticky Header */}
-      <div className="sticky top-0 z-50 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border-color)]">
+      <div className="sticky top-0 z-50 bg-white/85 dark:bg-black/85 backdrop-blur-md border-b border-gray-100 dark:border-[#2f3336]">
         
         {/* Brand & Focus Toggle */}
         <div className="flex justify-between items-center py-3 px-4">
-          <h1 className="text-xl font-extrabold text-[var(--text-primary)] font-arabic tracking-wide hidden md:block">
+          <h1 className="text-xl font-extrabold text-black dark:text-[#e7e9ea] font-arabic tracking-wide hidden md:block">
             الرئيسية
           </h1>
-          <div className="md:hidden font-black text-lg text-[var(--text-primary)]">M</div>
+          <div className="md:hidden font-black text-lg text-black dark:text-[#e7e9ea]">M</div>
           
           <button 
             onClick={() => setIsFocusMode(!isFocusMode)}
             className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
               isFocusMode 
                 ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' 
-                : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border-color)]'
+                : 'bg-gray-100 dark:bg-[#16181c] text-gray-500 dark:text-[#71767b] hover:bg-gray-200 dark:hover:bg-[#2f3336]'
             }`}
           >
             {isFocusMode ? <EyeOff className="w-3 h-3"/> : <Eye className="w-3 h-3"/>}
@@ -209,14 +209,14 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         <div className="flex w-full relative">
             <button 
                 onClick={() => setActiveTab('foryou')}
-                className={`flex-1 py-3 text-sm font-bold transition-colors hover:bg-[var(--bg-secondary)] ${activeTab === 'foryou' ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}
+                className={`flex-1 py-3 text-sm font-bold transition-colors hover:bg-gray-100 dark:hover:bg-[#16181c] ${activeTab === 'foryou' ? 'text-black dark:text-[#e7e9ea]' : 'text-gray-500 dark:text-[#71767b]'}`}
             >
                 لك (For You)
                 {activeTab === 'foryou' && <div className="absolute bottom-0 left-[25%] w-1/2 h-1 bg-[var(--accent-color)] rounded-full transition-all duration-300 transform -translate-x-1/2 left-1/2"></div>}
             </button>
             <button 
                 onClick={() => setActiveTab('following')}
-                className={`flex-1 py-3 text-sm font-bold transition-colors hover:bg-[var(--bg-secondary)] ${activeTab === 'following' ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}
+                className={`flex-1 py-3 text-sm font-bold transition-colors hover:bg-gray-100 dark:hover:bg-[#16181c] ${activeTab === 'following' ? 'text-black dark:text-[#e7e9ea]' : 'text-gray-500 dark:text-[#71767b]'}`}
             >
                 متابعة (Following)
                 {activeTab === 'following' && <div className="absolute bottom-0 left-[25%] w-1/2 h-1 bg-[var(--accent-color)] rounded-full transition-all duration-300 transform -translate-x-1/2 left-1/2"></div>}
@@ -226,17 +226,17 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
 
       {/* 3. Compose Area (Only if logged in) */}
       {user && (
-      <div className="border-b border-[var(--border-color)] p-4 bg-[var(--bg-primary)] hidden md:block">
+      <div className="border-b border-gray-200 dark:border-[#2f3336] p-4 bg-white dark:bg-black hidden md:block">
         <div className="flex gap-4">
           <img 
             src={user.avatar} 
             alt="User" 
-            className="w-10 h-10 rounded-full object-cover border border-[var(--border-color)] shrink-0"
+            className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-[#2f3336] shrink-0"
           />
           <div className="flex-1">
             <div className="relative">
               <textarea
-                className="w-full bg-transparent text-lg placeholder-[var(--text-secondary)] text-[var(--text-primary)] border-none focus:ring-0 resize-none h-16 disabled:opacity-50"
+                className="w-full bg-transparent text-lg placeholder-gray-500 dark:placeholder-[#71767b] text-black dark:text-[#e7e9ea] border-none focus:ring-0 resize-none h-16 disabled:opacity-50"
                 placeholder={isEnhancing ? "جاري التحسين بالذكاء الاصطناعي..." : "ماذا يحدث؟"}
                 value={newPostText}
                 onChange={(e) => setNewPostText(e.target.value)}
@@ -252,7 +252,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             {/* Media Preview */}
             {previewUrl && (
               <div className="relative mt-2 mb-4 w-fit group">
-                <img src={previewUrl} alt="Preview" className="rounded-xl max-h-64 object-cover border border-[var(--border-color)] shadow-md"/>
+                <img src={previewUrl} alt="Preview" className="rounded-xl max-h-64 object-cover border border-gray-200 dark:border-[#2f3336] shadow-md"/>
                 <button 
                   onClick={removeImage}
                   className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5 transition-colors"
@@ -267,7 +267,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
               </div>
             )}
 
-            <div className="flex justify-between items-center mt-2 border-t border-[var(--border-color)] pt-3">
+            <div className="flex justify-between items-center mt-2 border-t border-gray-200 dark:border-[#2f3336] pt-3">
               <div className="flex gap-2 text-[var(--accent-color)] items-center">
                 
                 {/* Hidden File Input */}
@@ -315,13 +315,13 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
       )}
 
       {/* 4. Feed List */}
-      <div className="divide-y divide-[var(--border-color)]">
+      <div className="divide-y divide-gray-200 dark:divide-[#2f3336]">
         {loading ? (
           <div className="py-20 flex justify-center">
               <Loader2 className="w-8 h-8 text-[var(--accent-color)] animate-spin" />
           </div>
         ) : displayedPosts.length === 0 ? (
-            <div className="py-20 text-center text-[var(--text-secondary)]">
+            <div className="py-20 text-center text-gray-500 dark:text-[#71767b]">
                 {activeTab === 'following' 
                     ? 'أنت لا تتابع أحداً بعد أو لم ينشروا شيئاً.' 
                     : 'لا توجد منشورات حالياً.'}

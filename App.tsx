@@ -132,7 +132,7 @@ const AppContent = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] font-sans">
+    <div className="min-h-screen bg-white dark:bg-black text-black dark:text-[#e7e9ea] transition-colors duration-200 font-sans">
        <SEOHelmet title="Mylaf Murad | National Platform" />
        {renderView()}
     </div>
