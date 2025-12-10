@@ -52,15 +52,25 @@
         -webkit-tap-highlight-color: transparent; 
         text-align: right; 
         background-color: #ffffff;
-        color: #0f172a;
-        transition: background-color 0.3s ease, color 0.3s ease;
+        color: #0f1419; /* Twitter Light Text */
+        transition: background-color 0.2s ease, color 0.2s ease;
     }
 
-    /* Dark Mode Global Overrides (Twitter Dim Palette) */
+    /* Dark Mode Global Overrides (Twitter Lights Out) */
     html.dark body {
-        background-color: #15202b !important; /* Twitter Dim BG */
-        color: #f7f9f9 !important; /* Twitter Dim Text */
+        background-color: #000000 !important; /* Pure Black */
+        color: #e7e9ea !important; /* High Contrast White/Grey */
     }
+
+    /* Strict Text Inheritance to prevent invisible text */
+    h1, h2, h3, h4, h5, h6, p, span, li, a {
+        color: inherit;
+    }
+
+    /* Exception for specific colored text classes (Tailwind handles this via specificity usually, but this helps) */
+    .text-blue-500 { color: #3b82f6 !important; }
+    .text-red-500 { color: #ef4444 !important; }
+    .text-emerald-500 { color: #10b981 !important; }
 
     ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: transparent; }
@@ -78,14 +88,14 @@
         theme: {
           extend: {
             colors: {
-              // Twitter-like Dark Palette
+              // Twitter-like Palette
               dark: {
-                bg: '#15202b',
-                card: '#1e2732',
-                border: '#38444d',
-                input: '#273340',
-                text: '#f7f9f9',
-                muted: '#8b98a5'
+                bg: '#000000',
+                card: '#16181c',
+                border: '#2f3336',
+                input: '#202327',
+                text: '#e7e9ea',
+                muted: '#71767b'
               }
             }
           }

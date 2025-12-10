@@ -15,7 +15,7 @@ export const SocialService = {
     async getPosts(): Promise<SocialPost[]> {
         try {
             const postsRef = collection(db, 'social_posts');
-            const q = query(postsRef, orderBy('createdAt', 'desc'));
+            const q = query(postsRef, orderBy('isPinned', 'desc'), orderBy('createdAt', 'desc')); // Order by Pinned first
             const snapshot = await getDocs(q);
             
             return snapshot.docs.map((doc: any) => {
@@ -33,23 +33,22 @@ export const SocialService = {
         }
     },
 
-    // Check if DB is empty and seed the specific Murad posts
+    // Check if DB is empty and AUTOMATICALLY seed the specific Murad posts
     async checkAndSeed(): Promise<void> {
         try {
             const postsRef = collection(db, 'social_posts');
             const snapshot = await getDocs(postsRef);
             
-            if (snapshot.docs.length === 0) {
-                // Auto-seed disabled to prevent race conditions during debugging
-                // Use the manual button instead
-                // await this.forceSeed(); 
+            if (snapshot.empty) {
+                console.log("Database empty. Executing Auto-Seed...");
+                await this.forceSeed(); 
             }
         } catch (error) {
             console.error("Seeding check failed:", error);
         }
     },
 
-    // Manual Force Seed
+    // Manual Force Seed - THE REPAIR FUNCTION
     async forceSeed(): Promise<void> {
         console.log("STARTING FORCE SEED...");
         const postsRef = collection(db, 'social_posts');
@@ -63,7 +62,7 @@ export const SocialService = {
             bio: "Founder of Murad Group | Tech Enthusiast 🇸🇦"
         };
 
-        // Post 2: The Archive (Added first so it appears below the viral one)
+        // Post 2: The Archive (Normal Post)
         await addDoc(postsRef, {
             user: MURAD_USER,
             type: 'image',
@@ -73,10 +72,11 @@ export const SocialService = {
             likes: 42000,
             retweets: 2000000,
             replies: 8000,
-            views: '10M'
+            views: '10M',
+            isPinned: false
         });
 
-        // Post 1: The Viral Welcome (Added second so it appears on top)
+        // Post 1: The Viral Welcome (Pinned)
         await addDoc(postsRef, {
             user: MURAD_USER,
             type: 'image',
@@ -86,7 +86,8 @@ export const SocialService = {
             likes: 50000,
             retweets: 5000000,
             replies: 12000,
-            views: '15M'
+            views: '15M',
+            isPinned: true
         });
         
         console.log("Force Seed Complete.");
@@ -111,7 +112,8 @@ export const SocialService = {
                 likes: 0,
                 retweets: 0,
                 replies: 0,
-                views: '0'
+                views: '0',
+                isPinned: false
             });
             return true;
         } catch (error) {

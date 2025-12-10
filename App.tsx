@@ -133,10 +133,7 @@ const AppContent = () => {
   const isImmersive = ['clock-system', 'dopamine', 'social'].includes(currentView);
 
   return (
-    // STRICT COLOR LOGIC: 
-    // Light Mode: bg-white, text-slate-900 (Dark Gray/Black)
-    // Dark Mode: bg-[#0f172a] (Dark Blue/Black), text-white
-    <div className="flex flex-col min-h-screen font-sans transition-colors duration-300 bg-white text-slate-900 dark:bg-[#0f172a] dark:text-white">
+    <div className="flex flex-col min-h-screen font-sans transition-colors duration-200 bg-white text-black dark:bg-black dark:text-[#e7e9ea]">
       <SEOHelmet title="مجموعة ميلاف مراد" />
       
       {!isImmersive && (

@@ -62,14 +62,14 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
 
   return (
     <>
-    <header className="sticky top-0 z-50 w-full bg-white/90 dark:bg-[#0f172a]/90 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
+    <header className="sticky top-0 z-50 w-full bg-white/90 dark:bg-black/90 backdrop-blur-md border-b border-gray-100 dark:border-gray-800 transition-colors duration-300">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         
         {/* BRAND & LOGO */}
         <div className="flex items-center gap-4">
             {/* Mobile Menu Button */}
             <button 
-                className="lg:hidden p-2 -mr-2 text-slate-600 dark:text-gray-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                className="lg:hidden p-2 -mr-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-900 rounded-lg transition-colors"
                 onClick={() => setMobileMenu(!mobileMenu)}
             >
                 <Menu className="w-6 h-6"/>
@@ -84,10 +84,10 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
                 </div>
                 
                 <div className="hidden sm:flex flex-col justify-center">
-                    <span className="text-base font-bold text-slate-800 dark:text-white leading-none tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    <span className="text-base font-bold text-gray-900 dark:text-white leading-none tracking-tight group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                         {t.brand_name}
                     </span>
-                    <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-wider uppercase mt-0.5">
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400 font-medium tracking-wider uppercase mt-0.5">
                         {t.brand_sub}
                     </span>
                 </div>
@@ -121,38 +121,38 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
                         onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
                         className={`flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full border transition-all ${
                             isUserMenuOpen 
-                            ? 'bg-blue-50 dark:bg-slate-800 border-blue-200 dark:border-slate-600' 
-                            : 'bg-white dark:bg-slate-900 border-gray-200 dark:border-gray-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                            ? 'bg-blue-50 dark:bg-gray-800 border-blue-200 dark:border-gray-600' 
+                            : 'bg-white dark:bg-black border-gray-200 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-900'
                         }`}
                     >
                         <img 
                             src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
-                            className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-600"
+                            className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-gray-700"
                             alt="User"
                         />
                         <div className="hidden md:flex flex-col items-start">
-                             <span className="text-xs font-bold text-slate-700 dark:text-gray-200 max-w-[80px] truncate leading-tight">
+                             <span className="text-xs font-bold text-gray-700 dark:text-gray-200 max-w-[80px] truncate leading-tight">
                                 {user.name.split(' ')[0]}
                             </span>
                         </div>
-                        <ChevronDown className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                        <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${isUserMenuOpen ? 'rotate-180' : ''}`} />
                     </button>
 
                     {/* PREMIUM USER DROPDOWN (Twitter/SaaS Style) */}
                     {isUserMenuOpen && (
-                        <div className={`absolute top-full mt-3 w-80 origin-top-right bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl dark:shadow-slate-900/20 z-50 overflow-hidden ring-1 ring-black/5 ${direction === 'rtl' ? 'left-0' : 'right-0'} animate-fade-in-up`}>
+                        <div className={`absolute top-full mt-3 w-80 origin-top-right bg-white dark:bg-black border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl dark:shadow-gray-900/20 z-50 overflow-hidden ring-1 ring-black/5 ${direction === 'rtl' ? 'left-0' : 'right-0'} animate-fade-in-up`}>
                             
                             {/* 1. User Info Header */}
                             <div className="px-5 py-4 border-b border-gray-100 dark:border-gray-800">
-                                <h3 className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.name}</h3>
-                                <p className="text-xs text-slate-500 dark:text-gray-500 truncate mt-0.5">{user.email}</p>
+                                <h3 className="text-sm font-bold text-gray-900 dark:text-white truncate">{user.name}</h3>
+                                <p className="text-xs text-gray-500 dark:text-gray-500 truncate mt-0.5">{user.email}</p>
                             </div>
 
                             <div className="py-2">
                                 {/* 2. Appearance Toggle */}
                                 <button 
                                     onClick={toggleTheme}
-                                    className="w-full flex items-center justify-between px-5 py-3 text-sm text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+                                    className="w-full flex items-center justify-between px-5 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                                 >
                                     <div className="flex items-center gap-3">
                                         {theme === 'dark' ? <Moon className="w-5 h-5 text-purple-400" /> : <Sun className="w-5 h-5 text-amber-500" />}
@@ -166,7 +166,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
                                 {/* 3. Language Switcher (Expandable) */}
                                 <button 
                                     onClick={() => setShowLanguageSubmenu(!showLanguageSubmenu)}
-                                    className={`w-full flex items-center justify-between px-5 py-3 text-sm text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors ${showLanguageSubmenu ? 'bg-gray-50 dark:bg-gray-900' : ''}`}
+                                    className={`w-full flex items-center justify-between px-5 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors ${showLanguageSubmenu ? 'bg-gray-50 dark:bg-gray-900' : ''}`}
                                 >
                                     <div className="flex items-center gap-3">
                                         <Globe className="w-5 h-5 text-blue-500" />
@@ -191,7 +191,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
                                                 className={`w-full flex items-center justify-between px-8 py-2.5 text-xs transition-colors ${
                                                     language === lang.code 
                                                     ? 'text-blue-600 dark:text-blue-400 font-bold bg-blue-50/50 dark:bg-blue-900/20' 
-                                                    : 'text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
+                                                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
                                                 }`}
                                             >
                                                 <span>{lang.name}</span>
@@ -208,12 +208,12 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
                             <div className="py-2">
                                 <DropdownItem 
                                     onClick={() => handleNav('profile')} 
-                                    icon={<LayoutGrid className="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors"/>} 
+                                    icon={<LayoutGrid className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors"/>} 
                                     label={t.dashboard} 
                                 />
                                 <DropdownItem 
                                     onClick={() => handleNav('settings')} 
-                                    icon={<Settings className="w-5 h-5 text-slate-400 group-hover:text-blue-500 transition-colors"/>} 
+                                    icon={<Settings className="w-5 h-5 text-gray-400 group-hover:text-blue-500 transition-colors"/>} 
                                     label={t.settings} 
                                 />
                             </div>
@@ -237,7 +237,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
             ) : (
                 <button 
                     onClick={() => setIsAuthOpen(true)}
-                    className="flex items-center gap-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-gray-100 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95"
+                    className="flex items-center gap-2 bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 px-5 py-2.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95"
                 >
                     <LogIn className="w-4 h-4"/>
                     <span>{t.login}</span>
@@ -249,7 +249,7 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
 
       {/* MOBILE MENU OVERLAY */}
       {mobileMenu && (
-          <div className="lg:hidden bg-white dark:bg-[#0f172a] border-t border-gray-200 dark:border-gray-800 absolute w-full left-0 top-16 shadow-2xl z-40 max-h-[calc(100vh-64px)] overflow-y-auto">
+          <div className="lg:hidden bg-white dark:bg-black border-t border-gray-200 dark:border-gray-800 absolute w-full left-0 top-16 shadow-2xl z-40 max-h-[calc(100vh-64px)] overflow-y-auto">
             <div className="p-4 space-y-1">
                 {user && (
                     <MobileNavItem onClick={() => handleNav('profile')} icon={<LayoutGrid className="w-5 h-5 text-blue-500"/>} label={t.dashboard} />
@@ -258,24 +258,24 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
                 <MobileNavItem onClick={() => handleNav('jobs')} icon={<BriefcaseIcon className="w-5 h-5 text-emerald-500"/>} label={t.nav_jobs} />
                 <MobileNavItem onClick={() => handleNav('academy')} icon={<FileText className="w-5 h-5 text-purple-500"/>} label={t.nav_academy} />
                 <MobileNavItem onClick={() => handleNav('market')} icon={<ShoppingBag className="w-5 h-5 text-amber-500"/>} label={t.nav_market} />
-                <MobileNavItem onClick={() => handleNav('corporate')} icon={<Building2 className="w-5 h-5 text-slate-500"/>} label={t.nav_corp} />
+                <MobileNavItem onClick={() => handleNav('corporate')} icon={<Building2 className="w-5 h-5 text-gray-500"/>} label={t.nav_corp} />
                 
                 <div className="border-t border-gray-100 dark:border-gray-800 my-2"></div>
                 
                 {/* Mobile Extra Controls (Since we removed them from top header) */}
                 <div className="flex items-center justify-between px-3 py-2">
-                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">المظهر</span>
-                    <button onClick={toggleTheme} className="p-2 bg-gray-100 dark:bg-slate-800 rounded-lg">
+                    <span className="text-sm font-bold text-gray-500 dark:text-gray-400">المظهر</span>
+                    <button onClick={toggleTheme} className="p-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
                          {theme === 'dark' ? <Moon className="w-5 h-5 text-purple-400"/> : <Sun className="w-5 h-5 text-amber-500"/>}
                     </button>
                 </div>
                 
                 <div className="flex items-center justify-between px-3 py-2">
-                    <span className="text-sm font-bold text-slate-500 dark:text-slate-400">اللغة</span>
+                    <span className="text-sm font-bold text-gray-500 dark:text-gray-400">اللغة</span>
                     <button onClick={() => {
                         const nextLang = language === 'ar' ? 'en' : 'ar'; // Simple toggle for mobile quick access
                         changeLanguage(nextLang);
-                    }} className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-slate-800 rounded-lg text-xs font-bold text-slate-700 dark:text-gray-200">
+                    }} className="flex items-center gap-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-xs font-bold text-gray-700 dark:text-gray-200">
                          <Globe className="w-4 h-4"/> {language.toUpperCase()}
                     </button>
                 </div>
@@ -297,8 +297,8 @@ const NavButton = ({ onClick, icon, label, active }: any) => (
         onClick={onClick}
         className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
             active 
-            ? 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white' 
-            : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800/50'
+            ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white' 
+            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800/50'
         }`}
     >
         {icon}
@@ -311,7 +311,7 @@ const DropdownItem = ({ onClick, icon, label }: any) => {
     return (
         <button 
             onClick={onClick}
-            className={`group w-full px-5 py-3 text-sm text-slate-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 flex items-center gap-3 transition-colors ${direction === 'rtl' ? 'text-right' : 'text-left'}`}
+            className={`group w-full px-5 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-900 flex items-center gap-3 transition-colors ${direction === 'rtl' ? 'text-right' : 'text-left'}`}
         >
             {icon}
             <span className="font-medium">{label}</span>
@@ -322,7 +322,7 @@ const DropdownItem = ({ onClick, icon, label }: any) => {
 const MobileNavItem = ({ onClick, icon, label }: any) => (
     <button 
         onClick={onClick}
-        className="w-full flex items-center gap-3 p-3 rounded-xl text-slate-700 dark:text-gray-200 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+        className="w-full flex items-center gap-3 p-3 rounded-xl text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
     >
         {icon}
         <span className="font-bold text-sm">{label}</span>
