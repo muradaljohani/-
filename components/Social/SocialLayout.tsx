@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Home, Search, Bell, Mail, User, Plus, Image as ImageIcon, Video, 
-    MoreHorizontal, ArrowLeft, Moon, Sun, Monitor, X
+    MoreHorizontal, ArrowLeft, Moon, Sun, Monitor, X, LogIn
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -15,8 +15,8 @@ import { ProfileHeader } from './ProfileHeader';
 import { MobileSidebar } from './MobileSidebar';
 import { PostDetail } from './PostDetail';
 import { ChatWindow } from './ChatWindow';
-import { Notifications } from './Notifications'; // New Import
-import { Explore } from './Explore'; // New Import
+import { Notifications } from './Notifications'; 
+import { Explore } from './Explore'; 
 import { collection, query, where, onSnapshot, db } from '../../src/lib/firebase';
 
 interface Props {
@@ -26,7 +26,7 @@ interface Props {
 export type ViewState = 'feed' | 'reels' | 'admin' | 'messages' | 'profile' | 'post-detail' | 'chat' | 'notifications' | 'explore';
 
 export const SocialLayout: React.FC<Props> = ({ onBack }) => {
-    const { user } = useAuth();
+    const { user, signInWithGoogle } = useAuth();
     const { theme, cycleTheme } = useTheme();
     const [view, setView] = useState<ViewState>('feed');
     
@@ -47,7 +47,6 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
         if (!user) return;
         
         const notifsRef = collection(db, 'users', user.id, 'notifications');
-        // Simple query for unread
         const q = query(notifsRef, where('read', '==', false));
         
         const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -158,11 +157,11 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                     <SidebarLink icon={User} label="الملف الشخصي" active={view==='profile'} onClick={() => setView('profile')} />
                     
                     <button 
-                        onClick={() => setIsComposeOpen(true)}
+                        onClick={() => user ? setIsComposeOpen(true) : signInWithGoogle()}
                         className="bg-[var(--accent-color)] hover:opacity-90 text-white rounded-full p-3 xl:px-8 xl:py-3.5 font-bold mt-4 w-fit xl:w-full transition-all shadow-lg text-lg flex items-center justify-center gap-2"
                     >
                         <Plus className="w-6 h-6 xl:hidden"/>
-                        <span className="hidden xl:block">نشر</span>
+                        <span className="hidden xl:block">{user ? 'نشر' : 'تسجيل دخول'}</span>
                     </button>
                 </div>
                 
@@ -178,7 +177,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                          <span className="hidden xl:block font-bold text-sm">المظهر: {theme === 'lights-out' ? 'ليلي' : theme === 'dim' ? 'خافت' : 'نهاري'}</span>
                      </div>
 
-                     {user && (
+                     {user ? (
                         <div className="flex items-center gap-3 p-3 rounded-full hover:bg-[var(--bg-secondary)] cursor-pointer xl:w-full transition-colors">
                             <img src={user.avatar} className="w-10 h-10 rounded-full bg-slate-800 object-cover"/>
                             <div className="hidden xl:block flex-1 min-w-0 text-right">
@@ -187,6 +186,17 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                             </div>
                             <MoreHorizontal className="hidden xl:block w-5 h-5 text-[var(--text-secondary)]"/>
                         </div>
+                     ) : (
+                        <button 
+                            onClick={() => signInWithGoogle()}
+                            className="flex items-center gap-3 p-3 rounded-full hover:bg-[var(--bg-secondary)] cursor-pointer xl:w-full transition-colors border border-[var(--border-color)]"
+                        >
+                            <LogIn className="w-6 h-6 text-[var(--text-primary)]"/>
+                            <div className="hidden xl:block text-right">
+                                <div className="font-bold text-[var(--text-primary)] text-sm">تسجيل الدخول</div>
+                                <div className="text-[var(--text-secondary)] text-xs">Google Account</div>
+                            </div>
+                        </button>
                      )}
                 </div>
             </div>
@@ -317,7 +327,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                     <NavButton icon={Home} active={view === 'feed'} onClick={() => setView('feed')} />
                     <NavButton icon={Search} active={view === 'explore'} onClick={() => setView('explore')} />
                     <button 
-                        onClick={() => setIsComposeOpen(true)}
+                        onClick={() => user ? setIsComposeOpen(true) : signInWithGoogle()}
                         className="bg-[var(--accent-color)] text-white p-3 rounded-full shadow-lg transform -translate-y-4 border-4 border-[var(--bg-primary)] active:scale-95 transition-transform"
                     >
                         <Plus className="w-6 h-6"/>

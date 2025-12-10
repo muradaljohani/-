@@ -4,7 +4,7 @@ import { storage, ref, uploadBytes, getDownloadURL } from '../lib/firebase';
 /**
  * Uploads a file to Firebase Storage and returns the download URL.
  * @param file The Javascript File object to upload.
- * @param path The path in storage (e.g. 'posts/image1.jpg').
+ * @param path The path in storage (e.g. 'posts/user_id/image.jpg').
  */
 export const uploadImage = async (file: File, path: string): Promise<string> => {
   try {
