@@ -10,36 +10,38 @@ import { ReelsFeed } from './ReelsFeed';
 import { SocialAdmin } from './SocialAdmin';
 import { SocialService } from '../../services/SocialService';
 import { MobileSidebar } from './MobileSidebar';
-import { Sidebar } from './Sidebar'; // NEW IMPORT
+import { Sidebar } from './Sidebar';
 import { PostDetail } from './PostDetail';
 import { ChatWindow } from './ChatWindow';
 import { Notifications } from './Notifications'; 
 import { Explore } from './Explore'; 
 import { collection, query, where, onSnapshot, db } from '../../src/lib/firebase';
 import { MuradAI } from './MuradAI';
-import { ProfilePage } from './ProfilePage'; // NEW IMPORT
+import { ProfilePage } from './ProfilePage';
+import { SettingsLayout } from './SettingsLayout'; // IMPORTED
 
 // IMPORT NEW SECONDARY PAGES
 import { ElitePage, CreatorStudioPage, CirclesPage, LiveRoomsPage, CollectionsPage, SavedPage } from './SecondaryPages';
-import { SettingsPage } from './SettingsPage';
 
 interface Props {
     onBack: () => void;
     initialView?: string; 
 }
 
+// Updated ViewState to include granular settings handling
 export type ViewState = 
     'feed' | 'reels' | 'admin' | 'messages' | 'profile' | 'post-detail' | 'chat' | 'notifications' | 'explore' |
-    'elite' | 'creator-studio' | 'circles' | 'live' | 'collections' | 'saved' | 'settings' | 'user-profile';
+    'elite' | 'creator-studio' | 'circles' | 'live' | 'collections' | 'saved' | 'user-profile' | string; 
+    // string allows for 'settings' and 'settings/account' etc.
 
 export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) => {
-    const { user, signInWithGoogle } = useAuth();
+    const { user } = useAuth();
     const [view, setView] = useState<ViewState>(initialView as ViewState);
     
     // Navigation Params
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
     const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-    const [visitedUserId, setVisitedUserId] = useState<string | null>(null); // For visiting other profiles
+    const [visitedUserId, setVisitedUserId] = useState<string | null>(null);
 
     const [isComposeOpen, setIsComposeOpen] = useState(false);
     const [isAIOpen, setIsAIOpen] = useState(false);
@@ -72,14 +74,19 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
 
     // --- NAVIGATION HANDLERS ---
     const handleNavigation = (route: string) => {
-        window.history.pushState({}, '', `/social/${route}`);
-        
-        // Special case for 'profile' -> Go to My Profile
-        if (route === 'profile' && user) {
-            setVisitedUserId(user.id);
-            setView('user-profile');
+        // Deep link handling for settings
+        if (route.startsWith('settings')) {
+            window.history.pushState({}, '', `/social/${route}`);
+            setView(route);
         } else {
-            setView(route as ViewState);
+            window.history.pushState({}, '', `/social/${route}`);
+            // Special case for 'profile' -> Go to My Profile
+            if (route === 'profile' && user) {
+                setVisitedUserId(user.id);
+                setView('user-profile');
+            } else {
+                setView(route as ViewState);
+            }
         }
         setIsSidebarOpen(false); 
     };
@@ -121,7 +128,9 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
         }
     };
 
-    const isDeepPage = ['elite', 'creator-studio', 'circles', 'live', 'collections', 'saved', 'settings', 'user-profile'].includes(view);
+    // Check if we are in a "Deep" page that should hide the main layout elements like sidebar
+    // 'settings' is handled separately as it has its own layout logic
+    const isDeepPage = ['elite', 'creator-studio', 'circles', 'live', 'collections', 'saved', 'user-profile'].includes(view) || view.startsWith('settings');
 
     return (
         <div className={`flex-1 w-full min-h-screen bg-white dark:bg-black text-black dark:text-[#e7e9ea] font-sans flex justify-center selection:bg-[var(--accent-color)] selection:text-white transition-colors duration-200`} dir="rtl">
@@ -158,7 +167,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                 </div>
             )}
 
-            {/* NEW EXTRACTED SIDEBAR */}
+            {/* MAIN SIDEBAR (Desktop) - Hidden on deep pages */}
             {!isDeepPage && (
                 <Sidebar 
                     activeView={view} 
@@ -194,18 +203,27 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                     </div>
                 )}
 
-                {/* VIEWS */}
+                {/* --- ROUTING LOGIC --- */}
+                
                 {view === 'feed' && (
                     <Feed 
                         onOpenLightbox={setLightboxSrc} 
                         showToast={showToast} 
                         onBack={onBack}
                         onPostClick={handlePostClick}
-                        onUserClick={handleVisitProfile} // Pass profile nav handler
+                        onUserClick={handleVisitProfile}
                     />
                 )}
 
-                {/* The Dynamic Profile View */}
+                {/* Settings & Sub-pages */}
+                {view.startsWith('settings') && (
+                    <SettingsLayout 
+                        subSection={view.split('/')[1]} // Extracts 'account', 'security', etc.
+                        onNavigate={handleNavigation}
+                        onBack={() => handleNavigation('feed')}
+                    />
+                )}
+
                 {view === 'user-profile' && visitedUserId && (
                     <ProfilePage 
                         userId={visitedUserId} 
@@ -213,14 +231,12 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                     />
                 )}
                 
-                {/* Other Pages */}
                 {view === 'elite' && <ElitePage onBack={() => handleNavigation('feed')} />}
                 {view === 'creator-studio' && <CreatorStudioPage onBack={() => handleNavigation('feed')} />}
                 {view === 'circles' && <CirclesPage onBack={() => handleNavigation('feed')} />}
                 {view === 'live' && <LiveRoomsPage onBack={() => handleNavigation('feed')} />}
                 {view === 'collections' && <CollectionsPage onBack={() => handleNavigation('feed')} />}
                 {view === 'saved' && <SavedPage onBack={() => handleNavigation('feed')} />}
-                {view === 'settings' && <SettingsPage onBack={() => handleNavigation('feed')} />}
 
                 {view === 'post-detail' && selectedPostId && (
                     <PostDetail 
@@ -263,7 +279,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                 )}
             </main>
 
-            {/* Right Sidebar Desktop */}
+            {/* Right Sidebar Desktop - Hidden on deep pages */}
             {!isDeepPage && (
             <div className="hidden lg:block w-80 xl:w-96 h-screen sticky top-0 px-6 py-4 border-r border-gray-100 dark:border-[#2f3336] z-40 bg-white dark:bg-black">
                 <div className="relative mb-6 group">
