@@ -1,16 +1,17 @@
 
-import { db } from '../firebaseConfig';
 import { 
     collection, 
     getDocs, 
     query, 
     orderBy, 
     serverTimestamp,
+    Timestamp,
     doc,
     setDoc,
     getDoc,
-    addDoc
-} from 'firebase/firestore'; 
+    addDoc,
+    db
+} from '../src/lib/firebase'; 
 import { SocialPost } from '../dummyData';
 
 export const SocialService = {
@@ -18,7 +19,7 @@ export const SocialService = {
     async checkAndSeed(): Promise<void> {
         try {
             // Check for the main viral post by ID to avoid duplicates
-            const viralDocRef = doc(db, 'posts', 'viral-welcome-post');
+            const viralDocRef = doc(db, 'posts', 'ambition-vision-post');
             const viralDocSnap = await getDoc(viralDocRef);
             
             if (!viralDocSnap.exists()) {
@@ -39,17 +40,32 @@ export const SocialService = {
             avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
             verified: true,
             isGold: true,
-            uid: "admin-murad-id", // Fixed ID for the owner
+            uid: "admin-murad-id",
             bio: "Founder of Murad Group | Tech Enthusiast 🇸🇦"
         };
 
-        // Post 1: The Viral Welcome (Pinned) - ID: viral-welcome-post
+        const now = new Date();
+
+        // Post 1: Ambition (Newest - Pinned Top)
+        await setDoc(doc(db, "posts", "ambition-vision-post"), {
+            content: 'الطموح وقود لا ينفد.. والطريق إلى القمة يبدأ بخطوة واثقة. 🦁\n\nنحن لا ننتظر المستقبل، نحن نصنعه بأيدينا. القادم أجمل وأعظم بإذن الله.\n\n#طموح #شغف #ميلاف',
+            image: 'https://i.ibb.co/B5jRsfSN/Snapchat-1099490273.jpg',
+            user: MURAD_USER,
+            likes: 35000, 
+            retweets: 18000, 
+            replies: 5600,
+            views: '2.5M',
+            isPinned: true,
+            createdAt: serverTimestamp() // Now
+        }, { merge: true });
+
+        // Post 2: Viral Welcome (Middle)
         await setDoc(doc(db, 'posts', 'viral-welcome-post'), {
             user: MURAD_USER,
             type: 'image',
             content: 'هل تعلم أن يوتيوب بدأ بمقطع فيديو مدته 18 ثانية فقط لشخص يتحدث عن "الفيلة" في حديقة الحيوان؟ والآن يشاهده المليارات يومياً! 🌍\n\nاليوم نضع حجر الأساس لـ "مجتمع ميلاف".. قد تبدو بداية بسيطة، ولكن تذكروا هذا المنشور جيداً.. لأننا قادمون لنغير قواعد اللعبة. 🚀🔥\n\n#البداية #ميلاف #المستقبل',
-            images: ["https://i.ibb.co/QjNHDv3F/images-4.jpg"],
-            createdAt: serverTimestamp(),
+            image: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
+            createdAt: Timestamp.fromDate(new Date(now.getTime() - 60000)), // 1 min ago
             likes: 50000,
             retweets: 5000000,
             replies: 12500,
@@ -57,18 +73,19 @@ export const SocialService = {
             isPinned: true
         }, { merge: true });
 
-        // Post 2: The Archive (Normal Post) - ID: archive-memory-post
+        // Post 3: Archive (Oldest Pinned)
         await setDoc(doc(db, 'posts', 'archive-memory-post'), {
             user: MURAD_USER,
             type: 'image',
             content: 'من الأرشيف.. الطموح لا يشيخ. 🦅\nكنت أعلم منذ تلك اللحظة أننا سنصل إلى هنا يوماً ما.\n\n#ذكريات #اصرار',
-            images: ["https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg"],
-            createdAt: new Date(Date.now() - 86400000), // 1 day ago
+            images: ["https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg"], // Use images array for PostCard compatibility
+            image: "https://i.ibb.co/Hfrm9Bd4/20190220-200812.jpg", // Fallback
+            createdAt: Timestamp.fromDate(new Date(now.getTime() - 120000)), // 2 mins ago
             likes: 42000,
             retweets: 2000000,
             replies: 8000,
             views: '10M',
-            isPinned: false // Pinned under the main one visually via sort
+            isPinned: true
         }, { merge: true });
         
         console.log("Viral Content Seeded Successfully.");

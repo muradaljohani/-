@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
 import { 
-  User, X, Bookmark, FileText, Mic, 
+  User, X, Bookmark, Layers, Mic, 
   Settings, HelpCircle, Moon, Sun, 
-  ChevronDown, ChevronUp, Zap, LogOut,
-  Video, Users, MessageSquare, DollarSign,
-  FileCode, Bell
+  ChevronDown, ChevronUp, Gem, LogOut,
+  Users, DollarSign,
+  Bell, Briefcase, Lock
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -14,10 +14,11 @@ import { SettingsPage } from './SettingsPage';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  unreadCount?: number; // New Prop
+  unreadCount?: number;
+  onNavigate: (route: string) => void;
 }
 
-export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose, unreadCount = 0 }) => {
+export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose, unreadCount = 0, onNavigate }) => {
   const { user, logout } = useAuth();
   const { theme, cycleTheme } = useTheme();
   
@@ -30,6 +31,11 @@ export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose, unreadCount = 
     let target = mode;
     if (theme === target) return;
     cycleTheme(); 
+  };
+
+  const handleNav = (route: string) => {
+      onNavigate(route);
+      onClose();
   };
 
   if (!user) return null;
@@ -52,7 +58,7 @@ export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose, unreadCount = 
 
       {/* --- DRAWER --- */}
       <div 
-        className={`fixed inset-y-0 right-0 w-[80%] sm:w-[320px] bg-[var(--bg-primary)] z-[70] shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${
+        className={`fixed inset-y-0 right-0 w-[85%] sm:w-[320px] bg-[var(--bg-primary)] z-[70] shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
         dir="rtl"
@@ -89,15 +95,21 @@ export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose, unreadCount = 
           <div className="h-px bg-[var(--border-color)] w-full"></div>
         </div>
 
-        {/* Menu Items */}
+        {/* REBRANDED Menu Items */}
         <div className="flex-1 overflow-y-auto py-0">
-          <MenuItem icon={User} label="الملف الشخصي" onClick={() => {}} />
-          <MenuItem icon={Bell} label="التنبيهات" badge={unreadCount > 0 ? `${unreadCount} جديد` : undefined} />
-          <MenuItem icon={Zap} label="Premium" />
-          <MenuItem icon={FileText} label="القوائم" />
-          <MenuItem icon={Bookmark} label="العلامات المرجعية" />
-          <MenuItem icon={Users} label="المجتمعات" />
-          <MenuItem icon={DollarSign} label="تحقيق الدخل" />
+          <MenuItem icon={User} label="الملف الشخصي" onClick={() => handleNav('profile')} />
+          <MenuItem icon={Bell} label="التنبيهات" onClick={() => handleNav('notifications')} badge={unreadCount > 0 ? `${unreadCount} جديد` : undefined} />
+          
+          {/* LEGAL REBRANDING SECTION */}
+          <div className="my-2 h-px bg-[var(--border-color)] mx-4"></div>
+          
+          <MenuItem icon={Gem} label="النخبة (Elite)" onClick={() => handleNav('elite')} />
+          <MenuItem icon={Briefcase} label="استوديو المبدعين" onClick={() => handleNav('creator-studio')} />
+          <MenuItem icon={Users} label="الدوائر (Circles)" onClick={() => handleNav('circles')} />
+          <MenuItem icon={Mic} label="غرف حية (Live)" onClick={() => handleNav('live')} />
+          <MenuItem icon={Layers} label="مجموعات (Collections)" onClick={() => handleNav('collections')} />
+          <MenuItem icon={Bookmark} label="المحفوظات (Saved)" onClick={() => handleNav('saved')} />
+          
         </div>
 
         {/* Footer */}
@@ -113,7 +125,6 @@ export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose, unreadCount = 
           {isSettingsAccordionOpen && (
             <div className="space-y-4 px-2 mb-4 animate-fade-in-up mt-2">
                
-               {/* Link to Settings Page */}
                <div 
                   onClick={() => setShowSettingsPage(true)}
                   className="flex items-center gap-3 text-[var(--text-primary)] text-[15px] cursor-pointer"
@@ -151,7 +162,6 @@ export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose, unreadCount = 
              
              <h3 className="font-bold text-xl text-[var(--text-primary)] mb-6">المظهر</h3>
 
-             {/* Dark Mode Toggle */}
              <div className="flex justify-between items-center mb-8">
                 <span className="font-bold text-[var(--text-primary)]">الوضع الداكن</span>
                 <button 
@@ -162,7 +172,6 @@ export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose, unreadCount = 
                 </button>
              </div>
 
-             {/* Theme Radio Selection (Only if Dark Mode is On) */}
              <div className={`space-y-4 transition-opacity ${theme === 'light' ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
                 <div 
                    className="flex items-center justify-between p-4 rounded-xl border border-[var(--border-color)] bg-[#15202b] cursor-pointer"

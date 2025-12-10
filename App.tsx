@@ -32,6 +32,7 @@ import { PublishPortal } from './components/PublishPortal';
 const AppContent = () => {
   const [currentView, setCurrentView] = useState('landing');
   const [courseId, setCourseId] = useState<string | null>(null);
+  const [socialSubView, setSocialSubView] = useState<string | undefined>(undefined);
   const { theme, cycleTheme } = useTheme();
 
   // Simple Router
@@ -41,6 +42,15 @@ const AppContent = () => {
         setCourseId(id);
         setCurrentView('course-view');
         window.history.pushState({}, '', `/courses/${id}`);
+    } else if (view.startsWith('social/')) {
+        const sub = view.split('/')[1];
+        setSocialSubView(sub);
+        setCurrentView('social');
+        window.history.pushState({}, '', `/social/${sub}`);
+    } else if (view === 'social') {
+        setSocialSubView(undefined); // Reset sub view
+        setCurrentView('social');
+        window.history.pushState({}, '', '/social');
     } else {
         window.history.pushState({}, '', view === 'landing' ? '/' : `/${view}`);
         setCurrentView(view);
@@ -49,33 +59,34 @@ const AppContent = () => {
   };
 
   useEffect(() => {
-    const path = window.location.pathname;
-    if (path === '/' || path === '') {
-        setCurrentView('landing');
-    } else if (path.startsWith('/courses/')) {
-        const id = path.split('/')[2];
-        if (id) {
-            setCourseId(id);
-            setCurrentView('course-view');
+    const handleNavigation = () => {
+        const path = window.location.pathname;
+        if (path === '/' || path === '') {
+            setCurrentView('landing');
+        } else if (path.startsWith('/courses/')) {
+            const id = path.split('/')[2];
+            if (id) {
+                setCourseId(id);
+                setCurrentView('course-view');
+            } else {
+                setCurrentView('courses');
+            }
+        } else if (path.startsWith('/social')) {
+             // Handle sub-routes like /social/elite
+             const parts = path.split('/');
+             const sub = parts.length > 2 ? parts[2] : undefined;
+             setSocialSubView(sub);
+             setCurrentView('social');
         } else {
-            setCurrentView('courses');
-        }
-    } else {
-        // Strip leading slash
-        const viewName = path.substring(1);
-        setCurrentView(viewName || 'landing');
-    }
-
-    const handlePopState = () => {
-        const p = window.location.pathname;
-        if (p.startsWith('/courses/')) {
-             setCourseId(p.split('/')[2]);
-             setCurrentView('course-view');
-        } else {
-             const viewName = p.substring(1);
-             setCurrentView(viewName || 'landing');
+            // Strip leading slash
+            const viewName = path.substring(1);
+            setCurrentView(viewName || 'landing');
         }
     };
+
+    handleNavigation();
+
+    const handlePopState = () => handleNavigation();
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
@@ -100,7 +111,7 @@ const AppContent = () => {
       case 'courses': return <CoursesList onBack={() => navigate('academy')} />;
       case 'course-view': return courseId ? <CourseView courseId={courseId} onBack={() => navigate('courses')} /> : <CoursesList onBack={() => navigate('academy')} />;
       case 'sitemap': return <VisualSitemap onBack={() => navigate('landing')} />;
-      case 'social': return <SocialLayout onBack={() => navigate('landing')} />;
+      case 'social': return <SocialLayout onBack={() => navigate('landing')} initialView={socialSubView} />;
       case 'publish': return <PublishPortal onBack={() => navigate('landing')} />;
       
       // Handle nested routes for group/cloud/dopamine by matching prefix
@@ -109,7 +120,8 @@ const AppContent = () => {
         if (currentView.startsWith('cloud')) return <CloudMarketing onNavigate={navigate} />;
         if (currentView.startsWith('dopamine')) return <MuradDopamine onExit={() => navigate('landing')} />;
         if (currentView.startsWith('support')) return <SupportPortal onExit={() => navigate('landing')} />;
-        if (currentView.startsWith('social')) return <SocialLayout onBack={() => navigate('landing')} />;
+        if (currentView.startsWith('social')) return <SocialLayout onBack={() => navigate('landing')} initialView={socialSubView} />;
+        
         return (
           <>
             <Header 

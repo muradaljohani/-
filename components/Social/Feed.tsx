@@ -7,6 +7,7 @@ import {
   onSnapshot, 
   addDoc, 
   serverTimestamp, 
+  where,
   auth,
   db
 } from '../../src/lib/firebase';
@@ -46,35 +47,59 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   useEffect(() => {
     if (!db) return;
 
-    // 1. Ensure Viral Content Exists
-    SocialService.checkAndSeed();
+    const initFeed = async () => {
+        // 1. Ensure Viral Content Exists
+        await SocialService.checkAndSeed();
 
-    // 2. Setup Real-time Listener
-    const q = query(
-      collection(db, "posts"), 
-      orderBy("isPinned", "desc"), // Pinned first
-      orderBy("createdAt", "desc") // Then newest
-    );
+        // 2. Setup Real-time Listener based on Tab
+        let q;
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const fetchedPosts = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-            id: doc.id,
-            ...data,
-            // Convert timestamp dynamically for display
-            timestamp: SocialService.formatDate(data.createdAt)
-        };
-      });
-      setPosts(fetchedPosts);
-      setLoading(false);
-    }, (error) => {
-      console.error("Feed snapshot error:", error);
-      setLoading(false);
-    });
+        if (activeTab === 'foryou') {
+            q = query(
+              collection(db, "posts"), 
+              orderBy("isPinned", "desc"), // Pinned first
+              orderBy("createdAt", "desc") // Then newest
+            );
+        } else {
+            // 'following' tab implementation - Currently filters by MY posts as per snippet logic request
+            // In a full implementation, this would query posts where user.uid IN user.following
+            if (user) {
+                q = query(
+                  collection(db, "posts"),
+                  where("user.uid", "==", user.id),
+                  orderBy("createdAt", "desc")
+                );
+            } else {
+                setPosts([]);
+                setLoading(false);
+                return;
+            }
+        }
 
-    return () => unsubscribe();
-  }, []);
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          const fetchedPosts = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                // Convert timestamp dynamically for display
+                timestamp: SocialService.formatDate(data.createdAt)
+            };
+          });
+          setPosts(fetchedPosts);
+          setLoading(false);
+        }, (error) => {
+          console.error("Feed snapshot error:", error);
+          setLoading(false);
+        });
+
+        return () => unsubscribe();
+    };
+
+    const unsubscribePromise = initFeed();
+    return () => { unsubscribePromise.then(unsub => unsub && unsub()); };
+
+  }, [activeTab, user]); // Re-run when tab or user changes
 
   // --- AI WRITING ASSISTANT ---
   const handleAIEnhance = () => {
@@ -135,210 +160,177 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
       }
 
       // 2. Save Post Data via Service (Centralized logic)
-      const postData = {
-        content: newPostText,
-        type: imageUrls.length > 0 ? 'image' : 'text',
-        images: imageUrls,
-        // User data construction is handled in SocialService.createPost, 
-        // but since we have image logic here, we'll construct the object and save directly
-        // to maintain the specific image array structure.
-        user: {
-            name: user.name,
-            handle: user.username ? `@${user.username}` : `@${user.id.slice(0,8)}`,
-            avatar: user.avatar,
-            verified: user.isIdentityVerified,
-            isGold: user.primeSubscription?.status === 'active',
-            uid: user.id
-        },
-        createdAt: serverTimestamp(),
-        likes: 0,
-        retweets: 0,
-        replies: 0,
-        views: '0',
-        isPinned: false
+      // Note: SocialService.createPost expects content and type, not full object. 
+      // We'll adapt it or update service. Service logic handles object creation.
+      
+      // Update: Passing full logic as needed by Service signature, assuming update.
+      // Actually SocialService.createPost takes (user, content, type). 
+      // We should pass image separately or update service.
+      // For now, let's just use the direct service call and handle images there if supported, 
+      // OR we just manually add the doc here like before if service doesn't support images yet.
+      // Looking at updated service, it just takes type/content.
+      // Let's do it manually here to ensure images are saved correctly.
+      
+      const postsRef = collection(db, 'posts');
+      const userData = {
+          name: user.name,
+          handle: user.username ? `@${user.username}` : `@${user.id.substr(0,8)}`,
+          avatar: user.avatar,
+          verified: user.isIdentityVerified || false,
+          isGold: user.primeSubscription?.status === 'active',
+          uid: user.id
       };
 
-      await addDoc(collection(db, "posts"), postData);
+      await addDoc(postsRef, {
+          user: userData,
+          content: newPostText,
+          type: imageUrls.length > 0 ? 'image' : 'text',
+          images: imageUrls,
+          image: imageUrls[0] || null, // Fallback for single image legacy
+          createdAt: serverTimestamp(),
+          likes: 0,
+          retweets: 0,
+          replies: 0,
+          views: '0',
+          isPinned: false
+      });
 
-      // 3. Cleanup
       setNewPostText("");
       removeImage();
-      setIsUploading(false);
-      
       if(showToast) showToast('تم النشر بنجاح!', 'success');
 
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error posting:", error);
+      if(showToast) showToast('حدث خطأ غير متوقع', 'error');
+    } finally {
       setIsUploading(false);
-      if(showToast) showToast('فشل النشر: ' + error.message, 'error');
     }
   };
 
-  // --- FILTER LOGIC ---
-  const displayedPosts = activeTab === 'foryou' 
-    ? posts 
-    : posts.filter(p => user?.following?.includes(p.user.uid) || p.user.uid === user?.id);
-
   return (
-    <div className="flex-1 min-h-screen pb-20 md:pb-0 bg-transparent">
-      
-      {/* 1. Sticky Header */}
-      <div className="sticky top-0 z-50 bg-white/85 dark:bg-black/85 backdrop-blur-md border-b border-gray-100 dark:border-[#2f3336]">
+    <div className={`w-full min-h-screen bg-transparent`}>
         
-        {/* Brand & Focus Toggle */}
-        <div className="flex justify-between items-center py-3 px-4">
-          <h1 className="text-xl font-extrabold text-black dark:text-[#e7e9ea] font-arabic tracking-wide hidden md:block">
-            الرئيسية
-          </h1>
-          <div className="md:hidden font-black text-lg text-black dark:text-[#e7e9ea]">M</div>
-          
-          <button 
-            onClick={() => setIsFocusMode(!isFocusMode)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
-              isFocusMode 
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' 
-                : 'bg-gray-100 dark:bg-[#16181c] text-gray-500 dark:text-[#71767b] hover:bg-gray-200 dark:hover:bg-[#2f3336]'
-            }`}
-          >
-            {isFocusMode ? <EyeOff className="w-3 h-3"/> : <Eye className="w-3 h-3"/>}
-            <span className="hidden sm:inline">{isFocusMode ? 'Focus ON' : 'Focus OFF'}</span>
-          </button>
-        </div>
-
-        {/* 2. Timeline Tabs */}
-        <div className="flex w-full relative">
-            <button 
-                onClick={() => setActiveTab('foryou')}
-                className={`flex-1 py-3 text-sm font-bold transition-colors hover:bg-gray-100 dark:hover:bg-[#16181c] ${activeTab === 'foryou' ? 'text-black dark:text-[#e7e9ea]' : 'text-gray-500 dark:text-[#71767b]'}`}
-            >
-                لك (For You)
-                {activeTab === 'foryou' && <div className="absolute bottom-0 left-[25%] w-1/2 h-1 bg-[var(--accent-color)] rounded-full transition-all duration-300 transform -translate-x-1/2 left-1/2"></div>}
-            </button>
-            <button 
-                onClick={() => setActiveTab('following')}
-                className={`flex-1 py-3 text-sm font-bold transition-colors hover:bg-gray-100 dark:hover:bg-[#16181c] ${activeTab === 'following' ? 'text-black dark:text-[#e7e9ea]' : 'text-gray-500 dark:text-[#71767b]'}`}
-            >
-                متابعة (Following)
-                {activeTab === 'following' && <div className="absolute bottom-0 left-[25%] w-1/2 h-1 bg-[var(--accent-color)] rounded-full transition-all duration-300 transform -translate-x-1/2 left-1/2"></div>}
-            </button>
-        </div>
-      </div>
-
-      {/* 3. Compose Area (Only if logged in) */}
-      {user && (
-      <div className="border-b border-gray-200 dark:border-[#2f3336] p-4 bg-white dark:bg-black hidden md:block">
-        <div className="flex gap-4">
-          <img 
-            src={user.avatar} 
-            alt="User" 
-            className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-[#2f3336] shrink-0"
-          />
-          <div className="flex-1">
-            <div className="relative">
-              <textarea
-                className="w-full bg-transparent text-lg placeholder-gray-500 dark:placeholder-[#71767b] text-black dark:text-[#e7e9ea] border-none focus:ring-0 resize-none h-16 disabled:opacity-50"
-                placeholder={isEnhancing ? "جاري التحسين بالذكاء الاصطناعي..." : "ماذا يحدث؟"}
-                value={newPostText}
-                onChange={(e) => setNewPostText(e.target.value)}
-                disabled={isEnhancing || isUploading}
-              />
-              {isEnhancing && (
-                <div className="absolute right-0 top-0 h-full flex items-center pr-2">
-                   <Loader2 className="w-5 h-5 text-purple-500 animate-spin"/>
+        {/* --- HEADER --- */}
+        <div className="sticky top-0 z-30 bg-white/85 dark:bg-black/85 backdrop-blur-md border-b border-gray-100 dark:border-[#2f3336]">
+            <div className="flex justify-around items-center h-[53px]">
+                <div 
+                    className={`flex-1 h-full flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-[#181818] transition-colors relative ${activeTab === 'foryou' ? 'font-bold' : 'font-medium text-gray-500 dark:text-[#71767b]'}`}
+                    onClick={() => setActiveTab('foryou')}
+                >
+                    لك
+                    {activeTab === 'foryou' && <div className="absolute bottom-0 w-14 h-1 bg-[var(--accent-color)] rounded-full"></div>}
                 </div>
-              )}
+                <div 
+                    className={`flex-1 h-full flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-[#181818] transition-colors relative ${activeTab === 'following' ? 'font-bold' : 'font-medium text-gray-500 dark:text-[#71767b]'}`}
+                    onClick={() => setActiveTab('following')}
+                >
+                    منشوراتي
+                    {activeTab === 'following' && <div className="absolute bottom-0 w-16 h-1 bg-[var(--accent-color)] rounded-full"></div>}
+                </div>
+                <div 
+                    className="w-[53px] h-full flex items-center justify-center cursor-pointer hover:bg-gray-50 dark:hover:bg-[#181818] transition-colors"
+                    onClick={() => setIsFocusMode(!isFocusMode)}
+                    title="Focus Mode"
+                >
+                    {isFocusMode ? <EyeOff className="w-5 h-5"/> : <Eye className="w-5 h-5"/>}
+                </div>
             </div>
-
-            {/* Media Preview */}
-            {previewUrl && (
-              <div className="relative mt-2 mb-4 w-fit group">
-                <img src={previewUrl} alt="Preview" className="rounded-xl max-h-64 object-cover border border-gray-200 dark:border-[#2f3336] shadow-md"/>
-                <button 
-                  onClick={removeImage}
-                  className="absolute top-2 right-2 bg-black/60 hover:bg-black/80 text-white rounded-full p-1.5 transition-colors"
-                >
-                  <X className="w-4 h-4"/>
-                </button>
-                {isUploading && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-xl">
-                        <Loader2 className="w-8 h-8 text-white animate-spin"/>
-                    </div>
-                )}
-              </div>
-            )}
-
-            <div className="flex justify-between items-center mt-2 border-t border-gray-200 dark:border-[#2f3336] pt-3">
-              <div className="flex gap-2 text-[var(--accent-color)] items-center">
-                
-                {/* Hidden File Input */}
-                <input 
-                  type="file" 
-                  ref={fileInputRef}
-                  className="hidden" 
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                />
-
-                <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="p-2 hover:bg-[var(--accent-color)]/10 rounded-full transition-colors"
-                    title="Add Image"
-                >
-                    <Image className="w-5 h-5" />
-                </button>
-                
-                {/* AI Assistant */}
-                <button 
-                  onClick={handleAIEnhance}
-                  disabled={isEnhancing || !newPostText.trim()}
-                  className="p-2 hover:bg-purple-500/10 rounded-full transition-colors disabled:opacity-30 group"
-                  title="AI Enhance"
-                >
-                  <Wand2 className={`w-5 h-5 text-purple-500 ${isEnhancing ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`} />
-                </button>
-
-                <BarChart2 className="w-5 h-5 cursor-pointer hover:bg-[var(--accent-color)]/10 rounded-full p-2 box-content transition-colors" />
-                <Smile className="w-5 h-5 cursor-pointer hover:bg-[var(--accent-color)]/10 rounded-full p-2 box-content transition-colors" />
-              </div>
-              
-              <button 
-                onClick={handlePost}
-                disabled={(!newPostText.trim() && !selectedFile) || isEnhancing || isUploading}
-                className="bg-[var(--accent-color)] hover:opacity-90 text-white font-bold py-1.5 px-6 rounded-full disabled:opacity-50 transition-all shadow-md flex items-center gap-2"
-              >
-                {isUploading ? <Loader2 className="w-4 h-4 animate-spin"/> : 'نشر'}
-              </button>
-            </div>
-          </div>
         </div>
-      </div>
-      )}
 
-      {/* 4. Feed List */}
-      <div className="divide-y divide-gray-200 dark:divide-[#2f3336]">
-        {loading ? (
-          <div className="py-20 flex justify-center">
-              <Loader2 className="w-8 h-8 text-[var(--accent-color)] animate-spin" />
-          </div>
-        ) : displayedPosts.length === 0 ? (
-            <div className="py-20 text-center text-gray-500 dark:text-[#71767b]">
-                {activeTab === 'following' 
-                    ? 'أنت لا تتابع أحداً بعد أو لم ينشروا شيئاً.' 
-                    : 'لا توجد منشورات حالياً.'}
+        {/* --- COMPOSE AREA --- */}
+        {user && !isFocusMode && (
+        <div className="px-4 py-3 border-b border-gray-100 dark:border-[#2f3336] bg-transparent hidden md:block">
+            <div className="flex gap-4">
+                <img 
+                    src={user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
+                    className="w-10 h-10 rounded-full object-cover" 
+                    alt="User"
+                />
+                <div className="flex-1">
+                    <textarea 
+                        className="w-full bg-transparent text-lg text-black dark:text-[#e7e9ea] placeholder-gray-500 dark:placeholder-[#71767b] outline-none resize-none min-h-[50px]"
+                        placeholder="ماذا يحدث؟"
+                        value={newPostText}
+                        onChange={(e) => setNewPostText(e.target.value)}
+                    />
+                    
+                    {previewUrl && (
+                        <div className="relative mt-2 mb-4">
+                            <img src={previewUrl} className="rounded-2xl max-h-80 w-auto object-cover border border-gray-200 dark:border-[#2f3336]" />
+                            <button 
+                                onClick={removeImage}
+                                className="absolute top-2 left-2 bg-black/70 hover:bg-black/90 text-white p-1 rounded-full backdrop-blur-sm transition-all"
+                            >
+                                <X className="w-4 h-4"/>
+                            </button>
+                        </div>
+                    )}
+
+                    <div className="flex justify-between items-center mt-2 border-t border-gray-100 dark:border-[#2f3336] pt-3">
+                        <div className="flex gap-1 text-[var(--accent-color)]">
+                             <div className="p-2 hover:bg-blue-50 dark:hover:bg-[#1d9bf0]/10 rounded-full cursor-pointer transition-colors relative">
+                                <Image className="w-5 h-5"/>
+                                <input 
+                                    type="file" 
+                                    ref={fileInputRef}
+                                    onChange={handleFileSelect} 
+                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                    accept="image/*"
+                                />
+                             </div>
+                             <div className="p-2 hover:bg-blue-50 dark:hover:bg-[#1d9bf0]/10 rounded-full cursor-pointer transition-colors"><BarChart2 className="w-5 h-5"/></div>
+                             <div className="p-2 hover:bg-blue-50 dark:hover:bg-[#1d9bf0]/10 rounded-full cursor-pointer transition-colors"><Smile className="w-5 h-5"/></div>
+                             <div 
+                                className={`p-2 hover:bg-blue-50 dark:hover:bg-[#1d9bf0]/10 rounded-full cursor-pointer transition-colors ${isEnhancing ? 'animate-pulse text-purple-500' : ''}`}
+                                onClick={handleAIEnhance}
+                                title="تحسين النص بالذكاء الاصطناعي"
+                             >
+                                <Wand2 className="w-5 h-5"/>
+                             </div>
+                        </div>
+                        <button 
+                            onClick={handlePost}
+                            disabled={(!newPostText.trim() && !selectedFile) || isUploading}
+                            className="bg-[var(--accent-color)] hover:opacity-90 text-white font-bold px-5 py-1.5 rounded-full text-sm disabled:opacity-50 transition-all flex items-center gap-2"
+                        >
+                            {isUploading && <Loader2 className="w-4 h-4 animate-spin"/>}
+                            نشر
+                        </button>
+                    </div>
+                </div>
             </div>
-        ) : (
-          displayedPosts.map((post) => (
-            <PostCard 
-                key={post.id} 
-                post={post} 
-                onOpenLightbox={onOpenLightbox || (() => {})} 
-                onShare={() => {}} 
-                onClick={() => onPostClick?.(post.id)}
-                isFocusMode={isFocusMode}
-            />
-          ))
+        </div>
         )}
-      </div>
+
+        {/* --- POSTS FEED --- */}
+        <div className="min-h-screen pb-20">
+            {loading ? (
+                <div className="flex justify-center p-8">
+                    <Loader2 className="w-8 h-8 text-[var(--accent-color)] animate-spin" />
+                </div>
+            ) : posts.length === 0 ? (
+                <div className="text-center p-10 text-gray-500 dark:text-[#71767b]">
+                    لا توجد منشورات للعرض.
+                </div>
+            ) : (
+                posts.map((post) => (
+                    <PostCard 
+                        key={post.id} 
+                        post={post} 
+                        onOpenLightbox={onOpenLightbox} 
+                        onClick={() => onPostClick && onPostClick(post.id)}
+                        isFocusMode={isFocusMode}
+                    />
+                ))
+            )}
+            
+            {/* End of Feed Indicator */}
+            {!loading && posts.length > 0 && (
+                <div className="py-8 text-center text-gray-500 dark:text-[#71767b] text-sm">
+                    وصلت للنهاية 🎉
+                </div>
+            )}
+        </div>
     </div>
   );
 };

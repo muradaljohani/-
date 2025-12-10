@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
     Home, Search, Bell, Mail, User, Plus, Image as ImageIcon, Video, 
-    MoreHorizontal, ArrowLeft, Moon, Sun, Monitor, X, LogIn
+    MoreHorizontal, ArrowLeft, Moon, Sun, Monitor, X, LogIn, 
+    Gem, Briefcase, Users, Mic, Layers, Bookmark
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -19,17 +20,28 @@ import { Notifications } from './Notifications';
 import { Explore } from './Explore'; 
 import { collection, query, where, onSnapshot, db } from '../../src/lib/firebase';
 
+// IMPORT NEW SECONDARY PAGES
+import { ElitePage, CreatorStudioPage, CirclesPage, LiveRoomsPage, CollectionsPage, SavedPage } from './SecondaryPages';
+
 interface Props {
     onBack: () => void;
+    initialView?: string; // Support Deep Linking
 }
 
-export type ViewState = 'feed' | 'reels' | 'admin' | 'messages' | 'profile' | 'post-detail' | 'chat' | 'notifications' | 'explore';
+export type ViewState = 
+    'feed' | 'reels' | 'admin' | 'messages' | 'profile' | 'post-detail' | 'chat' | 'notifications' | 'explore' |
+    'elite' | 'creator-studio' | 'circles' | 'live' | 'collections' | 'saved';
 
-export const SocialLayout: React.FC<Props> = ({ onBack }) => {
+export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) => {
     const { user, signInWithGoogle } = useAuth();
     const { theme, cycleTheme } = useTheme();
-    const [view, setView] = useState<ViewState>('feed');
+    const [view, setView] = useState<ViewState>(initialView as ViewState);
     
+    // Update view if initialView prop changes (from App router)
+    useEffect(() => {
+        if (initialView) setView(initialView as ViewState);
+    }, [initialView]);
+
     // Navigation Params
     const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
     const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
@@ -63,6 +75,12 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
     };
 
     // --- NAVIGATION HANDLERS ---
+    const handleNavigation = (route: string) => {
+        // Update URL to support browser back button logic in App.tsx (optional but good practice)
+        window.history.pushState({}, '', `/social/${route}`);
+        setView(route as ViewState);
+    };
+
     const handlePostClick = (postId: string) => {
         setSelectedPostId(postId);
         setView('post-detail');
@@ -77,6 +95,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
 
     const handleBackToFeed = () => {
         setView('feed');
+        window.history.pushState({}, '', '/social');
         setSelectedPostId(null);
     };
 
@@ -110,10 +129,18 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
         return <Monitor className="w-6 h-6" />; 
     };
 
+    // Check if current view is a "Full Page" view that hides standard layout parts
+    const isDeepPage = ['elite', 'creator-studio', 'circles', 'live', 'collections', 'saved'].includes(view);
+
     return (
-        <div className={`min-h-screen font-sans flex justify-center selection:bg-[var(--accent-color)] selection:text-white bg-white dark:bg-black text-black dark:text-[#e7e9ea]`} dir="rtl">
+        <div className={`flex-1 w-full min-h-screen bg-white dark:bg-black text-black dark:text-[#e7e9ea] font-sans flex justify-center selection:bg-[var(--accent-color)] selection:text-white`} dir="rtl">
             
-            <MobileSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} unreadCount={unreadCount} />
+            <MobileSidebar 
+                isOpen={isSidebarOpen} 
+                onClose={() => setIsSidebarOpen(false)} 
+                unreadCount={unreadCount} 
+                onNavigate={handleNavigation}
+            />
 
             {toastMsg && (
                 <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[6000] animate-fade-in-up">
@@ -138,7 +165,8 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 </div>
             )}
 
-            {/* Sidebar Desktop */}
+            {/* Sidebar Desktop (Hidden on Deep Pages) */}
+            {!isDeepPage && (
             <div className={`hidden md:flex flex-col w-20 xl:w-72 h-screen sticky top-0 px-2 xl:px-4 border-l border-gray-200 dark:border-[#2f3336] justify-between py-4 z-50 bg-white dark:bg-black`}>
                 <div className="space-y-1">
                     <div className="px-3 py-3 w-fit mb-2 hover:bg-gray-100 dark:hover:bg-[#16181c] rounded-full cursor-pointer transition-colors" onClick={onBack}>
@@ -150,11 +178,15 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                         </div>
                     </div>
                     
-                    <SidebarLink icon={Home} label="الرئيسية" active={view==='feed'} onClick={() => setView('feed')} />
-                    <SidebarLink icon={Search} label="استكشف" active={view==='explore'} onClick={() => setView('explore')} />
-                    <SidebarLink icon={Bell} label="التنبيهات" active={view==='notifications'} onClick={() => setView('notifications')} notifyCount={unreadCount} />
-                    <SidebarLink icon={Mail} label="الرسائل" active={view==='messages'} onClick={() => setView('messages')} />
-                    <SidebarLink icon={User} label="الملف الشخصي" active={view==='profile'} onClick={() => setView('profile')} />
+                    <SidebarLink icon={Home} label="الرئيسية" active={view==='feed'} onClick={() => handleNavigation('feed')} />
+                    <SidebarLink icon={Search} label="استكشف" active={view==='explore'} onClick={() => handleNavigation('explore')} />
+                    <SidebarLink icon={Bell} label="التنبيهات" active={view==='notifications'} onClick={() => handleNavigation('notifications')} notifyCount={unreadCount} />
+                    <SidebarLink icon={Mail} label="الرسائل" active={view==='messages'} onClick={() => handleNavigation('messages')} />
+                    
+                    {/* NEW LINKS */}
+                    <SidebarLink icon={Gem} label="النخبة" active={view==='elite'} onClick={() => handleNavigation('elite')} />
+                    <SidebarLink icon={Briefcase} label="استوديو" active={view==='creator-studio'} onClick={() => handleNavigation('creator-studio')} />
+                    <SidebarLink icon={User} label="الملف الشخصي" active={view==='profile'} onClick={() => handleNavigation('profile')} />
                     
                     <button 
                         onClick={() => user ? setIsComposeOpen(true) : signInWithGoogle()}
@@ -200,12 +232,13 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                      )}
                 </div>
             </div>
+            )}
 
             {/* Main Content Area */}
-            <main className={`flex-1 max-w-[600px] w-full min-h-screen pb-20 md:pb-0 relative border-r border-gray-200 dark:border-[#2f3336] bg-white dark:bg-black`}>
+            <main className={`flex-1 w-full min-h-screen pb-20 md:pb-0 relative border-r border-gray-200 dark:border-[#2f3336] bg-white dark:bg-black ${isDeepPage ? 'max-w-full' : 'max-w-[600px]'}`}>
                 
                 {/* Mobile Top Bar */}
-                {(view === 'feed' || view === 'profile' || view === 'messages' || view === 'notifications' || view === 'explore') && (
+                {(!isDeepPage && view !== 'chat' && view !== 'post-detail') && (
                     <div className="md:hidden sticky top-0 z-30 bg-white/85 dark:bg-black/85 backdrop-blur-md border-b border-gray-200 dark:border-[#2f3336] px-4 py-3 flex justify-between items-center text-black dark:text-[#e7e9ea]">
                         <div onClick={() => setIsSidebarOpen(true)} className="cursor-pointer relative">
                             <img 
@@ -230,6 +263,14 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                     />
                 )}
                 
+                {/* DEEP NAVIGATION PAGES (Rebranded) */}
+                {view === 'elite' && <ElitePage onBack={handleBackToFeed} />}
+                {view === 'creator-studio' && <CreatorStudioPage onBack={handleBackToFeed} />}
+                {view === 'circles' && <CirclesPage onBack={handleBackToFeed} />}
+                {view === 'live' && <LiveRoomsPage onBack={handleBackToFeed} />}
+                {view === 'collections' && <CollectionsPage onBack={handleBackToFeed} />}
+                {view === 'saved' && <SavedPage onBack={handleBackToFeed} />}
+
                 {view === 'post-detail' && selectedPostId && (
                     <PostDetail 
                         postId={selectedPostId} 
@@ -291,7 +332,8 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                 )}
             </main>
 
-            {/* Right Sidebar Desktop */}
+            {/* Right Sidebar Desktop (Hidden on Deep Pages) */}
+            {!isDeepPage && (
             <div className="hidden lg:block w-80 xl:w-96 h-screen sticky top-0 px-6 py-4 border-r border-gray-200 dark:border-[#2f3336] z-40 bg-white dark:bg-black">
                 <div className="relative mb-6 group">
                     <input 
@@ -320,20 +362,21 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                     </div>
                 </div>
             </div>
+            )}
 
             {/* Mobile Bottom Nav */}
-            {view !== 'post-detail' && view !== 'chat' && (
+            {!isDeepPage && view !== 'post-detail' && view !== 'chat' && (
                 <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-black/90 backdrop-blur-xl border-t border-gray-200 dark:border-[#2f3336] flex justify-around p-3 pb-safe z-50">
-                    <NavButton icon={Home} active={view === 'feed'} onClick={() => setView('feed')} />
-                    <NavButton icon={Search} active={view === 'explore'} onClick={() => setView('explore')} />
+                    <NavButton icon={Home} active={view === 'feed'} onClick={() => handleNavigation('feed')} />
+                    <NavButton icon={Search} active={view === 'explore'} onClick={() => handleNavigation('explore')} />
                     <button 
                         onClick={() => user ? setIsComposeOpen(true) : signInWithGoogle()}
                         className="bg-[var(--accent-color)] text-white p-3 rounded-full shadow-lg transform -translate-y-4 border-4 border-white dark:border-black active:scale-95 transition-transform"
                     >
                         <Plus className="w-6 h-6"/>
                     </button>
-                    <NavButton icon={Bell} active={view === 'notifications'} onClick={() => setView('notifications')} notifyCount={unreadCount} />
-                    <NavButton icon={Mail} active={view === 'messages'} onClick={() => setView('messages')} />
+                    <NavButton icon={Bell} active={view === 'notifications'} onClick={() => handleNavigation('notifications')} notifyCount={unreadCount} />
+                    <NavButton icon={Mail} active={view === 'messages'} onClick={() => handleNavigation('messages')} />
                 </div>
             )}
 
