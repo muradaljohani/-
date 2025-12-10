@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   collection, 
@@ -15,7 +14,7 @@ import {
   onAuthStateChanged
 } from '../../src/lib/firebase';
 import { PostCard } from './PostCard';
-import { Image, BarChart2, Smile, Calendar, Loader2 } from 'lucide-react';
+import { Image, BarChart2, Smile, Calendar, Loader2, Wand2, Eye, EyeOff } from 'lucide-react';
 
 interface FeedProps {
     onOpenLightbox?: (src: string) => void;
@@ -29,6 +28,10 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   const [newPostText, setNewPostText] = useState("");
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<any>(null);
+  
+  // Smart Features State
+  const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
 
   useEffect(() => {
     if (!auth) return;
@@ -122,6 +125,46 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     return () => unsubscribe();
   }, []);
 
+  // --- SMART FEATURE 1: AI WRITING ASSISTANT ---
+  const handleAIEnhance = () => {
+    if (!newPostText.trim()) {
+      alert("Write something first!");
+      return;
+    }
+
+    setIsEnhancing(true);
+
+    // Simulate AI Latency
+    setTimeout(() => {
+      let enhancedText = newPostText;
+
+      // 1. Mock Typo Fixer
+      enhancedText = enhancedText.replace(/\bteh\b/g, "the")
+                                 .replace(/\bi\b/g, "I")
+                                 .replace(/\bcant\b/g, "can't");
+
+      // 2. Contextual Hashtags
+      const lower = enhancedText.toLowerCase();
+      if (lower.includes('code') || lower.includes('dev') || lower.includes('برمجة')) {
+        enhancedText += "\n\n#Tech #Coding #Developer";
+      } else if (lower.includes('love') || lower.includes('happy') || lower.includes('حب')) {
+         enhancedText += "\n\n#Vibes #Life";
+      } else if (lower.includes('job') || lower.includes('work') || lower.includes('وظيفة')) {
+         enhancedText += "\n\n#Career #Hiring";
+      } else {
+         enhancedText += "\n\n#Community #MuradSocial";
+      }
+
+      // 3. Smart Emojis
+      if (lower.includes('rocket') || lower.includes('launch')) enhancedText += " 🚀";
+      else if (lower.includes('idea')) enhancedText += " 💡";
+      else enhancedText += " ✨";
+
+      setNewPostText(enhancedText);
+      setIsEnhancing(false);
+    }, 1500);
+  };
+
   const handlePost = async () => {
     if (!newPostText.trim()) return;
     if (!db) return;
@@ -159,12 +202,29 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
 
   return (
     <div className="flex-1 min-h-screen pb-20 md:pb-0 bg-[var(--bg-primary)]">
-      <div className="sticky top-0 z-50 bg-[var(--bg-primary)]/90 backdrop-blur-md border-b border-[var(--border-color)] py-4 mb-2">
-        <h1 className="text-center text-xl font-extrabold text-[var(--text-primary)] font-arabic tracking-wide">
-          مراد سوشل ميديا <span className="text-[var(--accent-color)] mx-2">|</span> Murad Social
+      
+      {/* Header with Focus Mode Toggle */}
+      <div className="sticky top-0 z-50 bg-[var(--bg-primary)]/90 backdrop-blur-md border-b border-[var(--border-color)] py-3 px-4 flex justify-between items-center">
+        <h1 className="text-xl font-extrabold text-[var(--text-primary)] font-arabic tracking-wide">
+          مراد سوشل ميديا <span className="text-[var(--accent-color)] mx-1">|</span> Murad Social
         </h1>
+        
+        {/* SMART FEATURE 2: Focus Mode Toggle */}
+        <button 
+          onClick={() => setIsFocusMode(!isFocusMode)}
+          className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold transition-all ${
+            isFocusMode 
+              ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' 
+              : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] hover:bg-[var(--border-color)]'
+          }`}
+          title={isFocusMode ? "Disable Focus Mode" : "Enable Focus Mode (Hide Metrics)"}
+        >
+          {isFocusMode ? <EyeOff className="w-3 h-3"/> : <Eye className="w-3 h-3"/>}
+          <span className="hidden sm:inline">{isFocusMode ? 'Focus ON' : 'Focus OFF'}</span>
+        </button>
       </div>
 
+      {/* Compose Area */}
       <div className="border-b border-[var(--border-color)] p-4 bg-[var(--bg-primary)]">
         <div className="flex gap-4">
           <img 
@@ -173,22 +233,43 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             className="w-10 h-10 rounded-full object-cover border border-[var(--border-color)]"
           />
           <div className="flex-1">
-            <textarea
-              className="w-full bg-transparent text-lg placeholder-[var(--text-secondary)] text-[var(--text-primary)] border-none focus:ring-0 resize-none h-12"
-              placeholder="ماذا يحدث ؟ اخبارك ؟ افكارك ؟ مجتمع ميلاف سعداء بك"
-              value={newPostText}
-              onChange={(e) => setNewPostText(e.target.value)}
-            />
+            <div className="relative">
+              <textarea
+                className="w-full bg-transparent text-lg placeholder-[var(--text-secondary)] text-[var(--text-primary)] border-none focus:ring-0 resize-none h-12 disabled:opacity-50"
+                placeholder={isEnhancing ? "Enhancing your thoughts..." : "ماذا يحدث ؟ اخبارك ؟ افكارك ؟ مجتمع ميلاف سعداء بك"}
+                value={newPostText}
+                onChange={(e) => setNewPostText(e.target.value)}
+                disabled={isEnhancing}
+              />
+              {isEnhancing && (
+                <div className="absolute right-0 top-0 h-full flex items-center pr-2">
+                   <Loader2 className="w-5 h-5 text-purple-500 animate-spin"/>
+                </div>
+              )}
+            </div>
+
             <div className="flex justify-between items-center mt-3 border-t border-[var(--border-color)] pt-3">
-              <div className="flex gap-4 text-[var(--accent-color)]">
+              <div className="flex gap-2 text-[var(--accent-color)] items-center">
                 <Image className="w-5 h-5 cursor-pointer hover:bg-[var(--accent-color)]/10 rounded-full p-1 box-content transition-colors" />
+                
+                {/* SMART FEATURE 1: AI Assistant Button */}
+                <button 
+                  onClick={handleAIEnhance}
+                  disabled={isEnhancing || !newPostText.trim()}
+                  className="group relative p-1 rounded-full hover:bg-purple-500/10 transition-colors disabled:opacity-30"
+                  title="AI Enhance"
+                >
+                  <Wand2 className={`w-5 h-5 text-purple-500 ${isEnhancing ? 'animate-pulse' : 'group-hover:scale-110 transition-transform'}`} />
+                  {!isEnhancing && <span className="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full animate-ping"></span>}
+                </button>
+
                 <BarChart2 className="w-5 h-5 cursor-pointer hover:bg-[var(--accent-color)]/10 rounded-full p-1 box-content transition-colors" />
                 <Smile className="w-5 h-5 cursor-pointer hover:bg-[var(--accent-color)]/10 rounded-full p-1 box-content transition-colors" />
                 <Calendar className="w-5 h-5 cursor-pointer hover:bg-[var(--accent-color)]/10 rounded-full p-1 box-content transition-colors" />
               </div>
               <button 
                 onClick={handlePost}
-                disabled={!newPostText.trim()}
+                disabled={!newPostText.trim() || isEnhancing}
                 className="bg-[var(--accent-color)] hover:opacity-90 text-white font-bold py-1.5 px-5 rounded-full disabled:opacity-50 transition-all shadow-md"
               >
                 Post
@@ -198,6 +279,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         </div>
       </div>
 
+      {/* Feed List */}
       <div className="divide-y divide-[var(--border-color)]">
         {loading ? (
           <div className="py-20 flex justify-center">
@@ -211,6 +293,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                 onOpenLightbox={onOpenLightbox || (() => {})} 
                 onShare={() => {}} 
                 onClick={() => onPostClick?.(post.id)}
+                isFocusMode={isFocusMode}
             />
           ))
         )}

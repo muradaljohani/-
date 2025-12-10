@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
     MessageCircle, Repeat, Heart, Share2, MoreHorizontal, 
@@ -11,9 +10,10 @@ interface PostCardProps {
     onOpenLightbox?: (src: string) => void;
     onShare?: (msg: string) => void;
     onClick?: () => void;
+    isFocusMode?: boolean; // New Prop for Focus Mode
 }
 
-export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShare, onClick }) => {
+export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShare, onClick, isFocusMode = false }) => {
     const [liked, setLiked] = useState(false);
     const [bookmarked, setBookmarked] = useState(false);
     const [likeCount, setLikeCount] = useState(post.likes);
@@ -79,6 +79,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         });
     };
 
+    // Helper to conditionally show metric
+    const showMetric = (count: number) => {
+        if (isFocusMode) return <span>•</span>;
+        return count > 0 ? formatNumber(count) : '';
+    };
+
     return (
         <div 
             className={`flex gap-3 p-4 border-b border-[var(--border-color)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer ${post.isPinned ? 'bg-[var(--bg-secondary)]/50' : ''}`}
@@ -134,14 +140,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                         <div className="p-2 rounded-full group-hover:bg-blue-500/10 -ml-2 transition-colors">
                             <MessageCircle className="w-4.5 h-4.5"/>
                         </div>
-                        <span className="text-xs font-medium">{post.replies > 0 ? formatNumber(post.replies) : ''}</span>
+                        <span className="text-xs font-medium">{showMetric(post.replies)}</span>
                     </button>
 
                     <button className="flex items-center gap-1 group transition-colors hover:text-green-400" onClick={(e) => e.stopPropagation()}>
                         <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
                             <Repeat className="w-4.5 h-4.5"/>
                         </div>
-                        <span className="text-xs font-medium">{post.retweets > 0 ? formatNumber(post.retweets) : ''}</span>
+                        <span className="text-xs font-medium">{showMetric(post.retweets)}</span>
                     </button>
 
                     <button 
@@ -151,14 +157,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                         <div className="p-2 rounded-full group-hover:bg-pink-600/10 transition-colors">
                             <Heart className={`w-4.5 h-4.5 transition-transform ${liked ? 'fill-current scale-125' : ''}`}/>
                         </div>
-                        <span className="text-xs font-medium">{likeCount > 0 ? formatNumber(likeCount) : ''}</span>
+                        <span className="text-xs font-medium">{showMetric(likeCount)}</span>
                     </button>
 
                     <button className="flex items-center gap-1 group transition-colors hover:text-blue-400" onClick={(e) => e.stopPropagation()}>
                         <div className="p-2 rounded-full group-hover:bg-blue-500/10 transition-colors">
                             <BarChart2 className="w-4.5 h-4.5"/>
                         </div>
-                        <span className="text-xs font-medium">{post.views || '1K'}</span>
+                        <span className="text-xs font-medium">{isFocusMode ? '•' : (post.views || '1K')}</span>
                     </button>
 
                     <div className="flex items-center gap-2">
