@@ -2,7 +2,7 @@
 // Re-export real Firebase functions to bridge the app to the actual SDK
 import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider, FacebookAuthProvider, TwitterAuthProvider, GithubAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, doc, collection, setDoc, getDoc, addDoc, updateDoc, getDocs, query, orderBy, serverTimestamp, onSnapshot } from 'firebase/firestore';
+import { getFirestore, doc, collection, setDoc, getDoc, addDoc, updateDoc, getDocs, query, orderBy, serverTimestamp, onSnapshot, where, limit, increment } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAnalytics } from 'firebase/analytics';
 import { db, auth, storage, analytics, app } from '../../firebaseConfig';
@@ -30,6 +30,9 @@ export {
     getDocs,
     query,
     orderBy,
+    where,
+    limit,
+    increment,
     serverTimestamp,
     onSnapshot,
     ref,

@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Camera, Save, Loader2, Link as LinkIcon, MapPin } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { uploadImage } from '../../src/services/storageService';
 
 interface Props {
   isOpen: boolean;
@@ -22,14 +23,18 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
     bannerURL: ''
   });
 
+  // Refs for file inputs
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
+
   // Initialize with current user data
   useEffect(() => {
     if (user && isOpen) {
       setFormData({
         displayName: user.name || '',
         bio: user.bio || '',
-        location: user.address || '', // Mapping address to location
-        website: user.customFormFields?.website || '', // Storing website in custom fields for now
+        location: user.address || '',
+        website: user.customFormFields?.website || '',
         photoURL: user.avatar || '',
         bannerURL: user.coverImage || ''
       });
@@ -43,7 +48,6 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
     setIsSaving(true);
 
     try {
-      // Map back to the User type structure used in AuthContext
       await updateProfile({
         name: formData.displayName,
         bio: formData.bio,
@@ -64,16 +68,25 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
     }
   };
 
-  const handleImageUpdate = (type: 'avatar' | 'banner') => {
-    const url = window.prompt(
-      type === 'avatar' ? "أدخل رابط صورة الملف الشخصي:" : "أدخل رابط صورة الغلاف:"
-    );
-    if (url) {
-      setFormData(prev => ({
-        ...prev,
-        [type === 'avatar' ? 'photoURL' : 'bannerURL']: url
-      }));
-    }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
+      if (e.target.files && e.target.files[0]) {
+          const file = e.target.files[0];
+          setIsSaving(true); // Block saving while uploading
+          
+          try {
+              const path = `users/${user.id}/${type}_${Date.now()}`;
+              const url = await uploadImage(file, path);
+              
+              setFormData(prev => ({
+                  ...prev,
+                  [type === 'avatar' ? 'photoURL' : 'bannerURL']: url
+              }));
+          } catch (err) {
+              alert("فشل رفع الصورة");
+          } finally {
+              setIsSaving(false);
+          }
+      }
   };
 
   return (
@@ -91,9 +104,10 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
           <button 
             onClick={handleSave} 
             disabled={isSaving}
-            className="px-6 py-1.5 bg-white text-black rounded-full font-bold text-sm hover:bg-gray-200 transition-colors disabled:opacity-50"
+            className="px-6 py-1.5 bg-white text-black rounded-full font-bold text-sm hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-2"
           >
-            {isSaving ? <Loader2 className="w-4 h-4 animate-spin"/> : 'حفظ'}
+            {isSaving && <Loader2 className="w-4 h-4 animate-spin"/>}
+            <span>حفظ</span>
           </button>
         </div>
 
@@ -103,29 +117,31 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
           {/* Images Section */}
           <div className="relative mb-16">
             {/* Banner */}
-            <div className="h-32 w-full bg-slate-800 relative group cursor-pointer" onClick={() => handleImageUpdate('banner')}>
+            <div className="h-32 w-full bg-slate-800 relative group cursor-pointer" onClick={() => bannerInputRef.current?.click()}>
               {formData.bannerURL ? (
                 <img src={formData.bannerURL} className="w-full h-full object-cover opacity-80" alt="Banner" />
               ) : (
                 <div className="w-full h-full bg-slate-800"></div>
               )}
               <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-100 transition-opacity">
-                <div className="bg-black/50 p-2 rounded-full backdrop-blur-md">
-                    <Camera className="w-5 h-5 text-white opacity-80"/>
+                <div className="bg-black/50 p-2 rounded-full backdrop-blur-md hover:bg-black/70">
+                    <Camera className="w-5 h-5 text-white opacity-90"/>
                 </div>
               </div>
+              <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'banner')}/>
             </div>
 
             {/* Avatar */}
-            <div className="absolute -bottom-10 right-4 p-1 bg-black rounded-full cursor-pointer group" onClick={() => handleImageUpdate('avatar')}>
+            <div className="absolute -bottom-10 right-4 p-1 bg-black rounded-full cursor-pointer group" onClick={() => avatarInputRef.current?.click()}>
               <div className="w-24 h-24 rounded-full bg-slate-900 relative overflow-hidden border-2 border-slate-800">
                  <img src={formData.photoURL || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover opacity-80"/>
                  <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-100 transition-opacity">
-                    <div className="bg-black/50 p-2 rounded-full backdrop-blur-md">
-                        <Camera className="w-5 h-5 text-white opacity-80"/>
+                    <div className="bg-black/50 p-2 rounded-full backdrop-blur-md hover:bg-black/70">
+                        <Camera className="w-5 h-5 text-white opacity-90"/>
                     </div>
                  </div>
               </div>
+              <input type="file" ref={avatarInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'avatar')}/>
             </div>
           </div>
 

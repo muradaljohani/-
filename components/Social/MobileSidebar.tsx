@@ -1,10 +1,11 @@
+
 import React, { useState } from 'react';
 import { 
   User, X, Bookmark, FileText, Mic, 
   Settings, HelpCircle, Moon, Sun, 
   ChevronDown, ChevronUp, Zap, LogOut,
   Video, Users, MessageSquare, DollarSign,
-  FileCode
+  FileCode, Bell
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -13,9 +14,10 @@ import { SettingsPage } from './SettingsPage';
 interface Props {
   isOpen: boolean;
   onClose: () => void;
+  unreadCount?: number; // New Prop
 }
 
-export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose }) => {
+export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose, unreadCount = 0 }) => {
   const { user, logout } = useAuth();
   const { theme, cycleTheme } = useTheme();
   
@@ -90,7 +92,8 @@ export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose }) => {
         {/* Menu Items */}
         <div className="flex-1 overflow-y-auto py-0">
           <MenuItem icon={User} label="الملف الشخصي" onClick={() => {}} />
-          <MenuItem icon={Zap} label="Premium" badge />
+          <MenuItem icon={Bell} label="التنبيهات" badge={unreadCount > 0 ? `${unreadCount} جديد` : undefined} />
+          <MenuItem icon={Zap} label="Premium" />
           <MenuItem icon={FileText} label="القوائم" />
           <MenuItem icon={Bookmark} label="العلامات المرجعية" />
           <MenuItem icon={Users} label="المجتمعات" />
@@ -199,6 +202,6 @@ const MenuItem = ({ icon: Icon, label, onClick, badge }: any) => (
   >
     <Icon className="w-6 h-6 text-[var(--text-primary)]" />
     <span className="font-bold text-xl text-[var(--text-primary)]">{label}</span>
-    {badge && <span className="mr-auto bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-md font-bold">NEW</span>}
+    {badge && <span className="mr-auto bg-blue-500 text-white text-[10px] px-2 py-0.5 rounded-md font-bold">{badge}</span>}
   </button>
 );

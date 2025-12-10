@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Home, Search, Bell, Mail, User, Plus, Image as ImageIcon, Video, 
     MoreHorizontal, ArrowLeft, Moon, Sun, Monitor, X
@@ -15,12 +15,15 @@ import { ProfileHeader } from './ProfileHeader';
 import { MobileSidebar } from './MobileSidebar';
 import { PostDetail } from './PostDetail';
 import { ChatWindow } from './ChatWindow';
+import { Notifications } from './Notifications'; // New Import
+import { Explore } from './Explore'; // New Import
+import { collection, query, where, onSnapshot, db } from '../../src/lib/firebase';
 
 interface Props {
     onBack: () => void;
 }
 
-export type ViewState = 'feed' | 'reels' | 'admin' | 'messages' | 'profile' | 'post-detail' | 'chat';
+export type ViewState = 'feed' | 'reels' | 'admin' | 'messages' | 'profile' | 'post-detail' | 'chat' | 'notifications' | 'explore';
 
 export const SocialLayout: React.FC<Props> = ({ onBack }) => {
     const { user } = useAuth();
@@ -36,6 +39,23 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
     const [toastMsg, setToastMsg] = useState<{msg: string, type: 'success'|'error'} | null>(null);
     const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+    // --- REAL-TIME NOTIFICATION LISTENER ---
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+        if (!user) return;
+        
+        const notifsRef = collection(db, 'users', user.id, 'notifications');
+        // Simple query for unread
+        const q = query(notifsRef, where('read', '==', false));
+        
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            setUnreadCount(snapshot.size);
+        });
+
+        return () => unsubscribe();
+    }, [user]);
 
     // Global Toast Handler
     const showToast = (msg: string, type: 'success' | 'error' = 'success') => {
@@ -94,7 +114,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
     return (
         <div className={`min-h-screen font-sans flex justify-center selection:bg-[var(--accent-color)] selection:text-white bg-[var(--bg-primary)] text-[var(--text-primary)]`} dir="rtl">
             
-            <MobileSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+            <MobileSidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} unreadCount={unreadCount} />
 
             {toastMsg && (
                 <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-[6000] animate-fade-in-up">
@@ -132,8 +152,8 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                     </div>
                     
                     <SidebarLink icon={Home} label="الرئيسية" active={view==='feed'} onClick={() => setView('feed')} />
-                    <SidebarLink icon={Search} label="استكشف" onClick={() => {}} />
-                    <SidebarLink icon={Bell} label="التنبيهات" notify />
+                    <SidebarLink icon={Search} label="استكشف" active={view==='explore'} onClick={() => setView('explore')} />
+                    <SidebarLink icon={Bell} label="التنبيهات" active={view==='notifications'} onClick={() => setView('notifications')} notifyCount={unreadCount} />
                     <SidebarLink icon={Mail} label="الرسائل" active={view==='messages'} onClick={() => setView('messages')} />
                     <SidebarLink icon={User} label="الملف الشخصي" active={view==='profile'} onClick={() => setView('profile')} />
                     
@@ -175,14 +195,15 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
             <main className={`flex-1 max-w-[600px] w-full min-h-screen pb-20 md:pb-0 relative border-r border-[var(--border-color)] bg-[var(--bg-primary)]`}>
                 
                 {/* Mobile Top Bar */}
-                {(view === 'feed' || view === 'profile' || view === 'messages') && (
+                {(view === 'feed' || view === 'profile' || view === 'messages' || view === 'notifications' || view === 'explore') && (
                     <div className="md:hidden sticky top-0 z-30 bg-[var(--bg-primary)]/80 backdrop-blur-md border-b border-[var(--border-color)] px-4 py-3 flex justify-between items-center">
-                        <div onClick={() => setIsSidebarOpen(true)} className="cursor-pointer">
+                        <div onClick={() => setIsSidebarOpen(true)} className="cursor-pointer relative">
                             <img 
                                 src={user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
                                 className="w-8 h-8 rounded-full object-cover" 
                                 alt="Menu"
                             />
+                            {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>}
                         </div>
                         <div className="font-black text-lg">M</div>
                         <div className="w-8"></div>
@@ -212,6 +233,9 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
                         onBack={handleBackToMessages} 
                     />
                 )}
+
+                {view === 'notifications' && <Notifications />}
+                {view === 'explore' && <Explore onPostClick={handlePostClick} />}
 
                 {view === 'reels' && <ReelsFeed />}
                 {view === 'admin' && <SocialAdmin />}
@@ -291,14 +315,14 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
             {view !== 'post-detail' && view !== 'chat' && (
                 <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[var(--bg-primary)]/90 backdrop-blur-xl border-t border-[var(--border-color)] flex justify-around p-3 pb-safe z-50">
                     <NavButton icon={Home} active={view === 'feed'} onClick={() => setView('feed')} />
-                    <NavButton icon={Search} active={false} onClick={() => {}} />
+                    <NavButton icon={Search} active={view === 'explore'} onClick={() => setView('explore')} />
                     <button 
                         onClick={() => setIsComposeOpen(true)}
                         className="bg-[var(--accent-color)] text-white p-3 rounded-full shadow-lg transform -translate-y-4 border-4 border-[var(--bg-primary)] active:scale-95 transition-transform"
                     >
                         <Plus className="w-6 h-6"/>
                     </button>
-                    <NavButton icon={Bell} active={false} onClick={() => {}} notify />
+                    <NavButton icon={Bell} active={view === 'notifications'} onClick={() => setView('notifications')} notifyCount={unreadCount} />
                     <NavButton icon={Mail} active={view === 'messages'} onClick={() => setView('messages')} />
                 </div>
             )}
@@ -339,25 +363,31 @@ export const SocialLayout: React.FC<Props> = ({ onBack }) => {
     );
 };
 
-const SidebarLink = ({ icon: Icon, label, active, onClick, notify }: any) => (
+const SidebarLink = ({ icon: Icon, label, active, onClick, notifyCount }: any) => (
     <button 
         onClick={onClick}
         className={`relative flex items-center gap-4 px-4 py-3 rounded-full text-xl transition-all w-fit xl:w-full group ${active ? 'font-bold text-[var(--text-primary)]' : 'text-[var(--text-primary)] hover:bg-[var(--bg-secondary)]'}`}
     >
         <div className="relative">
             <Icon className={`w-7 h-7 ${active ? 'fill-current' : ''}`} />
-            {notify && <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-[var(--accent-color)] rounded-full border-2 border-[var(--bg-primary)]"></span>}
+            {notifyCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-[var(--accent-color)] text-white text-[10px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-[var(--bg-primary)]">
+                    {notifyCount > 9 ? '9+' : notifyCount}
+                </span>
+            )}
         </div>
         <span className="hidden xl:block font-medium text-lg">{label}</span>
     </button>
 );
 
-const NavButton = ({ icon: Icon, active, onClick, notify }: any) => (
+const NavButton = ({ icon: Icon, active, onClick, notifyCount }: any) => (
     <button 
         onClick={onClick} 
         className={`p-2 rounded-xl relative transition-colors ${active ? 'text-[var(--text-primary)]' : 'text-[var(--text-secondary)]'}`}
     >
         <Icon className={`w-6 h-6 ${active ? 'fill-current' : ''}`}/>
-        {notify && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-black"></span>}
+        {notifyCount > 0 && (
+            <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--bg-primary)]"></span>
+        )}
     </button>
 );

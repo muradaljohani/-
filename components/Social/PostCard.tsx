@@ -1,22 +1,29 @@
+
 import React, { useState } from 'react';
 import { 
     MessageCircle, Repeat, Heart, Share2, MoreHorizontal, 
-    CheckCircle2, Crown, Pin, Play, Lock, BarChart2, Bookmark 
+    CheckCircle2, Crown, Pin, BarChart2, Bookmark 
 } from 'lucide-react';
-import { SocialPost } from '../../dummyData';
+import { doc, updateDoc, increment, addDoc, collection, serverTimestamp, db } from '../../src/lib/firebase';
+import { useAuth } from '../../context/AuthContext';
 
 interface PostCardProps {
-    post: SocialPost;
+    post: any; // Using any for flexibility with Firestore data
     onOpenLightbox?: (src: string) => void;
     onShare?: (msg: string) => void;
     onClick?: () => void;
-    isFocusMode?: boolean; // New Prop for Focus Mode
+    isFocusMode?: boolean;
 }
 
 export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShare, onClick, isFocusMode = false }) => {
+    const { user } = useAuth();
     const [liked, setLiked] = useState(false);
-    const [bookmarked, setBookmarked] = useState(false);
-    const [likeCount, setLikeCount] = useState(post.likes);
+    const [likeCount, setLikeCount] = useState(post.likes || 0);
+    const [isAnimating, setIsAnimating] = useState(false);
+    
+    // Retweet State
+    const [retweeted, setRetweeted] = useState(false);
+    const [retweetCount, setRetweetCount] = useState(post.retweets || 0);
 
     const formatNumber = (num: number) => {
         if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
@@ -24,45 +31,110 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         return num.toString();
     };
 
-    const handleLike = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setLiked(!liked);
-        setLikeCount(prev => liked ? prev - 1 : prev + 1);
-        if (navigator.vibrate) navigator.vibrate(50);
+    const playSound = () => {
+        const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3'); 
+        audio.volume = 0.2;
+        audio.play().catch(() => {});
     };
 
-    const handleNativeShare = async (e: React.MouseEvent) => {
+    const handleLike = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (onShare) onShare('Opening Share...');
-        
-        const shareData = {
-            title: `Post by ${post.user.name}`,
-            text: post.content,
-            url: window.location.href
-        };
+        if (!user) return; 
 
-        if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-            } catch (err) {}
-        } else {
-            navigator.clipboard.writeText(shareData.url);
-            if(onShare) onShare('تم نسخ الرابط!');
+        // 1. Optimistic UI Update
+        const isNowLiked = !liked;
+        setLiked(isNowLiked);
+        setLikeCount((prev: number) => isNowLiked ? prev + 1 : prev - 1);
+        
+        if (isNowLiked) {
+            setIsAnimating(true);
+            playSound();
+            setTimeout(() => setIsAnimating(false), 1000);
+        }
+
+        // 2. Background Firestore Update
+        try {
+            const postRef = doc(db, 'posts', post.id);
+            await updateDoc(postRef, {
+                likes: increment(isNowLiked ? 1 : -1)
+            });
+
+            // 3. Trigger Notification
+            if (isNowLiked && post.user?.uid && post.user.uid !== user.id) {
+                const notificationsRef = collection(db, 'users', post.user.uid, 'notifications');
+                await addDoc(notificationsRef, {
+                    type: 'like',
+                    actorId: user.id,
+                    actorName: user.name,
+                    actorAvatar: user.avatar,
+                    postId: post.id,
+                    content: post.content?.substring(0, 50) + '...',
+                    read: false,
+                    timestamp: serverTimestamp()
+                });
+            }
+        } catch (err) {
+            console.error("Like failed, reverting", err);
+            setLiked(!isNowLiked);
+            setLikeCount((prev: number) => isNowLiked ? prev - 1 : prev + 1);
+        }
+    };
+
+    const handleRetweet = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!user) {
+            alert("يرجى تسجيل الدخول لإعادة النشر");
+            return;
+        }
+        if (retweeted) return; // Prevent double retweet in session for simplicity
+
+        // 1. Optimistic Update
+        setRetweeted(true);
+        setRetweetCount((prev: number) => prev + 1);
+
+        try {
+            // 2. Create Repost Document
+            await addDoc(collection(db, 'posts'), {
+                type: 'repost',
+                originalPostId: post.id,
+                originalContent: post.content, // Snapshot for display
+                originalUser: post.user,
+                user: {
+                    name: user.name,
+                    handle: user.username ? `@${user.username}` : `@${user.id.slice(0,5)}`,
+                    avatar: user.avatar,
+                    verified: user.isIdentityVerified,
+                    isGold: user.primeSubscription?.status === 'active'
+                },
+                createdAt: serverTimestamp(),
+                likes: 0,
+                retweets: 0,
+                replies: 0,
+                views: '0'
+            });
+
+            // 3. Increment Count on Original Post
+            const postRef = doc(db, 'posts', post.id);
+            await updateDoc(postRef, {
+                retweets: increment(1)
+            });
+            
+        } catch (err) {
+            console.error("Retweet failed", err);
+            setRetweeted(false);
+            setRetweetCount((prev: number) => prev - 1);
         }
     };
 
     const handleLightbox = (e: React.MouseEvent, img: string) => {
         e.stopPropagation();
         if (onOpenLightbox) onOpenLightbox(img);
-    }
+    };
 
-    const renderBadge = () => {
-        if (post.user.isGold) return (
-            <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 ml-1" />
-        );
-        if (post.user.verified) return (
-             <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500 ml-1" />
-        );
+    const renderBadge = (postUser: any) => {
+        if (!postUser) return null;
+        if (postUser.isGold) return <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 ml-1" />;
+        if (postUser.verified) return <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500 ml-1" />;
         return null;
     };
 
@@ -70,61 +142,89 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         if (!text) return null;
         return text.split(/(\s+)/).map((word, i) => {
             if (word.startsWith('#') || word.startsWith('@')) {
-                return <span key={i} className="text-blue-400 hover:underline cursor-pointer font-medium">{word}</span>;
+                return <span key={i} className="text-[#1d9bf0] hover:underline cursor-pointer font-medium">{word}</span>;
             }
             if (word.match(/https?:\/\/[^\s]+/)) {
-                return <a key={i} href={word} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline break-all" onClick={e => e.stopPropagation()}>{word}</a>;
+                return <a key={i} href={word} target="_blank" rel="noopener noreferrer" className="text-[#1d9bf0] hover:underline break-all" onClick={e => e.stopPropagation()}>{word}</a>;
             }
             return word;
         });
     };
 
-    // Helper to conditionally show metric
-    const showMetric = (count: number) => {
-        if (isFocusMode) return <span>•</span>;
-        return count > 0 ? formatNumber(count) : '';
-    };
+    // --- REPOST RENDER LOGIC ---
+    if (post.type === 'repost') {
+        return (
+            <div className="p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors cursor-pointer" onClick={onClick} dir="rtl">
+                <div className="flex items-center gap-2 text-[#71767b] text-xs font-bold mb-2">
+                    <Repeat className="w-3 h-3"/>
+                    <span>{post.user?.name} أعاد النشر</span>
+                </div>
+                {/* Render the inner original post style (simplified) */}
+                <div className="border border-[#2f3336] rounded-2xl p-3 mt-1 hover:bg-[#16181c] transition-colors">
+                    <div className="flex gap-3">
+                         <div className="shrink-0">
+                            <img 
+                                src={post.originalUser?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
+                                className="w-8 h-8 rounded-full object-cover" 
+                            />
+                        </div>
+                        <div>
+                             <div className="flex items-center gap-1 text-[14px]">
+                                <span className="font-bold text-[#e7e9ea]">{post.originalUser?.name}</span>
+                                {renderBadge(post.originalUser)}
+                                <span className="text-[#71767b] dir-ltr text-sm" dir="ltr">{post.originalUser?.handle}</span>
+                            </div>
+                            <div className="text-[14px] text-[#e7e9ea] mt-1">
+                                {highlightText(post.originalContent || '')}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div 
-            className={`flex gap-3 p-4 border-b border-[var(--border-color)] hover:bg-[var(--bg-secondary)] transition-colors cursor-pointer ${post.isPinned ? 'bg-[var(--bg-secondary)]/50' : ''}`}
+            className={`flex gap-3 p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors cursor-pointer ${post.isPinned ? 'bg-[#16181c]/50' : ''} font-sans`}
             onClick={onClick}
+            dir="rtl"
         >
             <div className="shrink-0">
                 <img 
-                    src={post.user.avatar} 
-                    className="w-11 h-11 rounded-full object-cover border border-[var(--border-color)]" 
-                    alt={post.user.name} 
+                    src={post.user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
+                    className="w-11 h-11 rounded-full object-cover border border-[#2f3336]" 
+                    alt={post.user?.name} 
                 />
             </div>
 
             <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between text-[var(--text-secondary)] text-[15px] leading-tight mb-1">
+                <div className="flex items-center justify-between text-[#71767b] text-[15px] leading-tight mb-1">
                     <div className="flex items-center gap-1 overflow-hidden">
-                        {post.isPinned && <Pin className="w-3 h-3 text-[var(--text-secondary)] fill-current mr-1" />}
-                        <span className="font-bold text-[var(--text-primary)] truncate hover:underline">{post.user.name}</span>
-                        {renderBadge()}
-                        <span className="truncate ltr text-[var(--text-secondary)] ml-1 text-sm" dir="ltr">{post.user.handle}</span>
-                        <span className="text-[var(--text-secondary)] px-1">·</span>
-                        <span className="text-[var(--text-secondary)] text-sm">{post.timestamp}</span>
+                        {post.isPinned && <Pin className="w-3 h-3 text-[#71767b] fill-current mr-1" />}
+                        <span className="font-bold text-[#e7e9ea] truncate hover:underline">{post.user?.name}</span>
+                        {renderBadge(post.user)}
+                        <span className="truncate ltr text-[#71767b] ml-1 text-sm" dir="ltr">{post.user?.handle}</span>
+                        <span className="text-[#71767b] px-1">·</span>
+                        <span className="text-[#71767b] text-sm">{post.timestamp}</span>
                     </div>
-                    <button className="p-1 -mr-2 rounded-full hover:bg-[var(--accent-color)]/10 hover:text-[var(--accent-color)] transition-colors" onClick={(e) => e.stopPropagation()}>
+                    <button className="p-1 -mr-2 rounded-full hover:bg-[#1d9bf0]/10 hover:text-[#1d9bf0] transition-colors" onClick={(e) => e.stopPropagation()}>
                         <MoreHorizontal className="w-4 h-4"/>
                     </button>
                 </div>
 
-                <div className="text-[15px] text-[var(--text-primary)] whitespace-pre-wrap leading-relaxed mt-0.5" style={{ wordBreak: 'break-word' }}>
+                <div className="text-[15px] text-[#e7e9ea] whitespace-pre-wrap leading-relaxed mt-0.5" style={{ wordBreak: 'break-word' }}>
                     {highlightText(post.content || '')}
                 </div>
 
                 {post.images && post.images.length > 0 && (
-                    <div className={`mt-3 rounded-2xl overflow-hidden border border-[var(--border-color)] relative ${
+                    <div className={`mt-3 rounded-2xl overflow-hidden border border-[#2f3336] relative ${
                         post.images.length > 1 ? 'grid grid-cols-2 gap-0.5' : ''
                     }`}>
-                        {post.images.slice(0, 4).map((img, i) => (
+                        {post.images.slice(0, 4).map((img: string, i: number) => (
                             <div 
                                 key={i} 
-                                className={`relative bg-[var(--bg-secondary)] overflow-hidden ${
+                                className={`relative bg-[#16181c] overflow-hidden ${
                                     post.images?.length === 3 && i === 0 ? 'row-span-2 h-full' : 'aspect-[16/9]'
                                 }`}
                                 onClick={(e) => handleLightbox(e, img)}
@@ -135,43 +235,49 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                     </div>
                 )}
 
-                <div className="flex justify-between items-center mt-3 text-[var(--text-secondary)] max-w-md">
-                    <button className="flex items-center gap-1 group transition-colors hover:text-blue-400" onClick={(e) => e.stopPropagation()}>
-                        <div className="p-2 rounded-full group-hover:bg-blue-500/10 -ml-2 transition-colors">
+                <div className="flex justify-between items-center mt-3 text-[#71767b] max-w-md">
+                    <button className="flex items-center gap-1 group transition-colors hover:text-[#1d9bf0]" onClick={(e) => e.stopPropagation()}>
+                        <div className="p-2 rounded-full group-hover:bg-[#1d9bf0]/10 -ml-2 transition-colors">
                             <MessageCircle className="w-4.5 h-4.5"/>
                         </div>
-                        <span className="text-xs font-medium">{showMetric(post.replies)}</span>
-                    </button>
-
-                    <button className="flex items-center gap-1 group transition-colors hover:text-green-400" onClick={(e) => e.stopPropagation()}>
-                        <div className="p-2 rounded-full group-hover:bg-green-500/10 transition-colors">
-                            <Repeat className="w-4.5 h-4.5"/>
-                        </div>
-                        <span className="text-xs font-medium">{showMetric(post.retweets)}</span>
+                        <span className="text-xs font-medium">{isFocusMode ? '' : formatNumber(post.replies || 0)}</span>
                     </button>
 
                     <button 
-                        className={`flex items-center gap-1 group transition-colors ${liked ? 'text-pink-600' : 'hover:text-pink-600'}`}
-                        onClick={handleLike}
+                        className={`flex items-center gap-1 group transition-colors ${retweeted ? 'text-[#00ba7c]' : 'hover:text-[#00ba7c]'}`}
+                        onClick={handleRetweet}
                     >
-                        <div className="p-2 rounded-full group-hover:bg-pink-600/10 transition-colors">
-                            <Heart className={`w-4.5 h-4.5 transition-transform ${liked ? 'fill-current scale-125' : ''}`}/>
+                        <div className="p-2 rounded-full group-hover:bg-[#00ba7c]/10 transition-colors">
+                            <Repeat className="w-4.5 h-4.5"/>
                         </div>
-                        <span className="text-xs font-medium">{showMetric(likeCount)}</span>
+                        <span className="text-xs font-medium">{isFocusMode ? '' : formatNumber(retweetCount)}</span>
                     </button>
 
-                    <button className="flex items-center gap-1 group transition-colors hover:text-blue-400" onClick={(e) => e.stopPropagation()}>
-                        <div className="p-2 rounded-full group-hover:bg-blue-500/10 transition-colors">
+                    <button 
+                        className={`flex items-center gap-1 group transition-colors ${liked ? 'text-[#f91880]' : 'hover:text-[#f91880]'}`}
+                        onClick={handleLike}
+                    >
+                        <div className="p-2 rounded-full group-hover:bg-[#f91880]/10 transition-colors relative">
+                            <Heart className={`w-4.5 h-4.5 transition-transform ${liked ? 'fill-current' : ''} ${isAnimating ? 'animate-bounce' : ''}`}/>
+                        </div>
+                        <span className="text-xs font-medium">{isFocusMode ? '' : formatNumber(likeCount)}</span>
+                    </button>
+
+                    <button className="flex items-center gap-1 group transition-colors hover:text-[#1d9bf0]" onClick={(e) => e.stopPropagation()}>
+                        <div className="p-2 rounded-full group-hover:bg-[#1d9bf0]/10 transition-colors">
                             <BarChart2 className="w-4.5 h-4.5"/>
                         </div>
-                        <span className="text-xs font-medium">{isFocusMode ? '•' : (post.views || '1K')}</span>
+                        <span className="text-xs font-medium">{isFocusMode ? '' : (post.views || '0')}</span>
                     </button>
 
                     <div className="flex items-center gap-2">
-                        <button className="p-2 rounded-full hover:text-blue-400 hover:bg-blue-500/10 transition-colors" onClick={(e) => e.stopPropagation()}>
+                        <button className="p-2 rounded-full hover:text-[#1d9bf0] hover:bg-[#1d9bf0]/10 transition-colors" onClick={(e) => e.stopPropagation()}>
                             <Bookmark className="w-4.5 h-4.5"/>
                         </button>
-                        <button className="p-2 rounded-full hover:text-blue-400 hover:bg-blue-500/10 transition-colors" onClick={handleNativeShare}>
+                        <button className="p-2 rounded-full hover:text-[#1d9bf0] hover:bg-[#1d9bf0]/10 transition-colors" onClick={(e) => {
+                            e.stopPropagation();
+                            if(onShare) onShare('Share clicked');
+                        }}>
                             <Share2 className="w-4.5 h-4.5"/>
                         </button>
                     </div>

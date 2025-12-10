@@ -19,7 +19,6 @@ export const ChatWindow: React.FC<Props> = ({ chatId, onBack }) => {
     if (!chatId) return;
 
     // Use a subcollection for chat messages based on chatId
-    // In a real app, chatId would be a conversation ID. Here we simulate it.
     const messagesRef = collection(db, 'chats', chatId, 'messages');
     const q = query(messagesRef, orderBy('timestamp', 'asc'));
 

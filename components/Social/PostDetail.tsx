@@ -26,12 +26,17 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack }) => {
 
         // 1. Fetch Main Post
         const fetchPost = async () => {
-            const docRef = doc(db, 'posts', postId);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                setPost({ id: docSnap.id, ...docSnap.data() });
+            try {
+                const docRef = doc(db, 'posts', postId);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) {
+                    setPost({ id: docSnap.id, ...docSnap.data() });
+                }
+            } catch (e) {
+                console.error("Error fetching post", e);
+            } finally {
+                setLoading(false);
             }
-            setLoading(false);
         };
 
         fetchPost();
@@ -69,7 +74,7 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack }) => {
     };
 
     if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-[#71767b]">Loading...</div>;
-    if (!post) return null;
+    if (!post) return <div className="min-h-screen bg-black flex items-center justify-center text-[#71767b]">Post not found</div>;
 
     return (
         <div className="min-h-screen bg-black text-[#e7e9ea] font-sans pb-32 relative" dir="rtl">
@@ -88,7 +93,7 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack }) => {
                 <div className="flex justify-between items-start mb-3">
                     <div className="flex gap-3 items-center">
                         <img 
-                            src={post.user?.avatar} 
+                            src={post.user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
                             alt={post.user?.name} 
                             className="w-10 h-10 rounded-full object-cover border border-[#2f3336]"
                         />
@@ -173,9 +178,6 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack }) => {
 
             {/* 4. Fixed Reply Input */}
             <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-[#2f3336] px-4 py-2 pb-safe z-50">
-                 {/* Visual Thread Connector Line */}
-                 {/* Note: This simulates the visual cue requested */}
-                 
                  <div className="flex gap-3 items-end">
                     <div className="flex flex-col items-center justify-end h-full pb-2">
                          <img 
@@ -215,7 +217,7 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack }) => {
                     </div>
                  </div>
                  
-                 {/* Vertical Gray Line Visual Cue (Absolute positioning to connect to "thread") */}
+                 {/* Thread Connector Visual Cue */}
                  <div className="absolute left-[38px] bottom-[70px] top-[-1000px] w-[2px] bg-[#333639] -z-10 hidden"></div>
             </div>
 
