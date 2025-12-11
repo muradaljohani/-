@@ -17,9 +17,13 @@ export class WalletSystem {
 
   // --- 1. Wallet Initialization ---
   public getOrCreateWallet(user: User): Wallet {
-    const existing = localStorage.getItem(`wallet_${user.id}`);
-    if (existing) {
-      return JSON.parse(existing);
+    try {
+        const existing = localStorage.getItem(`wallet_${user.id}`);
+        if (existing) {
+          return JSON.parse(existing);
+        }
+    } catch (e) {
+        console.error("Wallet data corrupted, resetting.");
     }
 
     const newWallet: Wallet = {
@@ -47,10 +51,6 @@ export class WalletSystem {
     // Simulate Network/Database Lock
     // In a real DB, this would be `START TRANSACTION`
     try {
-      const walletData = localStorage.getItem(`wallet_${walletId.replace('w_', '').split('_')[0]}`);
-      
-      // Need to find wallet by ID more robustly in real app, here we use key convention
-      // For simulation, we scan keys if direct lookup fails
       let wallet: Wallet | null = null;
       
       // Simple lookup simulation based on the passed wallet object usually
@@ -59,8 +59,10 @@ export class WalletSystem {
       const parts = walletId.split('_');
       if (parts.length >= 2) {
           const uId = parts[1];
-          const stored = localStorage.getItem(`wallet_${uId}`);
-          if (stored) wallet = JSON.parse(stored);
+          try {
+              const stored = localStorage.getItem(`wallet_${uId}`);
+              if (stored) wallet = JSON.parse(stored);
+          } catch(e) { /* ignore corrupt wallet */ }
       }
 
       if (!wallet) return { success: false, error: 'Wallet not found' };

@@ -28,13 +28,23 @@ export class InvoiceSystem {
   }
 
   private static saveInvoice(invoice: Invoice) {
-    const history = JSON.parse(localStorage.getItem('user_invoices') || '[]');
+    let history = [];
+    try {
+        history = JSON.parse(localStorage.getItem('user_invoices') || '[]');
+    } catch (e) {
+        history = [];
+    }
     history.unshift(invoice);
     localStorage.setItem('user_invoices', JSON.stringify(history));
   }
 
   public static getInvoices(userId: string): Invoice[] {
-    const history = JSON.parse(localStorage.getItem('user_invoices') || '[]');
+    let history = [];
+    try {
+        history = JSON.parse(localStorage.getItem('user_invoices') || '[]');
+    } catch (e) {
+        return [];
+    }
     return history.filter((i: Invoice) => i.userId === userId);
   }
 

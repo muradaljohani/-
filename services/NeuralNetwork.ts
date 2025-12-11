@@ -50,7 +50,11 @@ export class Neural_Network {
   }
 
   public getGhostReplayData(): any[] {
-      return JSON.parse(localStorage.getItem('neural_session_log') || '[]');
+      try {
+          return JSON.parse(localStorage.getItem('neural_session_log') || '[]');
+      } catch (e) {
+          return [];
+      }
   }
 
   public getHeatmapData(): {x: number, y: number}[] {

@@ -10,10 +10,14 @@ export class FinanceCore {
 
   private constructor() {
       // Hydrate receipt hashes from existing transactions to prevent dupes on reload
-      const txns = JSON.parse(localStorage.getItem('mylaf_transactions') || '[]');
-      txns.forEach((t: any) => {
-          if (t.receiptHash) this.receiptHashes.add(t.receiptHash);
-      });
+      try {
+          const txns = JSON.parse(localStorage.getItem('mylaf_transactions') || '[]');
+          txns.forEach((t: any) => {
+              if (t.receiptHash) this.receiptHashes.add(t.receiptHash);
+          });
+      } catch (e) {
+          console.warn("FinanceCore data reset due to corruption");
+      }
   }
 
   public static getInstance(): FinanceCore {
@@ -84,7 +88,11 @@ export class FinanceCore {
       };
 
       // 4. Save to Ledger
-      const existingTxns = JSON.parse(localStorage.getItem('mylaf_transactions') || '[]');
+      let existingTxns = [];
+      try {
+        existingTxns = JSON.parse(localStorage.getItem('mylaf_transactions') || '[]');
+      } catch (e) { existingTxns = []; }
+      
       localStorage.setItem('mylaf_transactions', JSON.stringify([newTxn, ...existingTxns]));
       
       // Update Memory Cache
@@ -96,12 +104,15 @@ export class FinanceCore {
   // --- 3. ADMIN AUDIT ACTIONS & SMART CHANGE & CONSTITUTION TAX ---
 
   public getPendingTransactions(): Transaction[] {
-      const txns = JSON.parse(localStorage.getItem('mylaf_transactions') || '[]');
+      let txns = [];
+      try { txns = JSON.parse(localStorage.getItem('mylaf_transactions') || '[]'); } catch (e) {}
       return txns.filter((t: Transaction) => t.status === 'pending_verification');
   }
 
   public approveTransaction(txId: string, confirmedAmount?: number): boolean {
-      const txns = JSON.parse(localStorage.getItem('mylaf_transactions') || '[]');
+      let txns = [];
+      try { txns = JSON.parse(localStorage.getItem('mylaf_transactions') || '[]'); } catch (e) {}
+      
       let found = false;
       const updated = txns.map((t: Transaction) => {
           if (t.id === txId) {
@@ -141,7 +152,9 @@ export class FinanceCore {
   }
 
   public rejectTransaction(txId: string): boolean {
-      const txns = JSON.parse(localStorage.getItem('mylaf_transactions') || '[]');
+      let txns = [];
+      try { txns = JSON.parse(localStorage.getItem('mylaf_transactions') || '[]'); } catch (e) {}
+      
       const updated = txns.map((t: Transaction) => {
           if (t.id === txId) {
               return { ...t, status: 'rejected', updatedAt: new Date().toISOString() };
@@ -164,7 +177,9 @@ export class FinanceCore {
   }
 
   private runRecoveryRoutine() {
-      const invoices = JSON.parse(localStorage.getItem('user_invoices') || '[]');
+      let invoices = [];
+      try { invoices = JSON.parse(localStorage.getItem('user_invoices') || '[]'); } catch (e) {}
+      
       const now = Date.now();
 
       invoices.forEach((inv: any) => {
@@ -192,7 +207,9 @@ export class FinanceCore {
   }
 
   private sendRecoveryNotification(userId: string, message: string, type: 'financial' | 'warning') {
-      const users = JSON.parse(localStorage.getItem('mylaf_users') || '[]');
+      let users = [];
+      try { users = JSON.parse(localStorage.getItem('mylaf_users') || '[]'); } catch (e) {}
+      
       const updatedUsers = users.map((u: User) => {
           if (u.id === userId) {
               const newNotif: Notification = {
@@ -206,10 +223,12 @@ export class FinanceCore {
               };
               u.notifications = [newNotif, ...(u.notifications || [])];
               
-              const session = JSON.parse(localStorage.getItem('mylaf_session') || '{}');
-              if (session.id === userId) {
-                  localStorage.setItem('mylaf_session', JSON.stringify(u));
-              }
+              try {
+                  const session = JSON.parse(localStorage.getItem('mylaf_session') || '{}');
+                  if (session.id === userId) {
+                      localStorage.setItem('mylaf_session', JSON.stringify(u));
+                  }
+              } catch(e) {}
           }
           return u;
       });

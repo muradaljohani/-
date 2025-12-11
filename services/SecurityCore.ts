@@ -37,26 +37,35 @@ export class SecurityCore {
 
   // --- 2. Brute-Force Protection ---
   public checkLockout(email: string): { locked: boolean; timeLeft?: number } {
-    const attempts = JSON.parse(localStorage.getItem(`auth_attempts_${email}`) || '{"count": 0, "last": 0}');
-    const now = Date.now();
+    try {
+        const attempts = JSON.parse(localStorage.getItem(`auth_attempts_${email}`) || '{"count": 0, "last": 0}');
+        const now = Date.now();
 
-    if (attempts.count >= this.maxAttempts) {
-      const timePassed = now - attempts.last;
-      if (timePassed < this.lockoutTime) {
-        return { locked: true, timeLeft: Math.ceil((this.lockoutTime - timePassed) / 1000 / 60) };
-      } else {
-        // Reset after lockout expires
+        if (attempts.count >= this.maxAttempts) {
+          const timePassed = now - attempts.last;
+          if (timePassed < this.lockoutTime) {
+            return { locked: true, timeLeft: Math.ceil((this.lockoutTime - timePassed) / 1000 / 60) };
+          } else {
+            // Reset after lockout expires
+            this.resetAttempts(email);
+          }
+        }
+    } catch (e) {
+        // Reset if corrupt
         this.resetAttempts(email);
-      }
     }
     return { locked: false };
   }
 
   public recordFailedAttempt(email: string): void {
-    const attempts = JSON.parse(localStorage.getItem(`auth_attempts_${email}`) || '{"count": 0, "last": 0}');
-    attempts.count += 1;
-    attempts.last = Date.now();
-    localStorage.setItem(`auth_attempts_${email}`, JSON.stringify(attempts));
+    try {
+        const attempts = JSON.parse(localStorage.getItem(`auth_attempts_${email}`) || '{"count": 0, "last": 0}');
+        attempts.count += 1;
+        attempts.last = Date.now();
+        localStorage.setItem(`auth_attempts_${email}`, JSON.stringify(attempts));
+    } catch (e) {
+        localStorage.setItem(`auth_attempts_${email}`, JSON.stringify({count: 1, last: Date.now()}));
+    }
   }
 
   public resetAttempts(email: string): void {

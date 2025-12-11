@@ -22,8 +22,13 @@ export class AutoMod {
         // 2. Spam Flood Check
         // We retrieve timestamps of previous posts for this user
         const storageKey = `post_log_${user.id}`;
-        const rawLog = localStorage.getItem(storageKey);
-        const postTimestamps: number[] = rawLog ? JSON.parse(rawLog) : [];
+        let postTimestamps: number[] = [];
+        try {
+            const rawLog = localStorage.getItem(storageKey);
+            postTimestamps = rawLog ? JSON.parse(rawLog) : [];
+        } catch(e) {
+            postTimestamps = [];
+        }
         
         const oneHourAgo = Date.now() - 3600000;
         const recentPosts = postTimestamps.filter((t: number) => t > oneHourAgo);
