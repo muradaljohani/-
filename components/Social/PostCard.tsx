@@ -36,7 +36,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     };
 
     const isOwner = user && postUser.uid ? user.id === postUser.uid : false;
-    const canDelete = isOwner || isAdmin;
+    const canDelete = isAdmin || (user && postUser.uid === user.id);
 
     const getYouTubeId = (text: string) => {
         if (!text) return null;
