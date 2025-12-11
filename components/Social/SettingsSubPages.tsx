@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { ArrowRight, Save, Lock, AlertTriangle, ChevronLeft, Check, Loader2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRight, Lock, AlertTriangle, ChevronLeft, Check, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { doc, updateDoc, db, auth, sendPasswordResetEmail } from '../../src/lib/firebase';
 
@@ -14,7 +14,7 @@ const SettingsHeader = ({ title, onBack }: { title: string; onBack: () => void }
     </div>
 );
 
-// --- 1. ACCOUNT SETTINGS (FUNCTIONAL) ---
+// --- 1. ACCOUNT SETTINGS ---
 export const AccountSettings: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const { user, updateProfile } = useAuth();
     const [username, setUsername] = useState(user?.username || '');
@@ -116,7 +116,7 @@ export const AccountSettings: React.FC<{ onBack: () => void }> = ({ onBack }) =>
     );
 };
 
-// --- 2. SECURITY SETTINGS (HYBRID) ---
+// --- 2. SECURITY SETTINGS ---
 export const SecuritySettings: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     const { user } = useAuth();
     const [twoFactor, setTwoFactor] = useState(false);
@@ -181,7 +181,7 @@ export const SecuritySettings: React.FC<{ onBack: () => void }> = ({ onBack }) =
     );
 };
 
-// --- 3. LEGAL SETTINGS (STATIC CONTENT) ---
+// --- 3. LEGAL SETTINGS ---
 export const LegalSettings: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     return (
         <div className="min-h-screen bg-black text-[#e7e9ea] font-sans" dir="rtl">

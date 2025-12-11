@@ -1,6 +1,8 @@
 
 import React from 'react';
 import { ArrowRight, CheckCircle2, Crown, Zap, BarChart2, DollarSign, Settings, Users, Mic, Layers, Bookmark, Lock, Star } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { PaymentGateway } from '../PaymentGateway';
 
 interface PageProps {
     onBack: () => void;

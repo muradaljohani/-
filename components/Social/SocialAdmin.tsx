@@ -1,10 +1,10 @@
 
 import React, { useState } from 'react';
 import { 
-    Users, DollarSign, TrendingUp, ShieldAlert, Check, X, 
+    Users, DollarSign, ShieldAlert, Check, 
     Crown, Lock, Unlock, Megaphone, Search, BarChart3, Activity
 } from 'lucide-react';
-import { posts, adminLogs } from '../../dummyData';
+import { adminLogs } from '../../dummyData';
 
 export const SocialAdmin: React.FC = () => {
     const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'broadcast'>('overview');

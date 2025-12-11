@@ -26,11 +26,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     const [retweeted, setRetweeted] = useState(false);
     const [retweetCount, setRetweetCount] = useState(post?.retweets || 0);
 
-    // Safeguard: Check if post exists. 
-    // Sometimes user data might be nested or flat, handle gracefully.
     if (!post) return null;
     
-    // Ensure User Object Exists - Fallback for Legacy Data
     const postUser = post.user || {
         name: 'Unknown User',
         handle: '@unknown',

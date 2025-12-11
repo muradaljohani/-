@@ -40,7 +40,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // 1. Fetch Posts Logic (Client-Side Sort to avoid Index Errors)
   useEffect(() => {
     let isMounted = true;
     setLoading(true);
@@ -51,11 +50,9 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
 
     try {
         if (activeTab === 'foryou') {
-            // Fetch recent 100 posts unordered, then sort in memory
             q = query(postsRef, limit(100));
         } else {
             if (user) {
-                // Fetch filtered posts, sort in memory
                 q = query(
                   postsRef,
                   where("user.uid", "==", user.id),
@@ -77,24 +74,18 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                   ...doc.data()
               }));
 
-              // Robust Client-Side Sorting
               livePosts.sort((a: any, b: any) => {
-                  // 1. Pinned First (Only for For You tab)
                   if (activeTab === 'foryou') {
                       const pinA = a.isPinned ? 1 : 0;
                       const pinB = b.isPinned ? 1 : 0;
                       if (pinA !== pinB) return pinB - pinA;
                   }
                   
-                  // 2. Date Descending
                   const getTime = (p: any) => {
                       const val = p.createdAt || p.timestamp;
                       if (!val) return 0;
-                      // Handle Firestore Timestamp
                       if (val.toMillis && typeof val.toMillis === 'function') return val.toMillis();
-                      // Handle JS Date
                       if (val instanceof Date) return val.getTime();
-                      // Handle ISO String
                       if (typeof val === 'string') return new Date(val).getTime();
                       return 0; 
                   };
@@ -111,7 +102,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         }, (err) => {
             console.error("Firestore Feed Error:", err);
             if (isMounted) {
-               // Handle permission errors silently or show a gentle message
                if (err.code !== 'permission-denied') {
                   setError("حدث خطأ أثناء تحميل المنشورات.");
                }
@@ -221,7 +211,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   return (
     <div className="flex-1 min-h-screen bg-black text-[#e7e9ea] pb-20 md:pb-0 font-sans" dir="rtl">
       
-      {/* Header & Tabs */}
       <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-[#2f3336]">
         <div className="pt-3 pb-2 px-4 md:hidden">
           <h1 className="text-center text-lg font-bold text-white tracking-wide">
@@ -250,12 +239,10 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         </div>
       </div>
 
-      {/* Stories Rail */}
       <div className="border-b border-[#2f3336]">
           <StoriesBar />
       </div>
 
-      {/* Composer (Desktop) */}
       <div className="hidden md:block border-b border-[#2f3336] p-4 bg-black">
         <div className="flex gap-4">
           <img 
@@ -304,7 +291,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         </div>
       </div>
 
-      {/* Feed Stream */}
       <div className="w-full">
         {loading ? (
           <div className="p-8 text-center text-[#71767b] animate-pulse flex flex-col items-center">
