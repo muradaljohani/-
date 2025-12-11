@@ -51,11 +51,18 @@ export const HarajPortal: React.FC<HarajPortalProps> = ({ onBack }) => {
     useEffect(() => {
         // 1. Base Feed Generation (Colossus Engine)
         const cachedRaw = sessionStorage.getItem('colossus_feed_cache');
-        const cacheMeta = JSON.parse(sessionStorage.getItem('colossus_feed_meta') || '{}');
+        // SAFE PARSE FOR META
+        let cacheMeta = {};
+        try {
+            cacheMeta = JSON.parse(sessionStorage.getItem('colossus_feed_meta') || '{}');
+        } catch (e) {
+            cacheMeta = {};
+        }
+
         const now = Date.now();
         let fullFeed: DiscoveryItem[] = [];
 
-        if (cachedRaw && cacheMeta.timestamp && (now - cacheMeta.timestamp < CACHE_DURATION)) {
+        if (cachedRaw && (cacheMeta as any).timestamp && (now - (cacheMeta as any).timestamp < CACHE_DURATION)) {
             try {
                 fullFeed = JSON.parse(cachedRaw);
             } catch (e) {
