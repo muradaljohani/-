@@ -18,7 +18,7 @@ import { Explore } from './Explore';
 import { collection, query, where, onSnapshot, db } from '../../src/lib/firebase';
 import { MuradAI } from './MuradAI';
 import { ProfilePage } from './ProfilePage';
-import { SettingsLayout } from './SettingsLayout'; // IMPORTED
+import { SettingsLayout } from './SettingsLayout';
 
 // IMPORT NEW SECONDARY PAGES
 import { ElitePage, CreatorStudioPage, CirclesPage, LiveRoomsPage, CollectionsPage, SavedPage } from './SecondaryPages';
@@ -28,11 +28,9 @@ interface Props {
     initialView?: string; 
 }
 
-// Updated ViewState to include granular settings handling
 export type ViewState = 
     'feed' | 'reels' | 'admin' | 'messages' | 'profile' | 'post-detail' | 'chat' | 'notifications' | 'explore' |
     'elite' | 'creator-studio' | 'circles' | 'live' | 'collections' | 'saved' | 'user-profile' | string; 
-    // string allows for 'settings' and 'settings/account' etc.
 
 export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) => {
     const { user } = useAuth();
@@ -56,14 +54,20 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
     useEffect(() => {
         if (!user) return;
         
-        const notifsRef = collection(db, 'users', user.id, 'notifications');
-        const q = query(notifsRef, where('read', '==', false));
-        
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            setUnreadCount(snapshot.size);
-        });
+        try {
+            const notifsRef = collection(db, 'users', user.id, 'notifications');
+            const q = query(notifsRef, where('read', '==', false));
+            
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                setUnreadCount(snapshot.size);
+            }, (error) => {
+                console.error("Notifications Listener Error:", error);
+            });
 
-        return () => unsubscribe();
+            return () => unsubscribe();
+        } catch (e) {
+            console.error("Notifications Setup Error:", e);
+        }
     }, [user]);
 
     // Global Toast Handler
@@ -74,13 +78,11 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
 
     // --- NAVIGATION HANDLERS ---
     const handleNavigation = (route: string) => {
-        // Deep link handling for settings
         if (route.startsWith('settings')) {
             window.history.pushState({}, '', `/social/${route}`);
             setView(route);
         } else {
             window.history.pushState({}, '', `/social/${route}`);
-            // Special case for 'profile' -> Go to My Profile
             if (route === 'profile' && user) {
                 setVisitedUserId(user.id);
                 setView('user-profile');
@@ -128,8 +130,6 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
         }
     };
 
-    // Check if we are in a "Deep" page that should hide the main layout elements like sidebar
-    // 'settings' is handled separately as it has its own layout logic
     const isDeepPage = ['elite', 'creator-studio', 'circles', 'live', 'collections', 'saved', 'user-profile'].includes(view) || view.startsWith('settings');
 
     return (
@@ -167,7 +167,6 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                 </div>
             )}
 
-            {/* MAIN SIDEBAR (Desktop) - Hidden on deep pages */}
             {!isDeepPage && (
                 <Sidebar 
                     activeView={view} 
@@ -178,10 +177,8 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                 />
             )}
 
-            {/* Main Content Area */}
             <main className={`flex-1 w-full min-h-screen pb-20 md:pb-0 relative border-r border-gray-100 dark:border-[#2f3336] bg-white dark:bg-black ${isDeepPage ? 'max-w-full' : 'max-w-2xl'}`}>
                 
-                {/* Mobile Top Bar */}
                 {(!isDeepPage && view !== 'chat' && view !== 'post-detail') && (
                     <div className="md:hidden sticky top-0 z-50 bg-white/80 dark:bg-black/85 backdrop-blur-md border-b border-gray-200 dark:border-[#2f3336] px-4 py-3 flex justify-between items-center text-black dark:text-[#e7e9ea]">
                         <div onClick={() => setIsSidebarOpen(true)} className="cursor-pointer relative">
@@ -202,8 +199,6 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                         <div className="w-8"></div>
                     </div>
                 )}
-
-                {/* --- ROUTING LOGIC --- */}
                 
                 {view === 'feed' && (
                     <Feed 
@@ -215,10 +210,9 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                     />
                 )}
 
-                {/* Settings & Sub-pages */}
                 {view.startsWith('settings') && (
                     <SettingsLayout 
-                        subSection={view.split('/')[1]} // Extracts 'account', 'security', etc.
+                        subSection={view.split('/')[1]} 
                         onNavigate={handleNavigation}
                         onBack={() => handleNavigation('feed')}
                     />
@@ -262,7 +256,6 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                             <span>الرسائل</span>
                             <Mail className="w-5 h-5"/>
                         </div>
-                        {/* Mock Chat List */}
                         {[1, 2, 3].map(id => (
                             <div key={id} onClick={() => handleChatClick(id.toString())} className="flex gap-3 p-4 hover:bg-gray-50 dark:hover:bg-[#16181c] cursor-pointer transition-colors border-b border-gray-100 dark:border-[#2f3336]">
                                 <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${id}`} className="w-12 h-12 rounded-full border border-gray-200 dark:border-[#2f3336]"/>
@@ -279,7 +272,6 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                 )}
             </main>
 
-            {/* Right Sidebar Desktop - Hidden on deep pages */}
             {!isDeepPage && (
             <div className="hidden lg:block w-80 xl:w-96 h-screen sticky top-0 px-6 py-4 border-r border-gray-100 dark:border-[#2f3336] z-40 bg-white dark:bg-black">
                 <div className="relative mb-6 group">
@@ -310,7 +302,6 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
             </div>
             )}
 
-            {/* Mobile Bottom Nav */}
             {!isDeepPage && view !== 'post-detail' && view !== 'chat' && (
                 <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-black/95 backdrop-blur-xl border-t border-gray-200 dark:border-[#2f3336] flex justify-around items-center px-2 pb-safe z-50 h-[60px]">
                     <NavButton icon={Home} active={view === 'feed'} onClick={() => handleNavigation('feed')} />

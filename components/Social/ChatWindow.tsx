@@ -1,7 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowRight, Info, Image as ImageIcon, Mic, Plus, Send, Video, Phone } from 'lucide-react';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, db } from '../../src/lib/firebase';
+import { collection, addDoc, query, onSnapshot, serverTimestamp, db, limit } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 
 interface Props {
@@ -18,16 +18,30 @@ export const ChatWindow: React.FC<Props> = ({ chatId, onBack }) => {
   useEffect(() => {
     if (!chatId) return;
 
-    // Use a subcollection for chat messages based on chatId
-    const messagesRef = collection(db, 'chats', chatId, 'messages');
-    const q = query(messagesRef, orderBy('timestamp', 'asc'));
+    try {
+        const messagesRef = collection(db, 'chats', chatId, 'messages');
+        const q = query(messagesRef, limit(50));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
-    });
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const msgs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // Client-side sort by timestamp ASC
+            msgs.sort((a: any, b: any) => {
+                const tA = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
+                const tB = b.timestamp?.toMillis ? b.timestamp.toMillis() : 0;
+                return tA - tB;
+            });
 
-    return () => unsubscribe();
+            setMessages(msgs);
+            setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+        }, (error) => {
+            console.error("Chat Listener Error:", error);
+        });
+
+        return () => unsubscribe();
+    } catch (e) {
+        console.error("Chat Setup Error:", e);
+    }
   }, [chatId]);
 
   const handleSend = async () => {
@@ -113,14 +127,12 @@ export const ChatWindow: React.FC<Props> = ({ chatId, onBack }) => {
         <div ref={bottomRef} />
       </div>
 
-      {/* 3. Input Bar (Hayyak Style) */}
+      {/* 3. Input Bar */}
       <div className="p-3 bg-black flex items-center gap-2">
-        {/* Plus Icon Circle */}
         <button className="bg-[#1d9bf0] w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0 hover:bg-[#1a8cd8] transition-colors">
             <Plus className="w-5 h-5" />
         </button>
 
-        {/* Input Container */}
         <div className="flex-1 bg-[#202327] rounded-[20px] flex items-center px-4 py-1.5 border border-transparent focus-within:border-[#1d9bf0]/50 transition-all">
             <input 
               type="text" 
@@ -131,14 +143,12 @@ export const ChatWindow: React.FC<Props> = ({ chatId, onBack }) => {
               onKeyDown={e => e.key === 'Enter' && handleSend()}
             />
             
-            {/* Right Icons inside input */}
             <div className="flex items-center gap-3 mr-2 text-[#1d9bf0]">
                 <ImageIcon className="w-5 h-5 cursor-pointer hover:opacity-80" />
                 {!input.trim() && <Mic className="w-5 h-5 cursor-pointer hover:opacity-80" />}
             </div>
         </div>
 
-        {/* Send Button (Only if text) */}
         {input.trim() && (
             <button onClick={handleSend} className="text-[#1d9bf0] p-2 hover:bg-[#1d9bf0]/10 rounded-full transition-colors">
                 <Send className="w-5 h-5 rtl:rotate-180" />

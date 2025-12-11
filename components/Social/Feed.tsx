@@ -3,18 +3,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   collection, 
   query, 
-  orderBy, 
   onSnapshot, 
   addDoc, 
   serverTimestamp, 
   where,
+  limit,
   db
 } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
 import { Image, BarChart2, Smile, MapPin, Loader2, X, Wand2, Feather } from 'lucide-react';
 import { uploadImage } from '../../src/services/storageService';
-import { SocialService } from '../../services/SocialService';
 import { StoriesBar } from '../Stories/StoriesBar';
 
 interface FeedProps {
@@ -22,7 +21,7 @@ interface FeedProps {
     showToast?: (msg: string, type: 'success'|'error') => void;
     onBack?: () => void;
     onPostClick?: (postId: string) => void;
-    onUserClick?: (userId: string) => void; 
+    onUserClick?: (userId: string) => void;
 }
 
 export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostClick, onUserClick }) => {
@@ -30,6 +29,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   const [posts, setPosts] = useState<any[]>([]);
   const [newPostText, setNewPostText] = useState("");
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   const [activeTab, setActiveTab] = useState<'foryou' | 'following'>('foryou');
   
@@ -40,80 +40,98 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 1. Fetch Posts Logic (Client-Side Sort to avoid Index Errors)
   useEffect(() => {
-    // Ensure viral content exists
-    SocialService.checkAndSeed();
-
+    let isMounted = true;
+    setLoading(true);
+    setError(null);
+    
     let q;
     const postsRef = collection(db, "posts");
 
-    if (activeTab === 'foryou') {
-        // Query by date only to avoid composite index error with 'isPinned'
-        q = query(
-          postsRef, 
-          orderBy("createdAt", "desc")
-        );
-    } else {
-        if (user) {
-            // Filter by user. To avoid index error with orderBy, we fetch filtered then sort client-side.
-            q = query(
-              postsRef,
-              where("user.uid", "==", user.id)
-            );
+    try {
+        if (activeTab === 'foryou') {
+            // Fetch recent 100 posts unordered, then sort in memory
+            q = query(postsRef, limit(100));
         } else {
-            setPosts([]);
-            setLoading(false);
-            return;
-        }
-    }
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      try {
-        let livePosts = snapshot.docs.map((doc) => {
-            const data = doc.data();
-            return {
-              id: doc.id,
-              ...data
-            };
-        });
-
-        // CLIENT-SIDE SORTING
-        livePosts.sort((a: any, b: any) => {
-            // 1. Pinned posts first (only for 'foryou')
-            if (activeTab === 'foryou') {
-                const pinA = a.isPinned ? 1 : 0;
-                const pinB = b.isPinned ? 1 : 0;
-                if (pinA !== pinB) return pinB - pinA;
+            if (user) {
+                // Fetch filtered posts, sort in memory
+                q = query(
+                  postsRef,
+                  where("user.uid", "==", user.id),
+                  limit(50)
+                );
+            } else {
+                setPosts([]);
+                setLoading(false);
+                return;
             }
-            
-            // 2. Sort by Date (Handle both 'createdAt' and legacy 'timestamp')
-            const getTime = (p: any) => {
-                const val = p.createdAt || p.timestamp;
-                return val?.toMillis ? val.toMillis() : (new Date(val || 0).getTime());
-            };
-            
-            return getTime(b) - getTime(a);
+        }
+
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+          if (!isMounted) return;
+          
+          try {
+              const livePosts = snapshot.docs.map((doc) => ({
+                  id: doc.id,
+                  ...doc.data()
+              }));
+
+              // Robust Client-Side Sorting
+              livePosts.sort((a: any, b: any) => {
+                  // 1. Pinned First (Only for For You tab)
+                  if (activeTab === 'foryou') {
+                      const pinA = a.isPinned ? 1 : 0;
+                      const pinB = b.isPinned ? 1 : 0;
+                      if (pinA !== pinB) return pinB - pinA;
+                  }
+                  
+                  // 2. Date Descending
+                  const getTime = (p: any) => {
+                      const val = p.createdAt || p.timestamp;
+                      if (!val) return 0;
+                      if (val.toMillis && typeof val.toMillis === 'function') return val.toMillis();
+                      if (val instanceof Date) return val.getTime();
+                      if (typeof val === 'string') return new Date(val).getTime();
+                      return 0; 
+                  };
+                  
+                  return getTime(b) - getTime(a);
+              });
+
+              setPosts(livePosts);
+          } catch (mapError) {
+              console.error("Data Mapping Error:", mapError);
+          } finally {
+              if (isMounted) setLoading(false);
+          }
+        }, (err) => {
+            console.error("Firestore Feed Error:", err);
+            if (isMounted) {
+               // Handle permission errors silently or show a gentle message
+               if (err.code !== 'permission-denied') {
+                  setError("حدث خطأ أثناء تحميل المنشورات.");
+               }
+               setLoading(false);
+            }
         });
 
-        setPosts(livePosts);
-        setLoading(false);
-      } catch (e) {
-          console.error("Error processing posts snapshot", e);
-          setLoading(false);
-      }
-    }, (err) => {
-        console.error("Feed Query Error:", err);
-        setLoading(false);
-        if (showToast && err.code === 'failed-precondition') {
-             showToast("جارِ تحسين قاعدة البيانات، يرجى الانتظار...", "error");
-        }
-    });
-
-    return () => unsubscribe();
+        return () => {
+            isMounted = false;
+            unsubscribe();
+        };
+    } catch (err) {
+        console.error("Setup Feed Error:", err);
+        if (isMounted) setLoading(false);
+    }
   }, [activeTab, user]);
 
   const handlePost = async () => {
-    if ((!newPostText.trim() && !selectedFile) || !user) return;
+    if (!user) {
+        alert("يرجى تسجيل الدخول للنشر");
+        return;
+    }
+    if (!newPostText.trim() && !selectedFile) return;
     setIsUploading(true);
 
     try {
@@ -127,9 +145,9 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
       const postsRef = collection(db, 'posts');
       
       const userData = {
-          name: user.name,
-          handle: user.username ? `@${user.username}` : `@${user.id.substr(0,8)}`,
-          avatar: user.avatar,
+          name: user.name || "User",
+          handle: user.username ? `@${user.username}` : (user.email ? `@${user.email.split('@')[0]}` : `@${user.id.slice(0,8)}`),
+          avatar: user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User",
           verified: user.isIdentityVerified || false,
           isGold: user.primeSubscription?.status === 'active',
           uid: user.id
@@ -140,7 +158,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           content: newPostText,
           type: imageUrls.length > 0 ? 'image' : 'text',
           images: imageUrls,
-          image: imageUrls[0] || null, // Backward compatibility
+          image: imageUrls[0] || null, 
           createdAt: serverTimestamp(),
           likes: 0,
           retweets: 0,
@@ -173,7 +191,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
       } else {
          enhancedText += "\n\n#مجتمع_ميلاف #السعودية";
       }
-      enhancedText += " ✨";
       setNewPostText(enhancedText);
       setIsEnhancing(false);
     }, 1000);
@@ -267,8 +284,8 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                 <div onClick={handleAIEnhance} className={`cursor-pointer hover:bg-[#1d9bf0]/10 p-2 rounded-full transition ${isEnhancing ? 'animate-pulse text-purple-500' : ''}`}>
                     <Wand2 className="w-5 h-5" />
                 </div>
-                <div className="cursor-pointer hover:bg-[#1d9bf0]/10 p-2 rounded-full transition"><BarChart2 className="w-5 h-5" /></div>
-                <div className="cursor-pointer hover:bg-[#1d9bf0]/10 p-2 rounded-full transition"><Smile className="w-5 h-5" /></div>
+                <div className="cursor-pointer hover:bg-[#1d9bf0]/10 p-2 rounded-full transition opacity-50"><BarChart2 className="w-5 h-5" /></div>
+                <div className="cursor-pointer hover:bg-[#1d9bf0]/10 p-2 rounded-full transition opacity-50"><Smile className="w-5 h-5" /></div>
                 <div className="cursor-pointer hover:bg-[#1d9bf0]/10 p-2 rounded-full transition opacity-50"><MapPin className="w-5 h-5" /></div>
               </div>
               <button 
@@ -291,6 +308,11 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
               <Loader2 className="w-8 h-8 animate-spin mb-4 text-[#1d9bf0]"/>
               جاري الاتصال بالمجتمع...
           </div>
+        ) : error ? (
+            <div className="p-12 text-center text-red-400">
+                <p>{error}</p>
+                <button onClick={() => window.location.reload()} className="mt-4 text-blue-400 text-sm hover:underline">إعادة المحاولة</button>
+            </div>
         ) : posts.length === 0 ? (
              <div className="p-12 text-center text-[#71767b]">
                  <div className="w-16 h-16 bg-[#16181c] rounded-full flex items-center justify-center mx-auto mb-4">
@@ -311,7 +333,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           ))
         )}
         
-        {/* Spacer */}
         <div className="h-40"></div>
       </div>
     </div>

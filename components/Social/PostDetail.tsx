@@ -4,7 +4,7 @@ import {
   ArrowRight, MoreHorizontal, MessageCircle, Repeat, Heart, Share2, 
   Image as ImageIcon, BarChart2, MapPin, X, Calendar, Gift, Trash2
 } from 'lucide-react';
-import { doc, getDoc, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, db } from '../../src/lib/firebase';
+import { doc, getDoc, collection, addDoc, query, onSnapshot, serverTimestamp, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { formatRelativeTime } from '../../utils';
 
@@ -43,15 +43,30 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
 
         fetchPost();
 
-        // 2. Listen to Replies
-        const repliesRef = collection(db, 'posts', postId, 'replies');
-        const q = query(repliesRef, orderBy('timestamp', 'asc'));
-        
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            setReplies(snapshot.docs.map(d => ({ id: d.id, ...d.data() })));
-        });
+        // 2. Listen to Replies (No orderBy to avoid index error)
+        try {
+            const repliesRef = collection(db, 'posts', postId, 'replies');
+            const q = query(repliesRef);
+            
+            const unsubscribe = onSnapshot(q, (snapshot) => {
+                const fetchedReplies = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+                
+                // Client side sort
+                fetchedReplies.sort((a: any, b: any) => {
+                    const tA = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
+                    const tB = b.timestamp?.toMillis ? b.timestamp.toMillis() : 0;
+                    return tA - tB;
+                });
 
-        return () => unsubscribe();
+                setReplies(fetchedReplies);
+            }, (error) => {
+                console.error("Replies Listener Error:", error);
+            });
+
+            return () => unsubscribe();
+        } catch (e) {
+             console.error("Replies Setup Error:", e);
+        }
     }, [postId]);
 
     const handleReply = async () => {
@@ -124,12 +139,12 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
                 {/* Image */}
                 {post.image && (
                     <div className="rounded-2xl overflow-hidden border border-[#2f3336] mb-3 w-full">
-                        <img src={post.image} className="w-full h-auto object-cover" />
+                        <img src={post.image} className="w-full h-full object-cover" />
                     </div>
                 )}
                 {post.images && post.images.length > 0 && (
                      <div className="rounded-2xl overflow-hidden border border-[#2f3336] mb-3 w-full">
-                        <img src={post.images[0]} className="w-full h-auto object-cover" />
+                        <img src={post.images[0]} className="w-full h-full object-cover" />
                     </div>
                 )}
 
@@ -234,9 +249,6 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
                         </div>
                     </div>
                  </div>
-                 
-                 {/* Thread Connector Visual Cue */}
-                 <div className="absolute left-[38px] bottom-[70px] top-[-1000px] w-[2px] bg-[#333639] -z-10 hidden"></div>
             </div>
 
         </div>

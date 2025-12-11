@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Save, Lock, AlertTriangle, ChevronLeft, Check, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { doc, updateDoc, db, auth } from '../../src/lib/firebase';
-import { sendPasswordResetEmail } from 'firebase/auth';
+import { doc, updateDoc, db, auth, sendPasswordResetEmail } from '../../src/lib/firebase';
 
 // --- SHARED HEADER COMPONENT ---
 const SettingsHeader = ({ title, onBack }: { title: string; onBack: () => void }) => (

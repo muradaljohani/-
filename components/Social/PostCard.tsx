@@ -26,13 +26,23 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     const [retweeted, setRetweeted] = useState(false);
     const [retweetCount, setRetweetCount] = useState(post?.retweets || 0);
 
-    // Safeguard for missing post or user data
-    if (!post || !post.user) return null;
+    // Safeguard: Check if post exists. 
+    // Sometimes user data might be nested or flat, handle gracefully.
+    if (!post) return null;
+    
+    // Ensure User Object Exists - Fallback for Legacy Data
+    const postUser = post.user || {
+        name: 'Unknown User',
+        handle: '@unknown',
+        avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Unknown",
+        uid: 'unknown'
+    };
 
-    const isOwner = user && post.user?.uid ? user.id === post.user.uid : false;
+    const isOwner = user && postUser.uid ? user.id === postUser.uid : false;
     const canDelete = isOwner || isAdmin;
 
     const getYouTubeId = (text: string) => {
+        if (!text) return null;
         const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
         const match = text.match(regex);
         return match ? match[1] : null;
@@ -45,31 +55,22 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         : post.content;
 
     const formatNumber = (num: number) => {
+        if (!num) return '0';
         if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
         if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
         return num.toString();
-    };
-
-    const playSound = () => {
-        const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-software-interface-start-2574.mp3'); 
-        audio.volume = 0.2;
-        audio.play().catch(() => {});
     };
 
     const handleDelete = async (e: React.MouseEvent) => {
         e.stopPropagation();
         if (!canDelete) return;
 
-        const confirmMessage = isAdmin && !isOwner 
-            ? "تنبيه إداري: هل أنت متأكد من حذف منشور هذا العضو؟" 
-            : "هل أنت متأكد من حذف هذا المنشور؟ لا يمكن التراجع عن هذا الإجراء.";
-
-        if (window.confirm(confirmMessage)) {
+        if (window.confirm("هل أنت متأكد من حذف هذا المنشور؟")) {
             try {
                 await deleteDoc(doc(db, 'posts', post.id));
             } catch (err) {
                 console.error("Error deleting post:", err);
-                alert("حدث خطأ أثناء محاولة الحذف.");
+                alert("حدث خطأ أثناء الحذف.");
             }
         }
     };
@@ -91,7 +92,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         
         if (isNowLiked) {
             setIsAnimating(true);
-            playSound();
             setTimeout(() => setIsAnimating(false), 1000);
         }
 
@@ -100,22 +100,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
             await updateDoc(postRef, {
                 likes: increment(isNowLiked ? 1 : -1)
             });
-
-            if (isNowLiked && post.user?.uid && post.user.uid !== user.id) {
-                const notificationsRef = collection(db, 'users', post.user.uid, 'notifications');
-                await addDoc(notificationsRef, {
-                    type: 'like',
-                    actorId: user.id,
-                    actorName: user.name,
-                    actorAvatar: user.avatar,
-                    postId: post.id,
-                    content: post.content?.substring(0, 50) + '...',
-                    read: false,
-                    timestamp: serverTimestamp()
-                });
-            }
         } catch (err) {
-            console.error("Like failed", err);
             setLiked(!isNowLiked);
             setLikeCount((prev: number) => isNowLiked ? prev - 1 : prev + 1);
         }
@@ -123,10 +108,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
 
     const handleRetweet = async (e: React.MouseEvent) => {
         e.stopPropagation();
-        if (!user) {
-            alert("يرجى تسجيل الدخول لإعادة النشر");
-            return;
-        }
+        if (!user) return;
         if (retweeted) return;
 
         setRetweeted(true);
@@ -137,7 +119,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                 type: 'repost',
                 originalPostId: post.id,
                 originalContent: post.content,
-                originalUser: post.user,
+                originalUser: postUser,
                 user: {
                     name: user.name,
                     handle: user.username ? `@${user.username}` : `@${user.id.slice(0,5)}`,
@@ -157,9 +139,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
             await updateDoc(postRef, {
                 retweets: increment(1)
             });
-            
         } catch (err) {
-            console.error("Retweet failed", err);
             setRetweeted(false);
             setRetweetCount((prev: number) => prev - 1);
         }
@@ -170,10 +150,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         if (onOpenLightbox) onOpenLightbox(img);
     };
 
-    const renderBadge = (postUser: any) => {
-        if (!postUser) return null;
-        if (postUser.isGold) return <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 ml-1" />;
-        if (postUser.verified) return <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500 ml-1" />;
+    const renderBadge = (u: any) => {
+        if (!u) return null;
+        if (u.isGold) return <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 ml-1" />;
+        if (u.verified) return <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500 ml-1" />;
         return null;
     };
 
@@ -235,35 +215,30 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     };
 
     if (post.type === 'repost') {
+        const originalUser = post.originalUser || { name: 'Unknown', handle: '@unknown' };
         return (
             <div className="p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors cursor-pointer" onClick={onClick} dir="rtl">
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-[#71767b] text-xs font-bold">
                         <Repeat className="w-3 h-3"/>
-                        <span onClick={(e) => handleUserClick(e, post.user?.uid)} className="hover:underline cursor-pointer">{post.user?.name} أعاد النشر</span>
+                        <span onClick={(e) => handleUserClick(e, postUser.uid)} className="hover:underline cursor-pointer">{postUser.name} أعاد النشر</span>
                     </div>
                     {canDelete && (
-                        <button 
-                            className="text-gray-500 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-500/10"
-                            onClick={handleDelete}
-                        >
+                        <button className="text-gray-500 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-500/10" onClick={handleDelete}>
                             <Trash2 className="w-3.5 h-3.5" />
                         </button>
                     )}
                 </div>
                 <div className="border border-[#2f3336] rounded-2xl p-3 mt-1 hover:bg-[#16181c] transition-colors">
                     <div className="flex gap-3">
-                         <div className="shrink-0" onClick={(e) => handleUserClick(e, post.originalUser?.uid)}>
-                            <img 
-                                src={post.originalUser?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
-                                className="w-8 h-8 rounded-full object-cover hover:opacity-80 transition-opacity" 
-                            />
+                         <div className="shrink-0" onClick={(e) => handleUserClick(e, originalUser.uid)}>
+                            <img src={originalUser.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-8 h-8 rounded-full object-cover hover:opacity-80 transition-opacity" />
                         </div>
                         <div>
                              <div className="flex items-center gap-1 text-[14px]">
-                                <span className="font-bold text-[#e7e9ea] hover:underline" onClick={(e) => handleUserClick(e, post.originalUser?.uid)}>{post.originalUser?.name}</span>
-                                {renderBadge(post.originalUser)}
-                                <span className="text-[#71767b] dir-ltr text-sm" dir="ltr">{post.originalUser?.handle}</span>
+                                <span className="font-bold text-[#e7e9ea] hover:underline" onClick={(e) => handleUserClick(e, originalUser.uid)}>{originalUser.name}</span>
+                                {renderBadge(originalUser)}
+                                <span className="text-[#71767b] dir-ltr text-sm" dir="ltr">{originalUser.handle}</span>
                             </div>
                             <div className="text-[14px] text-[#e7e9ea] mt-1">
                                 {highlightText(post.originalContent || '')}
@@ -281,11 +256,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
             onClick={onClick}
             dir="rtl"
         >
-            <div className="shrink-0" onClick={(e) => handleUserClick(e, post.user?.uid)}>
+            <div className="shrink-0" onClick={(e) => handleUserClick(e, postUser.uid)}>
                 <img 
-                    src={post.user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
+                    src={postUser.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
                     className="w-11 h-11 rounded-full object-cover border border-[#2f3336] hover:opacity-80 transition-opacity" 
-                    alt={post.user?.name} 
+                    alt={postUser.name} 
                 />
             </div>
 
@@ -293,19 +268,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                 <div className="flex items-center justify-between text-[#71767b] text-[15px] leading-tight mb-1">
                     <div className="flex items-center gap-1 overflow-hidden">
                         {post.isPinned && <Pin className="w-3 h-3 text-[#71767b] fill-current mr-1" />}
-                        <span className="font-bold text-[#e7e9ea] truncate hover:underline" onClick={(e) => handleUserClick(e, post.user?.uid)}>{post.user?.name}</span>
-                        {renderBadge(post.user)}
-                        <span className="truncate ltr text-[#71767b] ml-1 text-sm" dir="ltr">{post.user?.handle}</span>
+                        <span className="font-bold text-[#e7e9ea] truncate hover:underline" onClick={(e) => handleUserClick(e, postUser.uid)}>{postUser.name}</span>
+                        {renderBadge(postUser)}
+                        <span className="truncate ltr text-[#71767b] ml-1 text-sm" dir="ltr">{postUser.handle}</span>
                         <span className="text-[#71767b] px-1">·</span>
-                        <span className="text-[#71767b] text-sm hover:underline">{formatRelativeTime(post.createdAt)}</span>
+                        <span className="text-[#71767b] text-sm hover:underline">{formatRelativeTime(post.createdAt || post.timestamp)}</span>
                     </div>
                     
                     <div className="flex items-center gap-2">
                         {canDelete && (
-                            <button 
-                                className="p-1.5 -mr-1 rounded-full text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"
-                                onClick={handleDelete}
-                            >
+                            <button className="p-1.5 -mr-1 rounded-full text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors" onClick={handleDelete}>
                                 <Trash2 className="w-4 h-4"/>
                             </button>
                         )}

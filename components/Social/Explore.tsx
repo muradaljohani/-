@@ -14,28 +14,37 @@ export const Explore: React.FC<Props> = ({ onPostClick }) => {
 
   // Real-time Media Feed
   useEffect(() => {
-    // FIXED: Removed 'where' clause to prevent composite index error with 'orderBy'.
-    // We fetch recent posts and filter for images client-side.
-    // Ideally we would have a specific 'media' collection or a proper index.
-    const postsRef = collection(db, 'posts');
-    const q = query(
-        postsRef, 
-        orderBy('createdAt', 'desc'), 
-        limit(50) // Fetch more to allow for filtering
-    );
+    try {
+        const postsRef = collection(db, 'posts');
+        const q = query(
+            postsRef, 
+            limit(50) 
+        );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Client-side filter for media posts
-        // Backward compatibility: check 'type' or 'images' array
-        const mediaOnly = posts.filter((p: any) => 
-            p.type === 'image' || (p.images && p.images.length > 0)
-        ).slice(0, 21); // Limit display to grid size
-        
-        setMediaPosts(mediaOnly);
-    });
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            let posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            
+            // Sort client side by createdAt desc
+            posts.sort((a: any, b: any) => {
+                const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (new Date(a.createdAt || 0).getTime());
+                const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (new Date(b.createdAt || 0).getTime());
+                return tB - tA;
+            });
 
-    return () => unsubscribe();
+            // Client-side filter for media posts
+            const mediaOnly = posts.filter((p: any) => 
+                p.type === 'image' || (p.images && p.images.length > 0)
+            ).slice(0, 21);
+            
+            setMediaPosts(mediaOnly);
+        }, (error) => {
+            console.error("Explore Feed Error:", error);
+        });
+
+        return () => unsubscribe();
+    } catch (e) {
+        console.error("Explore Setup Error:", e);
+    }
   }, []);
 
   const TRENDS = [

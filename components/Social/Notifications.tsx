@@ -4,8 +4,8 @@ import {
   Heart, User, MessageCircle, Star, ArrowRight, Bell 
 } from 'lucide-react';
 import { 
-  collection, query, orderBy, onSnapshot, 
-  doc, updateDoc, db 
+  collection, query, onSnapshot, 
+  doc, updateDoc, db, limit
 } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -14,7 +14,7 @@ interface Notification {
   type: 'like' | 'follow' | 'reply' | 'mention';
   actorName: string;
   actorAvatar: string;
-  content?: string; // For replies or post preview
+  content?: string;
   postId?: string;
   read: boolean;
   timestamp: any;
@@ -28,31 +28,45 @@ export const Notifications: React.FC = () => {
   useEffect(() => {
     if (!user) return;
 
-    // Real-time listener for notifications
-    const notifsRef = collection(db, 'users', user.id, 'notifications');
-    const q = query(notifsRef, orderBy('timestamp', 'desc'));
+    try {
+        const notifsRef = collection(db, 'users', user.id, 'notifications');
+        const q = query(notifsRef, limit(50));
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Notification[];
-      
-      setNotifications(data);
-      setLoading(false);
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const data = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Notification[];
+            
+            // Sort client-side
+            data.sort((a, b) => {
+                const tA = a.timestamp?.toMillis ? a.timestamp.toMillis() : 0;
+                const tB = b.timestamp?.toMillis ? b.timestamp.toMillis() : 0;
+                return tB - tA; // Newest first
+            });
 
-      // Mark all as read after a short delay (UX)
-      const unreadBatch = snapshot.docs.filter(doc => !doc.data().read);
-      if (unreadBatch.length > 0) {
-        setTimeout(() => {
-          unreadBatch.forEach(docSnap => {
-            updateDoc(doc(db, 'users', user.id, 'notifications', docSnap.id), { read: true });
-          });
-        }, 2000);
-      }
-    });
+            setNotifications(data);
+            setLoading(false);
 
-    return () => unsubscribe();
+            // Mark all as read after a short delay (UX)
+            const unreadBatch = snapshot.docs.filter(doc => !doc.data().read);
+            if (unreadBatch.length > 0) {
+                setTimeout(() => {
+                unreadBatch.forEach(docSnap => {
+                    updateDoc(doc(db, 'users', user.id, 'notifications', docSnap.id), { read: true });
+                });
+                }, 2000);
+            }
+        }, (error) => {
+            console.error("Notifications Page Error:", error);
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    } catch (e) {
+        console.error("Notifications Page Setup Error:", e);
+        setLoading(false);
+    }
   }, [user]);
 
   if (loading) {
