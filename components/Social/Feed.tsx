@@ -8,7 +8,10 @@ import {
   serverTimestamp, 
   where,
   limit,
-  db
+  db,
+  doc,
+  setDoc,
+  getDoc
 } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
@@ -39,6 +42,55 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   const [isEnhancing, setIsEnhancing] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // --- SEEDING LOGIC (Self-Healing) ---
+  useEffect(() => {
+    const forceSeedPosts = async () => {
+        try {
+            // 1. Seed Admin Profile (The Fix for User Not Found)
+            // Ensures the 'admin-fixed-id' document exists in 'users' collection
+            const adminId = "admin-fixed-id";
+            const adminRef = doc(db, "users", adminId);
+            const adminSnap = await getDoc(adminRef);
+
+            if (!adminSnap.exists() || !adminSnap.data().isAdmin) {
+                 await setDoc(adminRef, {
+                    uid: adminId,
+                    name: "Murad Aljohani",
+                    handle: "@IpMurad",
+                    email: "mrada4231@gmail.com",
+                    avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
+                    bio: "Founder & CEO of Milaf | مؤسس مجتمع ميلاف 🦅",
+                    location: "Saudi Arabia",
+                    website: "https://murad-group.com",
+                    createdAt: serverTimestamp(),
+                    isAdmin: true,
+                    isVerified: true,
+                    isIdentityVerified: true,
+                    followers: 11711, 
+                    following: 42
+                }, { merge: true });
+                console.log("✅ Admin Profile Seeded: @IpMurad");
+            }
+
+            // 2. Ensure Current User Profile Exists
+            if (user) {
+                await setDoc(doc(db, "users", user.id), {
+                    uid: user.id,
+                    name: user.name,
+                    email: user.email,
+                    avatar: user.avatar,
+                    lastLogin: serverTimestamp()
+                }, { merge: true });
+            }
+
+        } catch (e) {
+            console.error("Seeding Error:", e);
+        }
+    };
+
+    forceSeedPosts();
+  }, [user]);
 
   useEffect(() => {
     let isMounted = true;
