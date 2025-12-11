@@ -15,7 +15,7 @@ import {
 } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
-import { Image, BarChart2, Smile, MapPin, Loader2, X, Wand2, Feather } from 'lucide-react';
+import { Image, BarChart2, Smile, MapPin, Loader2, X, Wand2, Feather, WifiOff } from 'lucide-react';
 import { uploadImage } from '../../src/services/storageService';
 import { StoriesBar } from '../Stories/StoriesBar';
 
@@ -76,6 +76,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                     isAdmin: true,
                     isVerified: true,
                     isIdentityVerified: true,
+                    isGold: true,
                     followers: 11711, 
                     following: 42
                 }, { merge: true }).catch(e => console.error("Admin Seed Error", e));
@@ -162,6 +163,8 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
               });
 
               setPosts(livePosts);
+              // Clear errors if successful
+              setError(null);
           } catch (mapError) {
               console.error("Data Mapping Error:", mapError);
           } finally {
@@ -174,7 +177,10 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                    setLoading(false);
                    return;
                }
-               if (err && err.code !== 'permission-denied') {
+               // Check for offline error specifically
+               if (err.code === 'unavailable') {
+                   setError("لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة.");
+               } else if (err && err.code !== 'permission-denied') {
                   setError("حدث خطأ أثناء تحميل المنشورات.");
                }
                setLoading(false);
@@ -375,8 +381,12 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           </div>
         ) : error ? (
             <div className="p-12 text-center text-red-400">
-                <p>{error}</p>
-                <button onClick={() => window.location.reload()} className="mt-4 text-blue-400 text-sm hover:underline">إعادة المحاولة</button>
+                <WifiOff className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p className="font-bold text-lg mb-2">تعذر الاتصال</p>
+                <p className="text-sm opacity-80">{error}</p>
+                <button onClick={() => window.location.reload()} className="mt-6 text-[#1d9bf0] text-sm hover:underline font-bold">
+                    إعادة المحاولة
+                </button>
             </div>
         ) : posts.length === 0 ? (
              <div className="p-12 text-center text-[#71767b]">

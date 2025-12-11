@@ -56,9 +56,18 @@ export const HarajPortal: React.FC<HarajPortalProps> = ({ onBack }) => {
         let fullFeed: DiscoveryItem[] = [];
 
         if (cachedRaw && cacheMeta.timestamp && (now - cacheMeta.timestamp < CACHE_DURATION)) {
-            fullFeed = JSON.parse(cachedRaw);
+            try {
+                fullFeed = JSON.parse(cachedRaw);
+            } catch (e) {
+                fullFeed = [];
+            }
         } else {
-            const courses = JSON.parse(localStorage.getItem('mylaf_custom_courses') || '[]');
+            let courses = [];
+            try {
+                courses = JSON.parse(localStorage.getItem('mylaf_custom_courses') || '[]');
+            } catch (e) {
+                courses = [];
+            }
             fullFeed = ExpansionCore.DiscoveryEngine.generateMixedFeed(user, allProducts, allJobs, courses);
             sessionStorage.setItem('colossus_feed_cache', JSON.stringify(fullFeed));
             sessionStorage.setItem('colossus_feed_meta', JSON.stringify({ timestamp: now }));

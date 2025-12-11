@@ -59,8 +59,12 @@ export class NexusBrain {
 
         // 1. Query Jobs DB
         let jobs: UserJob[] = [];
-        try { jobs = JSON.parse(localStorage.getItem('allJobs') || '[]'); } catch {}
-        
+        try {
+            jobs = JSON.parse(localStorage.getItem('allJobs') || '[]');
+        } catch (e) {
+            console.warn('NexusBrain: Failed to parse allJobs');
+        }
+
         jobs.forEach(j => {
             if (j.title.toLowerCase().includes(term) || j.company.toLowerCase().includes(term)) {
                 results.push({
@@ -76,7 +80,11 @@ export class NexusBrain {
 
         // 2. Query Courses (LMS)
         let storedCourses: any[] = [];
-        try { storedCourses = JSON.parse(localStorage.getItem('mylaf_custom_courses') || '[]'); } catch {}
+        try {
+            storedCourses = JSON.parse(localStorage.getItem('mylaf_custom_courses') || '[]');
+        } catch (e) {
+            console.warn('NexusBrain: Failed to parse mylaf_custom_courses');
+        }
 
         storedCourses.forEach((c: any) => {
             if (c.title.toLowerCase().includes(term)) {
@@ -95,8 +103,18 @@ export class NexusBrain {
         // 3. Query Market (Products & Services)
         let products: ProductListing[] = [];
         let services: ServiceListing[] = [];
-        try { products = JSON.parse(localStorage.getItem('allProducts') || '[]'); } catch {}
-        try { services = JSON.parse(localStorage.getItem('mylaf_services') || '[]'); } catch {}
+        
+        try {
+            products = JSON.parse(localStorage.getItem('allProducts') || '[]');
+        } catch (e) {
+            console.warn('NexusBrain: Failed to parse allProducts');
+        }
+
+        try {
+            services = JSON.parse(localStorage.getItem('mylaf_services') || '[]');
+        } catch (e) {
+            console.warn('NexusBrain: Failed to parse mylaf_services');
+        }
 
         products.forEach(p => {
             if (p.title.toLowerCase().includes(term)) {
