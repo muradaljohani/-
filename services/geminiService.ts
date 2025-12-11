@@ -5,8 +5,8 @@ import { Message, Role, SearchSource, Attachment, User, Course, CourseCategory, 
 // Initialize the Gemini API client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// Using Flash for maximum speed - Updated to a stable valid model ID
-const CHAT_MODEL_NAME = "gemini-2.0-flash-exp";
+// Using Flash for maximum speed and stability
+const CHAT_MODEL_NAME = "gemini-2.5-flash";
 
 // --- SHARED DATA CONSTANTS ---
 export const CATEGORIES: CourseCategory[] = ['AI', 'Cybersecurity', 'Web', 'Mobile', 'Data', 'Business', 'Design', 'Finance', 'Management', 'Marketing'];
@@ -201,11 +201,16 @@ export const SECTIONS_LINKS = {
 };
 
 // --- FUNCTION DECLARATIONS ---
-// Reduced function usage for speed
 const getUserStatsTool: FunctionDeclaration = {
   name: 'get_user_stats',
   description: 'الحصول على إحصائيات المستخدم الحالي.',
-  parameters: { type: Type.OBJECT, properties: {} }
+  // Removing parameters or providing a dummy property to satisfy schema requirements if strict
+  parameters: {
+      type: Type.OBJECT,
+      properties: {
+          _dummy: { type: Type.STRING, description: "Not used" }
+      }
+  }
 };
 
 // --- EXPORTS FOR APP ---
@@ -236,7 +241,6 @@ export const generateAICourseContent = async (topic: string, level: string): Pro
 };
 
 export const analyzeProfileWithAI = async (fullUserProfile: User): Promise<any> => {
-  // Simplified prompt for speed
   const prompt = `Analyze user profile: ${JSON.stringify({name: fullUserProfile.name, skills: fullUserProfile.skills})}. Return JSON with: overview, personalityArchetype, skillsRadar, globalMarketMatch, topMatchedRoles, salaryProjection, criticalGaps, recommendedActions. Arabic.`;
   
   try {
@@ -262,7 +266,9 @@ export const streamChatResponse = async (
   customSystemInstruction?: string
 ) => {
   try {
-    const chatHistory = history.map((msg) => {
+    // 1. Sanitize History: Gemini API requires conversation to start with 'user'.
+    // We filter out any leading 'model' messages (like initial greetings).
+    let chatHistory = history.map((msg) => {
       const parts: any[] = [{ text: msg.content }];
       if (msg.attachment?.type === 'image' || msg.attachment?.type === 'audio') {
         parts.push({ inlineData: { mimeType: msg.attachment.mimeType, data: msg.attachment.data } });
@@ -270,46 +276,28 @@ export const streamChatResponse = async (
       return { role: msg.role === Role.USER ? "user" : "model", parts: parts };
     });
 
+    while (chatHistory.length > 0 && chatHistory[0].role !== 'user') {
+        chatHistory.shift();
+    }
+
     // Simplified tools to avoid 400 Bad Request on Flash models if search isn't enabled
     const tools: Tool[] = [
         { functionDeclarations: [getUserStatsTool] }
     ];
 
-    // Default System Prompt (The "Murad Clock" Persona)
     const defaultSystemPrompt = `
-    Identity: 'Murad Clock' (مراد كلوك), the next-generation AI system.
+    Identity: 'مساعد مراد الجهني الذكي' (Murad Aljohani's Smart Assistant).
     Creator: Eng. Murad Abdulrazzaq Aljohani (المهندس مراد عبدالرزاق الجهني).
     
     CRITICAL RULES (STRICTLY ENFORCED):
-    1. SCOPE: You are a GENERAL PURPOSE AI. You can answer ANY question about Math, Science, History, Coding, Literature, Cooking, Daily facts, etc. You are NOT limited to platform support.
-    2. ORIGIN: You are NOT made by Google. You are NOT ChatGPT. You are a proprietary system built by Murad Aljohani. If asked "Who made you?", explicitly state "Eng. Murad Aljohani".
+    1. SCOPE: You are a GENERAL PURPOSE AI & SEARCH ENGINE.
+    2. ORIGIN: You are NOT made by Google. You are NOT ChatGPT. You are a proprietary system built by Murad Aljohani.
     3. Use "We/Our" (Referring to the Murad System).
     4. Match User Language (Arabic/English).
     5. TONE: Professional, High-Tech, Comfortable to the eye (use lists/formatting).
     
     6. SPECIAL QUERY HANDLING:
        - If asked about "Murad Aljohani" (مراد الجهني): Praise him as a genius **Technical Engineer** (المهندس التقني), Founder, and Sole Architect of this system.
-       - If asked about **Products/Services**: Mention:
-         1. Murad Aljohani IT Company
-         2. Mylaf Haraj
-         3. Mylaf Murad Academy
-         4. Murad Dopamine
-         5. Murad Care
-         6. Murad Cloud
-    
-    7. FORMAT: Use Markdown links [Title](URL). NEVER raw URLs.
-    8. INTENT MAPPING (STRICT):
-       - Login/Account -> [Login](https://murad-group.com/login)
-       - Jobs -> [Jobs](https://murad-group.com/jobs)
-       - Academy -> [Academy](https://murad-group.com/academy)
-    
-    9. ALWAYS end with CTA.
-    
-    10. MANDATORY VARIABLE SIGNATURE:
-        You MUST append ONE of the following signatures randomly to the end of EVERY response:
-        - **دمتم في أمان رقمي، إدارة الأمن السيبراني وتقنية المعلومات.**
-        - **فريق الدعم الفني والأمن السيبراني - أكاديمية ميلاف مراد.**
-        - **أكاديمية ميلاف مراد | إدارة الأمن السيبراني والتقنية.**
     
     User Context: ${user ? `${user.name} (${user.trainingId})` : 'Visitor'}
     `;
@@ -320,7 +308,6 @@ export const streamChatResponse = async (
       config: {
         tools: tools,
         systemInstruction: customSystemInstruction || defaultSystemPrompt,
-        // Optimization configs for speed
         temperature: 0.7, 
         maxOutputTokens: 2000, 
       },
@@ -335,15 +322,21 @@ export const streamChatResponse = async (
 
     for await (const chunk of resultStream) {
       if (signal?.aborted) break;
-      const text = chunk.text;
-      if (text) onChunk(text);
       
-      // Handle sources if available from Google Search
-      if (chunk.groundingMetadata?.groundingChunks) {
-         const sources = chunk.groundingMetadata.groundingChunks
-            .map((c: any) => c.web ? { uri: c.web.uri, title: c.web.title } : null)
-            .filter((s: any) => s !== null);
-         if (sources.length > 0) onSources(sources);
+      // Safety check for text property
+      try {
+          const text = chunk.text;
+          if (text) onChunk(text);
+          
+          if (chunk.groundingMetadata?.groundingChunks) {
+             const sources = chunk.groundingMetadata.groundingChunks
+                .map((c: any) => c.web ? { uri: c.web.uri, title: c.web.title } : null)
+                .filter((s: any) => s !== null);
+             if (sources.length > 0) onSources(sources);
+          }
+      } catch (chunkError) {
+          // If a chunk is blocked or invalid, ignore it and continue
+          console.warn("Skipped invalid stream chunk", chunkError);
       }
     }
   } catch (error) {
