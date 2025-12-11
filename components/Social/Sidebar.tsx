@@ -34,16 +34,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onNavigate, onBack
     };
 
     return (
-        <div className={`hidden md:flex flex-col w-20 xl:w-72 h-screen sticky top-0 px-2 xl:px-4 border-l border-gray-100 dark:border-[#2f3336] justify-between py-4 z-50 bg-white dark:bg-black`}>
+        <div className="h-full flex flex-col justify-between py-1 bg-white dark:bg-black">
             
             <div className="space-y-1">
                 {/* Logo */}
-                <div className="px-3 py-3 w-fit mb-2 hover:bg-gray-100 dark:hover:bg-[#16181c] rounded-full cursor-pointer transition-colors" onClick={onBackToHome}>
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-black dark:bg-white rounded-full flex items-center justify-center">
-                                <span className="font-black text-white dark:text-black text-lg">M</span>
-                        </div>
-                        <span className="hidden xl:block text-xl font-extrabold tracking-wide text-black dark:text-[#e7e9ea]">مجتمع ميلاف</span>
+                <div className="p-3 w-fit mb-1 hover:bg-gray-100 dark:hover:bg-[#16181c] rounded-full cursor-pointer transition-colors" onClick={onBackToHome}>
+                    <div className="w-8 h-8 flex items-center justify-center text-3xl font-black text-black dark:text-[#e7e9ea]">
+                        M
                     </div>
                 </div>
                 
@@ -64,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onNavigate, onBack
                 {/* CTA Button */}
                 <button 
                     onClick={() => user ? onCompose() : handleLogin()}
-                    className="bg-[var(--accent-color)] hover:opacity-90 text-white rounded-full p-3 xl:px-8 xl:py-3.5 font-bold mt-4 w-fit xl:w-full transition-all shadow-lg text-lg flex items-center justify-center gap-2"
+                    className="bg-[#1d9bf0] hover:opacity-90 text-white rounded-full p-3 xl:px-8 xl:py-3.5 font-bold mt-4 w-fit xl:w-[90%] transition-all shadow-lg text-lg flex items-center justify-center gap-2 mx-auto xl:mx-0"
                 >
                     {user ? <Plus className="w-6 h-6 xl:hidden"/> : <LogIn className="w-6 h-6 xl:hidden"/>}
                     <span className="hidden xl:block">{user ? 'نشر' : 'تسجيل دخول'}</span>
@@ -72,35 +69,34 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onNavigate, onBack
             </div>
             
             {/* Footer Area */}
-            <div className="space-y-2">
-                    <InstallPrompt />
+            <div className="space-y-2 pb-4">
                     
                     <div 
                     onClick={cycleTheme}
-                    className="flex items-center gap-3 p-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#16181c] cursor-pointer xl:w-full transition-colors group text-black dark:text-[#e7e9ea]"
+                    className="flex items-center gap-4 p-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#16181c] cursor-pointer w-fit xl:w-full transition-colors group text-black dark:text-[#e7e9ea]"
                     title="Change Theme"
                     >
                         <div className="w-6 h-6 rounded-full border-2 border-current relative flex items-center justify-center">
                             {theme !== 'light' ? <div className="w-4 h-4 bg-current rounded-full" /> : null}
                         </div>
-                        <span className="hidden xl:block font-bold text-sm">المظهر</span>
+                        <span className="hidden xl:block font-bold text-lg">المظهر</span>
                     </div>
 
                     {user ? (
-                    <div className="relative group">
+                    <div className="relative group w-fit xl:w-full">
                         <div 
-                            className="flex items-center gap-3 p-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#16181c] cursor-pointer xl:w-full transition-colors"
+                            className="flex items-center gap-3 p-3 rounded-full hover:bg-gray-100 dark:hover:bg-[#16181c] cursor-pointer transition-colors"
                             onClick={() => onNavigate('profile')} 
                         >
                             <img src={user.avatar} className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-800 object-cover"/>
                             <div className="hidden xl:block flex-1 min-w-0 text-right">
                                 <div className="font-bold text-black dark:text-[#e7e9ea] text-sm truncate">{user.name}</div>
-                                <div className="text-gray-500 dark:text-[#71767b] text-xs truncate">@{user.username || user.id.slice(0,6)}</div>
+                                <div className="text-gray-500 dark:text-[#71767b] text-xs truncate" dir="ltr">@{user.username?.replace('@','') || user.id.slice(0,6)}</div>
                             </div>
                             <MoreHorizontal className="hidden xl:block w-5 h-5 text-gray-500 dark:text-[#71767b]"/>
                         </div>
                         
-                        <div className="absolute bottom-full left-0 w-full mb-2 bg-white dark:bg-black border border-gray-200 dark:border-[#2f3336] rounded-xl shadow-xl overflow-hidden hidden group-hover:block">
+                        <div className="absolute bottom-full left-0 w-64 mb-2 bg-white dark:bg-black border border-gray-200 dark:border-[#2f3336] rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] overflow-hidden hidden group-hover:block z-50">
                             <button onClick={handleLogout} className="w-full text-right px-4 py-3 hover:bg-gray-100 dark:hover:bg-[#16181c] text-red-500 font-bold text-sm flex items-center gap-2">
                                 <LogOut className="w-4 h-4"/> تسجيل الخروج
                             </button>
@@ -126,16 +122,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onNavigate, onBack
 const SidebarLink = ({ icon: Icon, label, active, onClick, notifyCount }: any) => (
     <button 
         onClick={onClick}
-        className={`relative flex items-center gap-4 px-4 py-3 rounded-full text-xl transition-all w-fit xl:w-full group ${active ? 'font-bold text-black dark:text-[#e7e9ea]' : 'text-slate-600 dark:text-[#e7e9ea] hover:bg-gray-100 dark:hover:bg-[#16181c]'}`}
+        className={`flex items-center gap-4 px-3 py-3 rounded-full text-xl transition-all w-fit xl:w-auto group hover:bg-gray-100 dark:hover:bg-[#16181c] ${active ? 'font-bold text-black dark:text-[#e7e9ea]' : 'text-[#0f1419] dark:text-[#e7e9ea]'}`}
     >
         <div className="relative">
-            <Icon className={`w-7 h-7 ${active ? 'fill-current' : ''}`} />
+            {active ? <Icon className="w-7 h-7 fill-current" strokeWidth={2.5} /> : <Icon className="w-7 h-7" />}
             {notifyCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-[var(--accent-color)] text-white text-[10px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-white dark:border-black">
+                <span className="absolute -top-1 -right-1 bg-[#1d9bf0] text-white text-[10px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full border-2 border-white dark:border-black">
                     {notifyCount > 9 ? '9+' : notifyCount}
                 </span>
             )}
         </div>
-        <span className="hidden xl:block font-medium text-lg">{label}</span>
+        <span className={`hidden xl:block text-xl ${active ? 'font-bold' : 'font-normal'}`}>{label}</span>
     </button>
 );

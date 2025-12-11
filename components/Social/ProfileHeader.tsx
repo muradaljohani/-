@@ -59,7 +59,7 @@ export const ProfileHeader: React.FC<Props> = ({ user, isOwnProfile }) => {
               {user.name}
               {user.isIdentityVerified && <CheckCircle2 className="w-4 h-4 text-blue-500 fill-current" />}
             </h1>
-            <p className="text-slate-500 text-sm ltr font-mono" dir="ltr">@{user.username || user.id.slice(0,8)}</p>
+            <p className="text-slate-500 text-sm font-mono" dir="ltr">@{user.username?.replace('@','') || user.id.slice(0,8)}</p>
           </div>
 
           {/* Bio */}

@@ -1,7 +1,7 @@
 
 import React from 'react';
-import { ArrowRight, User, Lock, Shield, FileText, ChevronLeft, Search } from 'lucide-react';
-import { AccountSettings, SecuritySettings, LegalSettings } from './SettingsSubPages';
+import { ArrowRight, User, Lock, Shield, FileText, ChevronLeft, Search, Database } from 'lucide-react';
+import { AccountSettings, SecuritySettings, LegalSettings, YourDataSettings } from './SettingsSubPages';
 
 interface Props {
   subSection?: string;
@@ -13,6 +13,7 @@ export const SettingsLayout: React.FC<Props> = ({ subSection, onNavigate, onBack
 
   // --- RENDER SUB-PAGES ---
   if (subSection === 'account') return <AccountSettings onBack={() => onNavigate('settings')} />;
+  if (subSection === 'your_data') return <YourDataSettings onBack={() => onNavigate('settings')} />;
   if (subSection === 'security') return <SecuritySettings onBack={() => onNavigate('settings')} />;
   if (subSection === 'legal') return <LegalSettings onBack={() => onNavigate('settings')} />;
   // Add 'privacy' mapping to legal or security for now, or add specific component if needed
@@ -23,7 +24,7 @@ export const SettingsLayout: React.FC<Props> = ({ subSection, onNavigate, onBack
   const MenuLink = ({ icon: Icon, title, desc, path }: any) => (
     <div 
       onClick={() => onNavigate(`settings/${path}`)}
-      className="flex items-start gap-4 py-4 px-4 hover:bg-[#16181c] cursor-pointer transition-colors"
+      className="flex items-start gap-4 py-4 px-4 hover:bg-[#16181c] cursor-pointer transition-colors border-b border-[#2f3336]/30"
     >
       <div className="text-[#71767b] mt-1">
         <Icon className="w-6 h-6" />
@@ -70,6 +71,12 @@ export const SettingsLayout: React.FC<Props> = ({ subSection, onNavigate, onBack
           title="حسابك" 
           desc="الاطلاع على معلومات الحساب، تغيير اسم المستخدم."
           path="account"
+        />
+        <MenuLink 
+            icon={Database} 
+            title="بياناتك وأذوناتك" 
+            desc="تنزيل أرشيف البيانات، إدارة الجلسات."
+            path="your_data"
         />
         <MenuLink 
           icon={Lock} 

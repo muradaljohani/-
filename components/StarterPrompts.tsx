@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Lightbulb, Code, BookOpen, User } from 'lucide-react';
+import { Lightbulb, Code, BookOpen, User, Search } from 'lucide-react';
 
 interface StarterPromptsProps {
   onSelect: (prompt: string) => void;
@@ -10,27 +10,27 @@ export const StarterPrompts: React.FC<StarterPromptsProps> = ({ onSelect }) => {
   const prompts = [
     {
       icon: <User className="w-5 h-5 text-blue-400" />,
-      title: "من هو مراد الجهني؟",
-      subtitle: "تعرف على المطور والمبرمج",
-      prompt: "من هو المبرمج مراد الجهني؟ وما هي إنجازاته؟"
+      title: "من هو المطور؟",
+      subtitle: "تعرف على المهندس مراد",
+      prompt: "من هو المهندس مراد عبدالرزاق الجهني؟ وما هي إنجازاته؟"
+    },
+    {
+      icon: <Search className="w-5 h-5 text-emerald-400" />,
+      title: "بحث شامل",
+      subtitle: "استخدم محرك البحث",
+      prompt: "ابحث لي عن أحدث أخبار التقنية والذكاء الاصطناعي اليوم."
+    },
+    {
+      icon: <Code className="w-5 h-5 text-purple-400" />,
+      title: "مساعد برمجيات",
+      subtitle: "كتابة وتصحيح الكود",
+      prompt: "اكتب لي كود React لإنشاء قائمة مهام (To-Do List) مع التخزين المحلي."
     },
     {
       icon: <Lightbulb className="w-5 h-5 text-yellow-400" />,
-      title: "معلومات عامة",
-      subtitle: "أسئلة ثقافية وعلمية",
-      prompt: "ما هي رؤية المملكة 2030 باختصار؟"
-    },
-    {
-      icon: <Code className="w-5 h-5 text-green-400" />,
-      title: "مساعدة برمجية",
-      subtitle: "أكواد وحلول تقنية",
-      prompt: "اكتب لي كود بايثون لترتيب قائمة من الأرقام تصاعدياً."
-    },
-    {
-      icon: <BookOpen className="w-5 h-5 text-purple-400" />,
-      title: "تلخيص وشرح",
-      subtitle: "شرح وتلخيص المحتوى",
-      prompt: "اشرح لي مفهوم الذكاء الاصطناعي التوليدي ببساطة."
+      title: "أفكار إبداعية",
+      subtitle: "توليد أفكار ومحتوى",
+      prompt: "اقترح لي 5 أفكار لمشاريع تجارية ناجحة في السعودية."
     }
   ];
 
@@ -40,7 +40,7 @@ export const StarterPrompts: React.FC<StarterPromptsProps> = ({ onSelect }) => {
         <button
           key={index}
           onClick={() => onSelect(item.prompt)}
-          className="flex flex-col items-start p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/30 transition-all duration-300 text-right group backdrop-blur-sm"
+          className="flex flex-col items-start p-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-blue-500/30 transition-all duration-300 text-right group backdrop-blur-sm shadow-sm hover:shadow-md"
           style={{ animationDelay: `${index * 100}ms` }}
         >
           <div className="flex items-center gap-3 mb-2">
@@ -49,7 +49,7 @@ export const StarterPrompts: React.FC<StarterPromptsProps> = ({ onSelect }) => {
             </div>
             <h3 className="font-bold text-gray-100 text-sm">{item.title}</h3>
           </div>
-          <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1">
+          <p className="text-xs text-gray-400 group-hover:text-gray-300 transition-colors line-clamp-1 font-medium">
             {item.subtitle}
           </p>
         </button>

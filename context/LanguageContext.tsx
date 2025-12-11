@@ -19,7 +19,7 @@ interface LanguageContextType {
 // --- Dictionary Data ---
 const translations: Record<LanguageCode, TranslationDictionary> = {
   ar: {
-    brand_name: "ميلاف مراد",
+    brand_name: "مجتمع ميلاف",
     brand_sub: "المنصة الوطنية",
     nav_corp: "الشركة",
     nav_market: "السوق",
@@ -34,7 +34,7 @@ const translations: Record<LanguageCode, TranslationDictionary> = {
     search_placeholder: "ابحث هنا...",
   },
   en: {
-    brand_name: "Mylaf Murad",
+    brand_name: "Milaf Community",
     brand_sub: "National Platform",
     nav_corp: "Corporate",
     nav_market: "Market",
@@ -49,7 +49,7 @@ const translations: Record<LanguageCode, TranslationDictionary> = {
     search_placeholder: "Search here...",
   },
   fr: {
-    brand_name: "Mylaf Murad",
+    brand_name: "Communauté Milaf",
     brand_sub: "Plateforme Nationale",
     nav_corp: "Entreprise",
     nav_market: "Marché",
@@ -64,7 +64,7 @@ const translations: Record<LanguageCode, TranslationDictionary> = {
     search_placeholder: "Rechercher...",
   },
   es: {
-    brand_name: "Mylaf Murad",
+    brand_name: "Comunidad Milaf",
     brand_sub: "Plataforma Nacional",
     nav_corp: "Corporativo",
     nav_market: "Mercado",
@@ -79,7 +79,7 @@ const translations: Record<LanguageCode, TranslationDictionary> = {
     search_placeholder: "Buscar...",
   },
   de: {
-    brand_name: "Mylaf Murad",
+    brand_name: "Milaf Community",
     brand_sub: "Nationale Plattform",
     nav_corp: "Unternehmen",
     nav_market: "Markt",
@@ -94,7 +94,7 @@ const translations: Record<LanguageCode, TranslationDictionary> = {
     search_placeholder: "Suchen...",
   },
   zh: {
-    brand_name: "Mylaf Murad",
+    brand_name: "Milaf Community",
     brand_sub: "国家平台",
     nav_corp: "企业",
     nav_market: "市场",
@@ -109,7 +109,7 @@ const translations: Record<LanguageCode, TranslationDictionary> = {
     search_placeholder: "搜索...",
   },
   ja: {
-    brand_name: "Mylaf Murad",
+    brand_name: "Milaf Community",
     brand_sub: "ナショナルプラットフォーム",
     nav_corp: "企業",
     nav_market: "市場",
@@ -124,7 +124,7 @@ const translations: Record<LanguageCode, TranslationDictionary> = {
     search_placeholder: "検索...",
   },
   ru: {
-    brand_name: "Mylaf Murad",
+    brand_name: "Milaf Community",
     brand_sub: "Национальная платформа",
     nav_corp: "Корпоративный",
     nav_market: "Рынок",
@@ -139,7 +139,7 @@ const translations: Record<LanguageCode, TranslationDictionary> = {
     search_placeholder: "Поиск...",
   },
   it: {
-    brand_name: "Mylaf Murad",
+    brand_name: "Milaf Community",
     brand_sub: "Piattaforma Nazionale",
     nav_corp: "Aziendale",
     nav_market: "Mercato",
@@ -154,7 +154,7 @@ const translations: Record<LanguageCode, TranslationDictionary> = {
     search_placeholder: "Cerca...",
   },
   pt: {
-    brand_name: "Mylaf Murad",
+    brand_name: "Comunidade Milaf",
     brand_sub: "Plataforma Nacional",
     nav_corp: "Corporativo",
     nav_market: "Mercado",

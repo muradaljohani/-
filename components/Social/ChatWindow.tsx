@@ -1,15 +1,17 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { ArrowRight, Info, Image as ImageIcon, Mic, Plus, Send, Video, Phone } from 'lucide-react';
-import { collection, addDoc, query, onSnapshot, serverTimestamp, db, limit } from '../../src/lib/firebase';
+import { collection, addDoc, query, onSnapshot, serverTimestamp, db, limit, updateDoc, doc } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
+import { User as UserType } from '../../types';
 
 interface Props {
   chatId: string;
+  recipient: UserType;
   onBack: () => void;
 }
 
-export const ChatWindow: React.FC<Props> = ({ chatId, onBack }) => {
+export const ChatWindow: React.FC<Props> = ({ chatId, recipient, onBack }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState('');
@@ -47,16 +49,28 @@ export const ChatWindow: React.FC<Props> = ({ chatId, onBack }) => {
   const handleSend = async () => {
     if (!input.trim() || !user) return;
     
+    const msgText = input;
+    setInput(''); // clear immediately
+
     try {
+        // 1. Add message
         const messagesRef = collection(db, 'chats', chatId, 'messages');
         await addDoc(messagesRef, {
-            text: input,
+            text: msgText,
             senderId: user.id,
             timestamp: serverTimestamp()
         });
-        setInput('');
+
+        // 2. Update chat metadata (for list view)
+        const chatRef = doc(db, 'chats', chatId);
+        await updateDoc(chatRef, {
+            lastMessage: msgText,
+            lastUpdated: serverTimestamp()
+        });
+
     } catch (e) {
         console.error("Failed to send", e);
+        setInput(msgText); // Restore on failure
     }
   };
 
@@ -71,25 +85,25 @@ export const ChatWindow: React.FC<Props> = ({ chatId, onBack }) => {
           </button>
           <div className="flex items-center gap-3">
              <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden border border-[#2f3336]">
-                <img src={`https://api.dicebear.com/7.x/initials/svg?seed=${chatId}`} className="w-full h-full object-cover"/>
+                <img src={recipient.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${recipient.id}`} className="w-full h-full object-cover"/>
              </div>
              <div className="flex flex-col">
-                <span className="font-bold text-[15px] text-[#e7e9ea]">المستخدم {chatId}</span>
-                <span className="text-[11px] text-[#71767b]">متصل الآن</span>
+                <span className="font-bold text-[15px] text-[#e7e9ea]">{recipient.name}</span>
+                <span className="text-[11px] text-[#71767b]" dir="ltr">@{recipient.username?.replace('@','') || recipient.id.slice(0,6)}</span>
              </div>
           </div>
         </div>
         <div className="flex gap-4 text-[#eff3f4]">
-            <Phone className="w-5 h-5"/>
-            <Video className="w-5 h-5"/>
-            <Info className="w-5 h-5" />
+            <Phone className="w-5 h-5 cursor-not-allowed opacity-50"/>
+            <Video className="w-5 h-5 cursor-not-allowed opacity-50"/>
+            <Info className="w-5 h-5 cursor-pointer" />
         </div>
       </div>
 
       {/* 2. Messages List */}
       <div className="flex-1 overflow-y-auto p-4 space-y-1">
         {/* Date Separator */}
-        <div className="text-center text-[13px] text-[#71767b] py-4 mb-2">اليوم</div>
+        <div className="text-center text-[13px] text-[#71767b] py-4 mb-2">بداية المحادثة</div>
 
         {messages.map((msg, index) => {
             const isMe = msg.senderId === user?.id;
@@ -118,7 +132,7 @@ export const ChatWindow: React.FC<Props> = ({ chatId, onBack }) => {
                   
                   {/* Timestamp */}
                   <div className={`text-[10px] text-right mt-1 opacity-70 ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
-                      {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...'}
+                      {msg.timestamp?.toDate ? new Date(msg.timestamp.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : ''}
                   </div>
                 </div>
               </div>
@@ -128,7 +142,7 @@ export const ChatWindow: React.FC<Props> = ({ chatId, onBack }) => {
       </div>
 
       {/* 3. Input Bar */}
-      <div className="p-3 bg-black flex items-center gap-2">
+      <div className="p-3 bg-black flex items-center gap-2 border-t border-[#2f3336]">
         <button className="bg-[#1d9bf0] w-8 h-8 rounded-full flex items-center justify-center text-white shrink-0 hover:bg-[#1a8cd8] transition-colors">
             <Plus className="w-5 h-5" />
         </button>

@@ -66,7 +66,7 @@ export const MobileSidebar: React.FC<Props> = ({ isOpen, onClose, unreadCount = 
                        alt="User"
                      />
                      <h2 className="font-bold text-lg text-black dark:text-[#e7e9ea] leading-tight mt-2">{user.name}</h2>
-                     <p className="text-gray-500 dark:text-[#71767b] text-sm dir-ltr text-right">@{user.username || user.id.slice(0,8)}</p>
+                     <p className="text-gray-500 dark:text-[#71767b] text-sm" dir="ltr">@{user.username?.replace('@','') || user.id.slice(0,8)}</p>
                  </div>
              ) : (
                  <div className="flex flex-col gap-1">

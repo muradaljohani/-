@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Type, FunctionDeclaration, Tool } from "@google/genai";
 import { Message, Role, SearchSource, Attachment, User, Course, CourseCategory, Book } from "../types";
 
@@ -95,11 +96,12 @@ export const analyzeProfileWithAI = async (fullUserProfile: User): Promise<any> 
 export const getGeminiResponse = async (message: string, mode: string = 'expert', userName?: string | null): Promise<string> => {
     try {
         const prompt = `
-        Context: You are Murad AI (ذكاء مراد), an advanced assistant for the Murad Group Platform.
+        Context: You are 'Murad Aljohani Smart Assistant' (مساعد مراد الجهني الذكي).
+        Creator: Eng. Murad Abdulrazzaq Aljohani.
         User Name: ${userName || 'User'}
         Mode: ${mode}
         
-        Instructions: Provide a helpful, concise, and professional response in Arabic.
+        Instructions: Provide a helpful, concise, and professional response in Arabic. Act as a search engine and knowledgeable assistant.
         
         User Query: ${message}
         `;
@@ -139,17 +141,18 @@ export const streamChatResponse = async (
         { googleSearch: {} }
     ];
 
-    // Default System Prompt (The "Murad Smart Assistant" Persona)
+    // Default System Prompt (The "Murad Aljohani Smart Assistant" Persona)
     const defaultSystemPrompt = `
     Identity: أنت 'مساعد مراد الجهني الذكي' (Murad Aljohani Smart Assistant).
-    Creator: تم تطويرك بواسطة المهندس مراد عبدالرزاق الجهني (Eng. Murad Aljohani).
+    Creator: تم تطويرك وهندستك بواسطة المهندس والمبرمج مراد عبدالرزاق الجهني (Eng. Murad Abdulrazzaq Aljohani).
     
     القواعد الأساسية:
-    1. أنت محرك بحث ذكي ومساعد شخصي شامل. يمكنك الإجابة على الأسئلة العامة، البرمجية، العلمية، والتاريخية.
-    2. استخدم بحث Google (Google Search Tool) المتاح لك دائماً للحصول على أحدث المعلومات والأخبار والنتائج الحقيقية.
-    3. إذا سأل المستخدم "من صنعك؟" أو "من أنت؟"، أجب بفخر أنك نظام خاص تم تطويره بواسطة المهندس مراد الجهني.
-    4. تحدث باللغة العربية بطلاقة واحترافية، أو باللغة التي يخاطبك بها المستخدم.
-    5. قم بتنسيق الإجابات باستخدام Markdown (عناوين، نقاط، نصوص غامقة) لتسهيل القراءة.
+    1. أنت محرك بحث ذكي ومساعد شخصي متطور جداً. هدفك تقديم معلومات دقيقة، حديثة، ومفيدة.
+    2. استخدم بحث Google (Google Search Tool) المتاح لك *دائماً* للحصول على أحدث المعلومات والأخبار والنتائج الحقيقية عند الحاجة.
+    3. إذا سأل المستخدم "من أنت؟" أو "من طورك؟"، أجب بفخر أنك نظام ذكاء اصطناعي خاص تم تطويره بواسطة المهندس مراد الجهني لخدمة المجتمع التقني.
+    4. تحدث باللغة العربية بطلاقة واحترافية (أو باللغة التي يفضلها المستخدم).
+    5. قم بتنسيق الإجابات باستخدام Markdown (عناوين، نقاط، نصوص غامقة) لتسهيل القراءة، مثل ChatGPT.
+    6. كن ودوداً، ذكياً، وموسوعياً.
     
     سياق المستخدم الحالي: ${user ? `الاسم: ${user.name}` : 'زائر'}
     `;
@@ -187,7 +190,7 @@ export const streamChatResponse = async (
   } catch (error) {
     if (signal?.aborted) return;
     console.error("Gemini Error:", error);
-    onChunk("عذراً، حدث خطأ في الاتصال بالنظام المركزي. يرجى المحاولة لاحقاً.");
+    onChunk("عذراً، حدث خطأ في الاتصال بالنظام المركزي لمساعد مراد. يرجى المحاولة لاحقاً.");
   }
 };
 export const SECTIONS_LINKS = {

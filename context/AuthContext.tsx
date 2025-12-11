@@ -593,8 +593,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       updateProfile({ following: (user.following || []).filter(id => id !== targetId) });
   };
 
+  // --- UPDATED ADMIN LOGIN LOGIC ---
   const adminLogin = (u: string, p: string) => {
-      if (u === 'MURAD' && p === 'MURAD123@A') {
+      const normalizedUser = u.trim().toLowerCase().replace('@', '');
+      
+      if (normalizedUser === 'ipmurad' && p === 'murad123@A') {
           setIsAdmin(true);
           localStorage.setItem('mylaf_admin_session', 'active');
           return true;

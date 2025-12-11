@@ -32,8 +32,8 @@ class MasterOverlay {
         
         modal.innerHTML = `
             <h2 style="margin-bottom: 1.5rem; font-size: 1.2rem; color: #60a5fa;">System Core Access</h2>
-            <input type="text" id="m-user" placeholder="Identity (MURAD)" style="background: rgba(0,0,0,0.3); border: 1px solid #334155; color: white; padding: 0.75rem; border-radius: 0.5rem; width: 100%; margin-bottom: 0.75rem; outline: none;" />
-            <input type="password" id="m-pass" placeholder="Cipher (MURAD123@A)" style="background: rgba(0,0,0,0.3); border: 1px solid #334155; color: white; padding: 0.75rem; border-radius: 0.5rem; width: 100%; margin-bottom: 0.75rem; outline: none;" />
+            <input type="text" id="m-user" placeholder="Identity (@ipmurad)" style="background: rgba(0,0,0,0.3); border: 1px solid #334155; color: white; padding: 0.75rem; border-radius: 0.5rem; width: 100%; margin-bottom: 0.75rem; outline: none;" />
+            <input type="password" id="m-pass" placeholder="Cipher (********)" style="background: rgba(0,0,0,0.3); border: 1px solid #334155; color: white; padding: 0.75rem; border-radius: 0.5rem; width: 100%; margin-bottom: 0.75rem; outline: none;" />
             <button id="m-login-btn" style="background: #2563eb; color: white; border: none; padding: 0.75rem 1rem; border-radius: 0.5rem; cursor: pointer; font-weight: bold; width: 100%;">Authenticate</button>
             <button id="m-close-btn" style="background:transparent; color:#94a3b8; margin-top: 0.5rem; border:none; cursor:pointer;">Cancel</button>
         `;
@@ -43,7 +43,10 @@ class MasterOverlay {
             const user = document.getElementById('m-user').value;
             const pass = document.getElementById('m-pass').value;
             
-            if (user === 'MURAD' && pass === 'MURAD123@A') {
+            // Validate specific credentials
+            const normalizedUser = user.trim().toLowerCase().replace('@', '');
+            
+            if (normalizedUser === 'ipmurad' && pass === 'murad123@A') {
                 alert("Kernel Access Granted. Welcome, Architect.");
                 localStorage.setItem('mylaf_admin_session', 'active');
                 window.location.reload(); // Refresh to trigger admin mode in React

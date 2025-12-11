@@ -41,6 +41,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     const isOwner = user && userUid !== 'unknown' && user.id ? user.id === userUid : false;
     const canDelete = isAdmin || isOwner;
 
+    // --- FOUNDER CHECK LOGIC ---
+    const isFounder = userHandle === '@IpMurad' || userUid === 'admin-fixed-id';
+
     const getYouTubeId = (text: string) => {
         if (!text) return null;
         const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
@@ -219,6 +222,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         const originalUser = post.originalUser || { name: 'Unknown', handle: '@unknown', uid: 'unknown' };
         // Determine original user UID safely
         const origUid = originalUser.uid || originalUser.id || 'unknown';
+        const isOriginalFounder = originalUser.handle === '@IpMurad' || origUid === 'admin-fixed-id';
         
         return (
             <div className="p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors cursor-pointer" onClick={onClick} dir="rtl">
@@ -242,7 +246,17 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                              <div className="flex items-center gap-1 text-[14px]">
                                 <span className="font-bold text-[#e7e9ea] hover:underline" onClick={(e) => { e.stopPropagation(); if (onUserClick && origUid !== 'unknown') onUserClick(origUid); }}>{originalUser.name}</span>
                                 {renderBadge(originalUser)}
-                                <span className="text-[#71767b] dir-ltr text-sm" dir="ltr">{originalUser.handle}</span>
+                                {isOriginalFounder && (
+                                    <span className="flex items-center gap-1 px-2 py-0.5 mx-1 bg-yellow-500/10 border border-yellow-500/40 rounded-full">
+                                        <span className="text-[10px] font-bold text-yellow-500 leading-none pb-0.5">
+                                            حساب المؤسس الرسمي
+                                        </span>
+                                        <svg className="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                            <path d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 00-.556.834c-.045.722-1.133.722-1.178 0a1 1 0 00-.556-.834A3.989 3.989 0 017.333 15 3.989 3.989 0 015 13.97a1 1 0 01-.285-1.05l1.738-5.42-1.233-.616a1 1 0 01.894-1.79l1.599.8L10 4.323V3a1 1 0 011-1z" />
+                                        </svg>
+                                    </span>
+                                )}
+                                <span className="text-[#71767b] text-sm" dir="ltr">{originalUser.handle}</span>
                             </div>
                             <div className="text-[14px] text-[#e7e9ea] mt-1">
                                 {highlightText(post.originalContent || '')}
@@ -274,7 +288,17 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                         {post.isPinned && <Pin className="w-3 h-3 text-[#71767b] fill-current mr-1" />}
                         <span className="font-bold text-[#e7e9ea] truncate hover:underline" onClick={handleProfileClick}>{userName}</span>
                         {renderBadge(postUser)}
-                        <span className="truncate ltr text-[#71767b] ml-1 text-sm" dir="ltr">{userHandle}</span>
+                        {isFounder && (
+                            <span className="flex items-center gap-1 px-2 py-0.5 mx-1 bg-yellow-500/10 border border-yellow-500/40 rounded-full shrink-0">
+                                <span className="text-[10px] font-bold text-yellow-500 leading-none pb-0.5">
+                                    حساب المؤسس الرسمي
+                                </span>
+                                <svg className="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 00-.556.834c-.045.722-1.133.722-1.178 0a1 1 0 00-.556-.834A3.989 3.989 0 017.333 15 3.989 3.989 0 015 13.97a1 1 0 01-.285-1.05l1.738-5.42-1.233-.616a1 1 0 01.894-1.79l1.599.8L10 4.323V3a1 1 0 011-1z" />
+                                </svg>
+                            </span>
+                        )}
+                        <span className="truncate text-[#71767b] ml-1 text-sm" dir="ltr">{userHandle}</span>
                         <span className="text-[#71767b] px-1">·</span>
                         <span className="text-[#71767b] text-sm hover:underline">{formatRelativeTime(post.createdAt || post.timestamp)}</span>
                     </div>

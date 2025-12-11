@@ -285,19 +285,20 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   };
 
   return (
-    <div className="flex-1 min-h-screen bg-black text-[#e7e9ea] pb-20 md:pb-0 font-sans" dir="rtl">
+    <div className="w-full h-full bg-white dark:bg-black font-sans" dir="rtl">
       
-      <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-[#2f3336]">
+      {/* Header Tabs */}
+      <div className="sticky top-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-gray-100 dark:border-[#2f3336]">
         <div className="pt-3 pb-2 px-4 md:hidden">
-          <h1 className="text-center text-lg font-bold text-white tracking-wide">
+          <h1 className="text-center text-lg font-bold text-black dark:text-white tracking-wide">
             مجتمع ميلاف <span className="text-[#1d9bf0]">|</span> Milaf Community
           </h1>
         </div>
         <div className="flex justify-around mt-2">
           <button 
             onClick={() => setActiveTab('foryou')}
-            className={`flex-1 text-center py-3 font-bold text-sm transition-all relative ${
-              activeTab === 'foryou' ? 'text-white' : 'text-[#71767b] hover:bg-white/5'
+            className={`flex-1 text-center py-3 font-bold text-sm transition-all relative hover:bg-gray-200 dark:hover:bg-[#181818] ${
+              activeTab === 'foryou' ? 'text-black dark:text-white' : 'text-gray-500 dark:text-[#71767b]'
             }`}
           >
             لك
@@ -305,8 +306,8 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           </button>
           <button 
             onClick={() => setActiveTab('following')}
-            className={`flex-1 text-center py-3 font-bold text-sm transition-all relative ${
-              activeTab === 'following' ? 'text-white' : 'text-[#71767b] hover:bg-white/5'
+            className={`flex-1 text-center py-3 font-bold text-sm transition-all relative hover:bg-gray-200 dark:hover:bg-[#181818] ${
+              activeTab === 'following' ? 'text-black dark:text-white' : 'text-gray-500 dark:text-[#71767b]'
             }`}
           >
             منشوراتي
@@ -315,11 +316,11 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         </div>
       </div>
 
-      <div className="border-b border-[#2f3336]">
+      <div className="border-b border-gray-100 dark:border-[#2f3336]">
           <StoriesBar />
       </div>
 
-      <div className="hidden md:block border-b border-[#2f3336] p-4 bg-black">
+      <div className="hidden md:block border-b border-gray-100 dark:border-[#2f3336] p-4 bg-white dark:bg-black">
         <div className="flex gap-4">
           <img 
             src={user?.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
@@ -328,20 +329,20 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           />
           <div className="flex-1">
             <textarea
-              className="w-full bg-transparent text-lg placeholder-[#71767b] text-[#e7e9ea] border-none focus:ring-0 resize-none min-h-[50px] outline-none"
+              className="w-full bg-transparent text-lg placeholder-gray-500 dark:placeholder-[#71767b] text-black dark:text-[#e7e9ea] border-none focus:ring-0 resize-none min-h-[50px] outline-none"
               placeholder="ماذا يحدث؟"
               value={newPostText}
               onChange={(e) => setNewPostText(e.target.value)}
             />
             {previewUrl && (
               <div className="relative mt-2 mb-2">
-                <img src={previewUrl} className="rounded-xl w-auto max-h-[300px] object-cover border border-[#2f3336]" alt="preview" />
+                <img src={previewUrl} className="rounded-xl w-auto max-h-[300px] object-cover border border-gray-200 dark:border-[#2f3336]" alt="preview" />
                 <button onClick={removeImage} className="absolute top-2 right-2 bg-black/70 text-white rounded-full p-1 hover:bg-gray-800">
                     <X className="w-4 h-4"/>
                 </button>
               </div>
             )}
-            <div className="flex justify-between items-center mt-2 border-t border-[#2f3336] pt-3">
+            <div className="flex justify-between items-center mt-2 border-t border-gray-100 dark:border-[#2f3336] pt-3">
               <div className="flex gap-2 text-[#1d9bf0]">
                 <label className="cursor-pointer hover:bg-[#1d9bf0]/10 p-2 rounded-full transition">
                   <input type="file" hidden accept="image/*" onChange={handleFileSelect} ref={fileInputRef} />
