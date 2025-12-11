@@ -290,7 +290,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
       <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-[#2f3336]">
         <div className="pt-3 pb-2 px-4 md:hidden">
           <h1 className="text-center text-lg font-bold text-white tracking-wide">
-            مراد سوشل <span className="text-[#1d9bf0]">|</span> Murad Social
+            مجتمع ميلاف <span className="text-[#1d9bf0]">|</span> Milaf Community
           </h1>
         </div>
         <div className="flex justify-around mt-2">

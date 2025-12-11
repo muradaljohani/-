@@ -277,7 +277,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                 <div className="relative mb-6 group">
                     <input 
                         type="text" 
-                        placeholder="بحث في مراد سوشل..." 
+                        placeholder="بحث في مجتمع ميلاف..." 
                         className="w-full bg-gray-100 dark:bg-[#202327] border-none focus:ring-1 focus:ring-[var(--accent-color)] rounded-full py-3 pr-12 pl-4 text-sm text-black dark:text-[#e7e9ea] placeholder-gray-500 dark:placeholder-[#71767b] outline-none transition-all"
                     />
                     <Search className="absolute right-4 top-3 w-5 h-5 text-gray-400 dark:text-[#71767b]"/>
