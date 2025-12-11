@@ -46,14 +46,12 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   // --- SEEDING LOGIC (Self-Healing) ---
   useEffect(() => {
     const forceSeedPosts = async () => {
-        if (!db) return; // Safety check if db is not initialized
+        if (!db) return; 
 
         try {
-            // 1. Seed Admin Profile (The Fix for User Not Found)
             const adminId = "admin-fixed-id";
             const adminRef = doc(db, "users", adminId);
             
-            // Safe Get
             let adminSnap;
             try {
                 adminSnap = await getDoc(adminRef);
@@ -81,13 +79,10 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                     followers: 11711, 
                     following: 42
                 }, { merge: true }).catch(e => console.error("Admin Seed Error", e));
-                console.log("✅ Admin Profile Seeded: @IpMurad");
             }
 
-            // 2. Ensure Current User Profile Exists
             if (user && user.id) {
                 const userRef = doc(db, "users", user.id);
-                // Fire and forget, catch error to prevent crash
                 setDoc(userRef, {
                     uid: user.id,
                     name: user.name,
@@ -111,15 +106,17 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     setError(null);
     
     if (!db) {
-        setLoading(false);
-        setError("Database connection unavailable");
+        if (isMounted) {
+            setLoading(false);
+            setError("Database unavailable");
+        }
         return;
     }
 
-    let q;
-    const postsRef = collection(db, "posts");
-
     try {
+        const postsRef = collection(db, "posts");
+        let q;
+
         if (activeTab === 'foryou') {
             q = query(postsRef, limit(100));
         } else {
@@ -173,12 +170,10 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         }, (err: any) => {
             console.error("Firestore Feed Error:", err);
             if (isMounted) {
-               // Ignore permission errors for non-logged in users on 'following' tab
                if (activeTab === 'following' && !user) {
                    setLoading(false);
                    return;
                }
-               // Safe property access
                if (err && err.code !== 'permission-denied') {
                   setError("حدث خطأ أثناء تحميل المنشورات.");
                }
@@ -199,6 +194,10 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   const handlePost = async () => {
     if (!user) {
         alert("يرجى تسجيل الدخول للنشر");
+        return;
+    }
+    if (!db) {
+        alert("Database connection failed");
         return;
     }
     if (!newPostText.trim() && !selectedFile) return;

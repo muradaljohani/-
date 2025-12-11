@@ -26,6 +26,11 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
+            if (!db) {
+                setLoading(false);
+                return;
+            }
+
             try {
                 // 1. Fetch User Data
                 let userData: User | null = null;
@@ -42,8 +47,6 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                 setProfileUser(userData);
 
                 // 2. Fetch User Posts
-                // FIXED: Removed orderBy('createdAt', 'desc') to avoid composite index error with where clause.
-                // Sorting will be done client-side.
                 if (userData) {
                     const postsQuery = query(
                         collection(db, 'posts'),

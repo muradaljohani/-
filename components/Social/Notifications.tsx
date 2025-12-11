@@ -26,7 +26,10 @@ export const Notifications: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !db) {
+        setLoading(false);
+        return;
+    }
 
     try {
         const notifsRef = collection(db, 'users', user.id, 'notifications');

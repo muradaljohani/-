@@ -52,7 +52,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
     const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || !db) return;
         
         try {
             const notifsRef = collection(db, 'users', user.id, 'notifications');
