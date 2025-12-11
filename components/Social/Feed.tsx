@@ -25,7 +25,7 @@ interface FeedProps {
 }
 
 export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostClick, onUserClick }) => {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [posts, setPosts] = useState<any[]>([]);
   const [newPostText, setNewPostText] = useState("");
   const [loading, setLoading] = useState(true);
@@ -137,12 +137,16 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
 
       const postsRef = collection(db, 'posts');
       
+      // Strict User Data Construction
+      // Uses the isAdmin flag from AuthContext (synced with Firestore)
       const userData = {
           name: user.name || "User",
-          handle: user.username ? `@${user.username}` : (user.email ? `@${user.email.split('@')[0]}` : `@${user.id.slice(0,8)}`),
+          // Force @IpMurad if admin, otherwise use stored username or fallback
+          handle: isAdmin || user.username === 'IpMurad' ? '@IpMurad' : (user.username ? `@${user.username}` : `@${user.id.slice(0,8)}`),
           avatar: user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User",
-          verified: user.isIdentityVerified || false,
-          isGold: user.primeSubscription?.status === 'active',
+          // Force verification for admin
+          verified: isAdmin ? true : (user.isIdentityVerified || false),
+          isGold: isAdmin ? true : (user.primeSubscription?.status === 'active'),
           uid: user.id
       };
 
