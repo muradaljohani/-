@@ -51,7 +51,7 @@ export const HarajPortal: React.FC<HarajPortalProps> = ({ onBack }) => {
     useEffect(() => {
         // 1. Base Feed Generation (Colossus Engine)
         const cachedRaw = sessionStorage.getItem('colossus_feed_cache');
-        // SAFE PARSE FOR META
+        
         let cacheMeta = {};
         try {
             cacheMeta = JSON.parse(sessionStorage.getItem('colossus_feed_meta') || '{}');

@@ -56,7 +56,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             try {
                 adminSnap = await getDoc(adminRef);
             } catch (err) {
-                console.warn("Failed to check admin profile:", err);
+                // Silent fail or minimal log
                 return;
             }
 
@@ -79,7 +79,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                     isGold: true,
                     followers: 11711, 
                     following: 42
-                }, { merge: true }).catch(e => console.error("Admin Seed Error", e));
+                }, { merge: true }).catch(e => {});
             }
 
             if (user && user.id) {
@@ -90,11 +90,11 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                     email: user.email,
                     avatar: user.avatar,
                     lastLogin: serverTimestamp()
-                }, { merge: true }).catch(e => console.warn("User profile sync warning", e));
+                }, { merge: true }).catch(e => {});
             }
 
         } catch (e) {
-            console.error("Seeding General Error:", e);
+            // Ignore
         }
     };
 
@@ -163,24 +163,19 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
               });
 
               setPosts(livePosts);
-              // Clear errors if successful
               setError(null);
           } catch (mapError) {
-              console.error("Data Mapping Error:", mapError);
+              // Ignore mapping errors
           } finally {
               if (isMounted) setLoading(false);
           }
         }, (err: any) => {
-            console.error("Firestore Feed Error:", err);
             if (isMounted) {
-               if (activeTab === 'following' && !user) {
-                   setLoading(false);
-                   return;
-               }
-               // Check for offline error specifically
+               // Handle offline error specifically
                if (err.code === 'unavailable') {
                    setError("لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة.");
-               } else if (err && err.code !== 'permission-denied') {
+               } else if (err.code !== 'permission-denied') {
+                  console.warn("Feed Error:", err.message);
                   setError("حدث خطأ أثناء تحميل المنشورات.");
                }
                setLoading(false);
@@ -192,7 +187,6 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             unsubscribe();
         };
     } catch (err) {
-        console.error("Setup Feed Error:", err);
         if (isMounted) setLoading(false);
     }
   }, [activeTab, user]);
