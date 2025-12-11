@@ -129,7 +129,7 @@ export const SecuritySettings: React.FC<{ onBack: () => void }> = ({ onBack }) =
             setResetSent(true);
             setTimeout(() => setResetSent(false), 5000);
         } catch (e) {
-            alert("حدث خطأ أثناء إرسال البريد.");
+            alert("حدث خطأ أثناء إرسال البريد. يرجى المحاولة لاحقاً.");
         }
     };
 

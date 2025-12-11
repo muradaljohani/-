@@ -90,8 +90,11 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                   const getTime = (p: any) => {
                       const val = p.createdAt || p.timestamp;
                       if (!val) return 0;
+                      // Handle Firestore Timestamp
                       if (val.toMillis && typeof val.toMillis === 'function') return val.toMillis();
+                      // Handle JS Date
                       if (val instanceof Date) return val.getTime();
+                      // Handle ISO String
                       if (typeof val === 'string') return new Date(val).getTime();
                       return 0; 
                   };
