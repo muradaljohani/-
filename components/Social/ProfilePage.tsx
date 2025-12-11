@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Calendar, MapPin, Link as LinkIcon, Mail } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal } from 'lucide-react';
 import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
@@ -18,13 +18,14 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [isEditOpen, setIsEditOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState<'posts' | 'media' | 'likes'>('posts');
+    const [activeTab, setActiveTab] = useState<'posts' | 'replies' | 'media' | 'likes'>('posts');
 
     const isOwnProfile = currentUser?.id === userId;
     const isFollowing = currentUser?.following?.includes(userId);
 
     // --- ADMIN HARDCODED DATA BYPASS ---
-    const ADMIN_BYPASS_IDS = ["admin-fixed-id", "admin-murad-main-id"];
+    // Includes IDs from various seed sources to ensure consistency
+    const ADMIN_BYPASS_IDS = ["admin-fixed-id", "admin-murad-main-id", "admin-murad-id"];
 
     useEffect(() => {
         const fetchData = async () => {
@@ -44,21 +45,22 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     isLoggedIn: true,
                     verified: true,
                     isIdentityVerified: true,
-                    isGold: true, // Assuming this maps to isGold for UI
+                    isGold: true, 
                     avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
                     coverImage: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=1500&q=80",
                     bio: "Founder & CEO of Milaf | مؤسس مجتمع ميلاف 🦅",
                     address: "Saudi Arabia",
-                    createdAt: new Date().toISOString(),
+                    createdAt: new Date(2025, 0, 1).toISOString(),
                     lastLogin: new Date().toISOString(),
                     loginMethod: 'email',
                     linkedProviders: [],
                     xp: 99999,
                     level: 99,
                     nextLevelXp: 100000,
-                    followers: Array(11711).fill('f'), // Mock array for count
-                    following: Array(42).fill('f'),
-                    primeSubscription: { status: 'active' } as any
+                    followers: Array(11711).fill('f'), 
+                    following: Array(142).fill('f'),
+                    primeSubscription: { status: 'active' } as any,
+                    customFormFields: { website: 'https://murad-group.com' }
                 } as User;
                 
                 setProfileUser(userData);
@@ -80,13 +82,25 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
             }
 
             // 2. Fetch User Posts
+            // If it's the admin mock, we try to fetch posts associated with any admin ID
             if (userData && db) {
                 try {
-                    const postsQuery = query(
-                        collection(db, 'posts'),
-                        where('user.uid', '==', userId)
-                    );
-                    const postsSnap = await getDocs(postsQuery);
+                    let q;
+                    if (ADMIN_BYPASS_IDS.includes(userId)) {
+                         // Fetch posts where user.uid is in any of the admin IDs
+                         // Firestore "in" query allows up to 10 values
+                         q = query(
+                            collection(db, 'posts'),
+                            where('user.uid', 'in', ADMIN_BYPASS_IDS)
+                        );
+                    } else {
+                        q = query(
+                            collection(db, 'posts'),
+                            where('user.uid', '==', userId)
+                        );
+                    }
+
+                    const postsSnap = await getDocs(q);
                     const userPosts = postsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
                     
                     // Client-side sort
@@ -106,7 +120,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
         };
 
         fetchData();
-    }, [userId, currentUser]); // Refetch if currentUser changes
+    }, [userId, currentUser]); 
 
     const handleFollowToggle = () => {
         if (!currentUser) return alert("يرجى تسجيل الدخول");
@@ -123,35 +137,37 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
 
     if (!profileUser) {
         return (
-            <div className="min-h-screen bg-black text-white p-4">
+            <div className="min-h-screen bg-black text-white p-4 font-sans" dir="rtl">
                 <button onClick={onBack} className="flex items-center gap-2 mb-4 text-blue-500">
-                    <ArrowLeft className="w-5 h-5 rtl:rotate-180"/> عودة
+                    <ArrowRight className="w-5 h-5 rtl:rotate-180"/> عودة
                 </button>
                 <div className="text-center py-20 text-gray-500">المستخدم غير موجود</div>
             </div>
         );
     }
 
-    const joinDate = profileUser.joinDate 
-        ? new Date(profileUser.joinDate).toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' }) 
+    const joinDate = profileUser.createdAt 
+        ? new Date(profileUser.createdAt).toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' }) 
         : 'منذ فترة';
+    
+    const websiteUrl = profileUser.customFormFields?.website || profileUser.businessProfile?.website;
 
     return (
         <div className="min-h-screen bg-black text-[#e7e9ea] font-sans pb-20" dir="rtl">
             
-            {/* Header */}
-            <div className="sticky top-0 z-30 bg-black/80 backdrop-blur-md px-4 py-2 flex items-center gap-6 border-b border-[#2f3336]">
-                <button onClick={onBack} className="p-2 hover:bg-[#18191c] rounded-full transition-colors">
-                    <ArrowLeft className="w-5 h-5 text-white rtl:rotate-180"/>
+            {/* 1. STICKY HEADER */}
+            <div className="sticky top-0 z-40 bg-black/80 backdrop-blur-md px-4 py-1 flex items-center gap-6 border-b border-[#2f3336]">
+                <button onClick={onBack} className="p-2 -mr-2 hover:bg-[#18191c] rounded-full transition-colors">
+                    <ArrowRight className="w-5 h-5 text-white rtl:rotate-180"/>
                 </button>
-                <div>
+                <div className="flex flex-col">
                     <h2 className="font-bold text-lg text-white leading-tight">{profileUser.name}</h2>
                     <p className="text-xs text-[#71767b]">{posts.length} منشور</p>
                 </div>
             </div>
 
-            {/* Banner */}
-            <div className="h-48 bg-[#333639] relative">
+            {/* 2. COVER IMAGE */}
+            <div className="h-32 md:h-48 bg-[#333639] relative overflow-hidden">
                 {profileUser.coverImage ? (
                     <img src={profileUser.coverImage} className="w-full h-full object-cover" alt="Banner"/>
                 ) : (
@@ -159,34 +175,38 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                 )}
             </div>
 
-            {/* Profile Info */}
+            {/* 3. PROFILE DETAILS */}
             <div className="px-4 relative mb-4">
+                
+                {/* Avatar & Action Button Row */}
                 <div className="flex justify-between items-start">
-                    <div className="-mt-16 bg-black p-1 rounded-full">
-                         <img 
-                            src={profileUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${profileUser.id}`} 
-                            className="w-32 h-32 rounded-full object-cover border-2 border-black bg-gray-800"
-                            alt={profileUser.name}
-                        />
+                    <div className="-mt-[15%] md:-mt-[10%] mb-3">
+                         <div className="w-[25%] min-w-[80px] max-w-[130px] aspect-square rounded-full border-4 border-black bg-black overflow-hidden relative">
+                             <img 
+                                src={profileUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${profileUser.id}`} 
+                                className="w-full h-full object-cover"
+                                alt={profileUser.name}
+                            />
+                         </div>
                     </div>
                     <div className="mt-3">
                         {isOwnProfile ? (
                             <button 
                                 onClick={() => setIsEditOpen(true)}
-                                className="px-4 py-1.5 border border-[#536471] rounded-full font-bold text-sm hover:bg-[#18191c] transition-colors"
+                                className="px-4 py-1.5 border border-[#536471] text-white rounded-full font-bold text-sm hover:bg-[#18191c] transition-colors"
                             >
                                 تعديل الملف الشخصي
                             </button>
                         ) : (
                             <div className="flex gap-2">
-                                <button className="p-2 border border-[#536471] rounded-full hover:bg-[#18191c]">
+                                <button className="p-2 border border-[#536471] rounded-full hover:bg-[#18191c] text-white">
                                     <Mail className="w-5 h-5"/>
                                 </button>
                                 <button 
                                     onClick={handleFollowToggle}
                                     className={`px-5 py-1.5 rounded-full font-bold text-sm transition-colors ${
                                         isFollowing 
-                                        ? 'border border-[#536471] hover:bg-red-900/20 hover:text-red-500 hover:border-red-500' 
+                                        ? 'border border-[#536471] text-white hover:bg-red-900/20 hover:text-red-500 hover:border-red-500' 
                                         : 'bg-white text-black hover:bg-[#eff3f4]'
                                     }`}
                                 >
@@ -197,25 +217,34 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     </div>
                 </div>
 
-                <div className="mt-3">
-                    <h1 className="font-black text-xl text-white">{profileUser.name}</h1>
+                {/* Name & Handle */}
+                <div className="mt-1">
+                    <h1 className="font-black text-xl text-white flex items-center gap-1">
+                        {profileUser.name}
+                        {profileUser.isVerified && <CheckCircle2 className="w-5 h-5 text-[#1d9bf0] fill-[#1d9bf0] text-white" />}
+                        {profileUser.role === 'admin' && <span className="bg-[#eff3f4] text-black text-[10px] px-1 rounded ml-1 border border-white">Admin</span>}
+                    </h1>
                     <p className="text-[#71767b] text-sm dir-ltr text-right font-mono">@{profileUser.username || profileUser.id.slice(0,8)}</p>
                 </div>
 
+                {/* Bio */}
                 {profileUser.bio && (
-                    <p className="mt-3 text-sm leading-relaxed whitespace-pre-wrap">{profileUser.bio}</p>
+                    <p className="mt-3 text-[15px] text-[#e7e9ea] leading-relaxed whitespace-pre-wrap">{profileUser.bio}</p>
                 )}
 
-                <div className="flex flex-wrap gap-x-4 gap-y-2 text-[#71767b] text-sm mt-3">
+                {/* Metadata */}
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[#71767b] text-[14px] mt-3 items-center">
                     {profileUser.address && (
                         <div className="flex items-center gap-1">
                             <MapPin className="w-4 h-4"/> {profileUser.address}
                         </div>
                     )}
-                    {profileUser.customFormFields?.website && (
+                    {websiteUrl && (
                          <div className="flex items-center gap-1">
                             <LinkIcon className="w-4 h-4"/> 
-                            <a href={profileUser.customFormFields.website} target="_blank" className="text-blue-400 hover:underline">{profileUser.customFormFields.website.replace('https://','')}</a>
+                            <a href={websiteUrl.startsWith('http') ? websiteUrl : `https://${websiteUrl}`} target="_blank" rel="noopener noreferrer" className="text-[#1d9bf0] hover:underline">
+                                {websiteUrl.replace(/^https?:\/\//, '')}
+                            </a>
                         </div>
                     )}
                     <div className="flex items-center gap-1">
@@ -223,50 +252,62 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     </div>
                 </div>
 
-                <div className="flex gap-5 text-sm mt-3">
-                    <div className="hover:underline cursor-pointer">
-                        <span className="font-bold text-white">{profileUser.following?.length || 0}</span> <span className="text-[#71767b]">متابعة</span>
+                {/* Follow Stats */}
+                <div className="flex gap-5 text-[14px] mt-3 text-[#71767b]">
+                    <div className="hover:underline cursor-pointer flex gap-1">
+                        <span className="font-bold text-[#e7e9ea]">{profileUser.following?.length || 0}</span> <span>متابِعًا</span>
                     </div>
-                    <div className="hover:underline cursor-pointer">
-                        <span className="font-bold text-white">{profileUser.followers?.length || 0}</span> <span className="text-[#71767b]">متابِع</span>
+                    <div className="hover:underline cursor-pointer flex gap-1">
+                        <span className="font-bold text-[#e7e9ea]">{profileUser.followers?.length || 0}</span> <span>المتابعين</span>
                     </div>
                 </div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex border-b border-[#2f3336] mt-2">
+            {/* 4. TABS */}
+            <div className="flex border-b border-[#2f3336] mt-2 sticky top-[53px] bg-black/95 z-30 backdrop-blur-sm">
                 <button 
                     onClick={() => setActiveTab('posts')}
-                    className={`flex-1 py-3 text-sm font-bold relative hover:bg-[#18191c] transition-colors ${activeTab === 'posts' ? 'text-white' : 'text-[#71767b]'}`}
+                    className="flex-1 hover:bg-[#18191c] transition-colors relative h-[53px] flex items-center justify-center"
                 >
-                    المنشورات
-                    {activeTab === 'posts' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-[#1d9bf0] rounded-full"></div>}
+                    <span className={`font-bold text-[15px] ${activeTab === 'posts' ? 'text-white' : 'text-[#71767b]'}`}>منشورات</span>
+                    {activeTab === 'posts' && <div className="absolute bottom-0 w-14 h-1 bg-[#1d9bf0] rounded-full"></div>}
+                </button>
+                <button 
+                    onClick={() => setActiveTab('replies')}
+                    className="flex-1 hover:bg-[#18191c] transition-colors relative h-[53px] flex items-center justify-center"
+                >
+                    <span className={`font-bold text-[15px] ${activeTab === 'replies' ? 'text-white' : 'text-[#71767b]'}`}>الردود</span>
+                    {activeTab === 'replies' && <div className="absolute bottom-0 w-12 h-1 bg-[#1d9bf0] rounded-full"></div>}
                 </button>
                 <button 
                     onClick={() => setActiveTab('media')}
-                    className={`flex-1 py-3 text-sm font-bold relative hover:bg-[#18191c] transition-colors ${activeTab === 'media' ? 'text-white' : 'text-[#71767b]'}`}
+                    className="flex-1 hover:bg-[#18191c] transition-colors relative h-[53px] flex items-center justify-center"
                 >
-                    الوسائط
-                    {activeTab === 'media' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-[#1d9bf0] rounded-full"></div>}
+                    <span className={`font-bold text-[15px] ${activeTab === 'media' ? 'text-white' : 'text-[#71767b]'}`}>الوسائط</span>
+                    {activeTab === 'media' && <div className="absolute bottom-0 w-12 h-1 bg-[#1d9bf0] rounded-full"></div>}
                 </button>
                 <button 
                     onClick={() => setActiveTab('likes')}
-                    className={`flex-1 py-3 text-sm font-bold relative hover:bg-[#18191c] transition-colors ${activeTab === 'likes' ? 'text-white' : 'text-[#71767b]'}`}
+                    className="flex-1 hover:bg-[#18191c] transition-colors relative h-[53px] flex items-center justify-center"
                 >
-                    الإعجابات
-                    {activeTab === 'likes' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-14 h-1 bg-[#1d9bf0] rounded-full"></div>}
+                    <span className={`font-bold text-[15px] ${activeTab === 'likes' ? 'text-white' : 'text-[#71767b]'}`}>الإعجابات</span>
+                    {activeTab === 'likes' && <div className="absolute bottom-0 w-14 h-1 bg-[#1d9bf0] rounded-full"></div>}
                 </button>
             </div>
 
-            {/* Posts Feed */}
+            {/* 5. POSTS FEED */}
             <div>
-                {posts.map(post => (
-                    <PostCard key={post.id} post={post} onClick={() => {}} />
-                ))}
-                {posts.length === 0 && (
-                    <div className="p-8 text-center text-[#71767b]">
-                        لا توجد منشورات لعرضها
+                {loading ? (
+                    <div className="p-8 text-center text-[#71767b]">جاري التحميل...</div>
+                ) : posts.length === 0 ? (
+                    <div className="p-12 text-center">
+                        <div className="font-bold text-xl text-white mb-2">لا توجد منشورات بعد</div>
+                        <p className="text-[#71767b] text-sm">عندما يقوم {profileUser.name} بنشر تغريدات، ستظهر هنا.</p>
                     </div>
+                ) : (
+                    posts.map(post => (
+                        <PostCard key={post.id} post={post} onClick={() => {}} />
+                    ))
                 )}
             </div>
 

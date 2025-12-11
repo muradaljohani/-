@@ -217,6 +217,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
 
     if (post.type === 'repost') {
         const originalUser = post.originalUser || { name: 'Unknown', handle: '@unknown', uid: 'unknown' };
+        // Determine original user UID safely
+        const origUid = originalUser.uid || originalUser.id || 'unknown';
+        
         return (
             <div className="p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors cursor-pointer" onClick={onClick} dir="rtl">
                 <div className="flex items-center justify-between mb-2">
@@ -232,12 +235,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                 </div>
                 <div className="border border-[#2f3336] rounded-2xl p-3 mt-1 hover:bg-[#16181c] transition-colors">
                     <div className="flex gap-3">
-                         <div className="shrink-0" onClick={(e) => { e.stopPropagation(); onUserClick && onUserClick(originalUser.uid); }}>
+                         <div className="shrink-0" onClick={(e) => { e.stopPropagation(); if (onUserClick && origUid !== 'unknown') onUserClick(origUid); }}>
                             <img src={originalUser.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-8 h-8 rounded-full object-cover hover:opacity-80 transition-opacity" />
                         </div>
                         <div>
                              <div className="flex items-center gap-1 text-[14px]">
-                                <span className="font-bold text-[#e7e9ea] hover:underline" onClick={(e) => { e.stopPropagation(); onUserClick && onUserClick(originalUser.uid); }}>{originalUser.name}</span>
+                                <span className="font-bold text-[#e7e9ea] hover:underline" onClick={(e) => { e.stopPropagation(); if (onUserClick && origUid !== 'unknown') onUserClick(origUid); }}>{originalUser.name}</span>
                                 {renderBadge(originalUser)}
                                 <span className="text-[#71767b] dir-ltr text-sm" dir="ltr">{originalUser.handle}</span>
                             </div>

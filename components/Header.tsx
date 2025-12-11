@@ -101,15 +101,6 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
             <NavButton onClick={() => handleNav('academy')} icon={<FileText className="w-4 h-4"/>} label={t.nav_academy} />
             <NavButton onClick={() => handleNav('jobs')} icon={<BriefcaseIcon className="w-4 h-4"/>} label={t.nav_jobs} />
             
-            {/* NEW ASSISTANT BUTTON */}
-             <button 
-                onClick={() => handleNav('assistant')}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 transition-all"
-            >
-                <Sparkles className="w-4 h-4"/>
-                <span>مساعد مراد الذكي</span>
-            </button>
-
             {/* NEW SOCIAL PORTAL BUTTON */}
             <button 
                 onClick={() => handleNav('social')}
@@ -263,7 +254,6 @@ export const Header: React.FC<HeaderProps> = ({ onNavigate, theme, toggleTheme }
                 {user && (
                     <MobileNavItem onClick={() => handleNav('profile')} icon={<LayoutGrid className="w-5 h-5 text-blue-500"/>} label={t.dashboard} />
                 )}
-                <MobileNavItem onClick={() => handleNav('assistant')} icon={<Sparkles className="w-5 h-5 text-emerald-500"/>} label="مساعد مراد الذكي" />
                 <MobileNavItem onClick={() => handleNav('social')} icon={<MessageCircle className="w-5 h-5 text-pink-500"/>} label="مجتمع ميلاف" />
                 <MobileNavItem onClick={() => handleNav('jobs')} icon={<BriefcaseIcon className="w-5 h-5 text-emerald-500"/>} label={t.nav_jobs} />
                 <MobileNavItem onClick={() => handleNav('academy')} icon={<FileText className="w-5 h-5 text-purple-500"/>} label={t.nav_academy} />
