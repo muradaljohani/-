@@ -33,9 +33,14 @@ export class Trap {
         };
         
         // Store in Blacklist Log
-        const logs = JSON.parse(localStorage.getItem('iron_dome_blackbox') || '[]');
-        logs.push(fingerprint);
-        localStorage.setItem('iron_dome_blackbox', JSON.stringify(logs));
+        try {
+            const logs = JSON.parse(localStorage.getItem('iron_dome_blackbox') || '[]');
+            logs.push(fingerprint);
+            localStorage.setItem('iron_dome_blackbox', JSON.stringify(logs));
+        } catch (e) {
+            // Reset if corrupt
+            localStorage.setItem('iron_dome_blackbox', JSON.stringify([fingerprint]));
+        }
 
         // Execute Immediate Ban via Firewall
         Firewall.getInstance().triggerBanHammer('HONEYPOT_BREACH', source, 'Unauthorized Access to Decoy');

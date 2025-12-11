@@ -38,9 +38,15 @@ export const SupportTicketWizard: React.FC<Props> = ({ onComplete }) => {
         });
 
         // Save to LocalStorage for tracking without login (Critical for user experience in this demo)
-        const localTickets = JSON.parse(localStorage.getItem('my_support_tickets') || '[]');
-        localTickets.push({ id: newTicketId, subject, status: 'Open', date: new Date().toISOString() });
-        localStorage.setItem('my_support_tickets', JSON.stringify(localTickets));
+        try {
+            const localTickets = JSON.parse(localStorage.getItem('my_support_tickets') || '[]');
+            localTickets.push({ id: newTicketId, subject, status: 'Open', date: new Date().toISOString() });
+            localStorage.setItem('my_support_tickets', JSON.stringify(localTickets));
+        } catch (e) {
+            // Reset if corrupt
+            const localTickets = [{ id: newTicketId, subject, status: 'Open', date: new Date().toISOString() }];
+            localStorage.setItem('my_support_tickets', JSON.stringify(localTickets));
+        }
 
         setIsSubmitting(false);
         setStep(3);

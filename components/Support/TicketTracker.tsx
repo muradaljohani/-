@@ -9,8 +9,12 @@ export const TicketTracker: React.FC = () => {
     const [history, setHistory] = useState<any[]>([]);
 
     useEffect(() => {
-        const saved = JSON.parse(localStorage.getItem('my_support_tickets') || '[]');
-        setHistory(saved);
+        try {
+            const saved = JSON.parse(localStorage.getItem('my_support_tickets') || '[]');
+            setHistory(saved);
+        } catch (e) {
+            setHistory([]);
+        }
     }, []);
 
     const handleCheck = (idToCheck: string = ticketId) => {

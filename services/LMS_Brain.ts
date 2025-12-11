@@ -70,17 +70,27 @@ export class BehaviorObserver {
   private syncToStorage() {
     // In a real app, this would be `fetch('/api/logs', { method: 'POST', body: ... })`
     // Here we append to localStorage to persist across reloads for the algorithm
-    const existing = JSON.parse(localStorage.getItem('learning_logs') || '[]');
-    const updated = [...existing, ...this.sessionLogs];
-    // Keep DB small for browser performance
-    if (updated.length > 500) updated.splice(0, updated.length - 500); 
-    
-    localStorage.setItem('learning_logs', JSON.stringify(updated));
-    this.sessionLogs = []; // Clear buffer
+    try {
+        const existing = JSON.parse(localStorage.getItem('learning_logs') || '[]');
+        const updated = [...existing, ...this.sessionLogs];
+        // Keep DB small for browser performance
+        if (updated.length > 500) updated.splice(0, updated.length - 500); 
+        
+        localStorage.setItem('learning_logs', JSON.stringify(updated));
+        this.sessionLogs = []; // Clear buffer
+    } catch (e) {
+        // Reset log if corrupt
+        localStorage.setItem('learning_logs', '[]');
+        this.sessionLogs = [];
+    }
   }
 
   public getLogs(): SQL_UserBehavior[] {
-    return JSON.parse(localStorage.getItem('learning_logs') || '[]');
+    try {
+        return JSON.parse(localStorage.getItem('learning_logs') || '[]');
+    } catch (e) {
+        return [];
+    }
   }
 }
 

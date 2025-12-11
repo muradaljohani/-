@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { 
   ChevronLeft, Clock, X, Award, Lock, GraduationCap, PlayCircle, 
@@ -104,7 +105,13 @@ export const TrainingCenter: React.FC<{ onClose: () => void }> = ({ onClose }) =
             progress: Math.floor(Math.random() * 100)
         })) as LMSCourse[];
         
-        const stored = JSON.parse(localStorage.getItem('mylaf_custom_courses') || '[]');
+        let stored = [];
+        try {
+            stored = JSON.parse(localStorage.getItem('mylaf_custom_courses') || '[]');
+        } catch (e) {
+            stored = [];
+        }
+        
         let allCourses = [...stored, ...mocks];
 
         // 2. The 'Algorithmic' Brain: Dynamic Re-ordering

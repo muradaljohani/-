@@ -39,8 +39,12 @@ export const AdminDashboard: React.FC<Props> = ({ isOpen, onClose }) => {
   useEffect(() => {
       if (isOpen) {
           // Load all transactions for analytics
-          const allTxns = JSON.parse(localStorage.getItem('mylaf_transactions') || '[]');
-          setAllTransactions(allTxns);
+          try {
+              const allTxns = JSON.parse(localStorage.getItem('mylaf_transactions') || '[]');
+              setAllTransactions(allTxns);
+          } catch (e) {
+              setAllTransactions([]);
+          }
 
           const interval = setInterval(() => {
               setLogs([...Enterprise.AnalyticsStream.logs]);
@@ -123,7 +127,9 @@ export const AdminDashboard: React.FC<Props> = ({ isOpen, onClose }) => {
           sendSystemNotification(txn.buyerId, 'تم اعتماد الدفع', 'تم التحقق من الحوالة البنكية وتفعيل طلبك بنجاح.', 'success');
           alert('تم الاعتماد بنجاح');
           setPendingTxns(finance.getPendingTransactions());
-          setAllTransactions(JSON.parse(localStorage.getItem('mylaf_transactions') || '[]')); // Refresh analytics
+          try {
+             setAllTransactions(JSON.parse(localStorage.getItem('mylaf_transactions') || '[]')); // Refresh analytics
+          } catch(e) { setAllTransactions([]); }
           setEditingTxId(null);
       }
   };
@@ -134,7 +140,9 @@ export const AdminDashboard: React.FC<Props> = ({ isOpen, onClose }) => {
           sendSystemNotification(buyerId, 'رفض الدفع', 'عذراً، لم نتمكن من التحقق من الإيصال المرفق. يرجى التأكد من البيانات والمحاولة مرة أخرى.', 'error');
           alert('تم الرفض');
           setPendingTxns(finance.getPendingTransactions());
-          setAllTransactions(JSON.parse(localStorage.getItem('mylaf_transactions') || '[]')); // Refresh analytics
+          try {
+             setAllTransactions(JSON.parse(localStorage.getItem('mylaf_transactions') || '[]')); // Refresh analytics
+          } catch(e) { setAllTransactions([]); }
       }
   };
 
