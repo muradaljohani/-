@@ -1,5 +1,4 @@
 
-
 export enum Role {
   USER = 'user',
   MODEL = 'model'
@@ -967,6 +966,8 @@ export interface User {
   businessProfile?: BusinessProfile;
   followers?: string[]; 
   following?: string[]; 
+  followersCount?: number; // Override for high numbers (e.g. 450M)
+  followingCount?: number; // Override for high numbers
   viralStats?: ViralStats;
   stories?: Story[];
   supportTickets?: SupportTicket[];

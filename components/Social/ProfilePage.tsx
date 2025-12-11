@@ -46,19 +46,23 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     verified: true,
                     isIdentityVerified: true,
                     isGold: true, 
+                    // Avatar: Personal Image
                     avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
-                    coverImage: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=1500&q=80",
-                    bio: "Founder & CEO of Milaf | مؤسس مجتمع ميلاف 🦅",
-                    address: "Saudi Arabia",
+                    // Cover: "M" Logo (Elon Musk style - Black background, White text)
+                    coverImage: "https://ui-avatars.com/api/?name=M&background=000000&color=ffffff&size=1920&font-size=0.5&bold=true&length=1",
+                    bio: "الذكاء الاصطناعي الخاص بمجتمع ميلاف 🤖\nThe AI of Mylaf Community",
+                    address: "Digital World",
                     createdAt: new Date(2025, 0, 1).toISOString(),
                     lastLogin: new Date().toISOString(),
                     loginMethod: 'email',
                     linkedProviders: [],
-                    xp: 99999,
-                    level: 99,
-                    nextLevelXp: 100000,
-                    followers: Array(11711).fill('f'), 
-                    following: Array(142).fill('f'),
+                    xp: 999999,
+                    level: 999,
+                    nextLevelXp: 1000000,
+                    followers: [], 
+                    following: [],
+                    followersCount: 450000000, // 450 Million
+                    followingCount: 0, // 0 Following
                     primeSubscription: { status: 'active' } as any,
                     customFormFields: { website: 'https://murad-group.com' }
                 } as User;
@@ -131,6 +135,13 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
         }
     };
 
+    const formatCount = (num: number | undefined) => {
+        if (num === undefined) return '0';
+        if (num >= 1000000) return (num / 1000000).toFixed(0) + 'M';
+        if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+        return num.toString();
+    };
+
     if (loading) {
         return <div className="min-h-screen bg-black flex items-center justify-center text-white">جاري التحميل...</div>;
     }
@@ -151,6 +162,9 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
         : 'منذ فترة';
     
     const websiteUrl = profileUser.customFormFields?.website || profileUser.businessProfile?.website;
+
+    const displayFollowers = profileUser.followersCount !== undefined ? profileUser.followersCount : (profileUser.followers?.length || 0);
+    const displayFollowing = profileUser.followingCount !== undefined ? profileUser.followingCount : (profileUser.following?.length || 0);
 
     return (
         <div className="min-h-screen bg-black text-[#e7e9ea] font-sans pb-20" dir="rtl">
@@ -255,10 +269,10 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                 {/* Follow Stats */}
                 <div className="flex gap-5 text-[14px] mt-3 text-[#71767b]">
                     <div className="hover:underline cursor-pointer flex gap-1">
-                        <span className="font-bold text-[#e7e9ea]">{profileUser.following?.length || 0}</span> <span>متابِعًا</span>
+                        <span className="font-bold text-[#e7e9ea]">{formatCount(displayFollowing)}</span> <span>متابِعًا</span>
                     </div>
                     <div className="hover:underline cursor-pointer flex gap-1">
-                        <span className="font-bold text-[#e7e9ea]">{profileUser.followers?.length || 0}</span> <span>المتابعين</span>
+                        <span className="font-bold text-[#e7e9ea]">{formatCount(displayFollowers)}</span> <span>المتابعين</span>
                     </div>
                 </div>
             </div>
