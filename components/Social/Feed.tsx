@@ -46,13 +46,22 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   // --- SEEDING LOGIC (Self-Healing) ---
   useEffect(() => {
     const forceSeedPosts = async () => {
+        if (!db) return; // Safety check if db is not initialized
+
         try {
             // 1. Seed Admin Profile (The Fix for User Not Found)
             const adminId = "admin-fixed-id";
             const adminRef = doc(db, "users", adminId);
-            const adminSnap = await getDoc(adminRef);
+            
+            // Safe Get
+            let adminSnap;
+            try {
+                adminSnap = await getDoc(adminRef);
+            } catch (err) {
+                console.warn("Failed to check admin profile:", err);
+                return;
+            }
 
-            // Safe check for data existence
             const adminData = adminSnap.exists() ? adminSnap.data() : null;
 
             if (!adminSnap.exists() || !adminData?.isAdmin) {
@@ -71,23 +80,25 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                     isIdentityVerified: true,
                     followers: 11711, 
                     following: 42
-                }, { merge: true });
+                }, { merge: true }).catch(e => console.error("Admin Seed Error", e));
                 console.log("✅ Admin Profile Seeded: @IpMurad");
             }
 
             // 2. Ensure Current User Profile Exists
             if (user && user.id) {
-                await setDoc(doc(db, "users", user.id), {
+                const userRef = doc(db, "users", user.id);
+                // Fire and forget, catch error to prevent crash
+                setDoc(userRef, {
                     uid: user.id,
                     name: user.name,
                     email: user.email,
                     avatar: user.avatar,
                     lastLogin: serverTimestamp()
-                }, { merge: true });
+                }, { merge: true }).catch(e => console.warn("User profile sync warning", e));
             }
 
         } catch (e) {
-            console.error("Seeding Warning:", e);
+            console.error("Seeding General Error:", e);
         }
     };
 
@@ -99,6 +110,12 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     setLoading(true);
     setError(null);
     
+    if (!db) {
+        setLoading(false);
+        setError("Database connection unavailable");
+        return;
+    }
+
     let q;
     const postsRef = collection(db, "posts");
 
@@ -153,7 +170,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           } finally {
               if (isMounted) setLoading(false);
           }
-        }, (err) => {
+        }, (err: any) => {
             console.error("Firestore Feed Error:", err);
             if (isMounted) {
                // Ignore permission errors for non-logged in users on 'following' tab
@@ -161,7 +178,8 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                    setLoading(false);
                    return;
                }
-               if (err.code !== 'permission-denied') {
+               // Safe property access
+               if (err && err.code !== 'permission-denied') {
                   setError("حدث خطأ أثناء تحميل المنشورات.");
                }
                setLoading(false);
@@ -198,7 +216,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
       
       const userData = {
           name: user.name || "User",
-          handle: isAdmin || user.username === 'IpMurad' ? '@IpMurad' : (user.username ? `@${user.username}` : `@${user.id.slice(0,8)}`),
+          handle: isAdmin || user.username === 'IpMurad' ? '@IpMurad' : (user.username ? `@${user.username}` : `@${String(user.id).slice(0,8)}`),
           avatar: user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User",
           verified: isAdmin ? true : (user.isIdentityVerified || false),
           isGold: isAdmin ? true : (user.primeSubscription?.status === 'active'),

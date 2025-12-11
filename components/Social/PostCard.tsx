@@ -29,15 +29,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     // Defensive check: If post is null or empty object, return nothing
     if (!post || Object.keys(post).length === 0) return null;
     
-    const postUser = post.user || {
-        name: 'Unknown User',
-        handle: '@unknown',
-        avatar: "https://api.dicebear.com/7.x/initials/svg?seed=Unknown",
-        uid: 'unknown'
-    };
+    // Ensure post.user exists and has default values if missing
+    const postUser = post.user || {};
+    const userName = postUser.name || 'Unknown User';
+    const userHandle = postUser.handle || '@unknown';
+    const userAvatar = postUser.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=Unknown";
+    const userUid = postUser.uid || 'unknown';
 
     // Ensure uid exists before comparison
-    const isOwner = user && postUser.uid && user.id ? user.id === postUser.uid : false;
+    const isOwner = user && userUid !== 'unknown' && user.id ? user.id === userUid : false;
     const canDelete = isAdmin || isOwner;
 
     const getYouTubeId = (text: string) => {
@@ -220,7 +220,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-[#71767b] text-xs font-bold">
                         <Repeat className="w-3 h-3"/>
-                        <span onClick={(e) => handleUserClick(e, postUser.uid)} className="hover:underline cursor-pointer">{postUser.name} أعاد النشر</span>
+                        <span onClick={(e) => handleUserClick(e, userUid)} className="hover:underline cursor-pointer">{userName} أعاد النشر</span>
                     </div>
                     {canDelete && (
                         <button className="text-gray-500 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-500/10" onClick={handleDelete}>
@@ -255,11 +255,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
             onClick={onClick}
             dir="rtl"
         >
-            <div className="shrink-0" onClick={(e) => handleUserClick(e, postUser.uid)}>
+            <div className="shrink-0" onClick={(e) => handleUserClick(e, userUid)}>
                 <img 
-                    src={postUser.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} 
+                    src={userAvatar} 
                     className="w-11 h-11 rounded-full object-cover border border-[#2f3336] hover:opacity-80 transition-opacity" 
-                    alt={postUser.name} 
+                    alt={userName} 
                 />
             </div>
 
@@ -267,9 +267,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                 <div className="flex items-center justify-between text-[#71767b] text-[15px] leading-tight mb-1">
                     <div className="flex items-center gap-1 overflow-hidden">
                         {post.isPinned && <Pin className="w-3 h-3 text-[#71767b] fill-current mr-1" />}
-                        <span className="font-bold text-[#e7e9ea] truncate hover:underline" onClick={(e) => handleUserClick(e, postUser.uid)}>{postUser.name}</span>
+                        <span className="font-bold text-[#e7e9ea] truncate hover:underline" onClick={(e) => handleUserClick(e, userUid)}>{userName}</span>
                         {renderBadge(postUser)}
-                        <span className="truncate ltr text-[#71767b] ml-1 text-sm" dir="ltr">{postUser.handle}</span>
+                        <span className="truncate ltr text-[#71767b] ml-1 text-sm" dir="ltr">{userHandle}</span>
                         <span className="text-[#71767b] px-1">·</span>
                         <span className="text-[#71767b] text-sm hover:underline">{formatRelativeTime(post.createdAt || post.timestamp)}</span>
                     </div>
