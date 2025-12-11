@@ -34,7 +34,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     const userName = postUser.name || 'Unknown User';
     const userHandle = postUser.handle || '@unknown';
     const userAvatar = postUser.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=Unknown";
-    const userUid = postUser.uid || 'unknown';
+    // Fallback for UID to ensure clickable even if data is slightly malformed
+    const userUid = postUser.uid || postUser.id || 'unknown';
 
     // Ensure uid exists before comparison
     const isOwner = user && userUid !== 'unknown' && user.id ? user.id === userUid : false;
@@ -74,10 +75,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         }
     };
 
-    const handleUserClick = (e: React.MouseEvent, uid: string) => {
-        e.stopPropagation();
-        if (onUserClick && uid && uid !== 'unknown') {
-            onUserClick(uid);
+    // --- CRITICAL FIX: PROFILE NAVIGATION HANDLER ---
+    const handleProfileClick = (e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent opening post details
+        if (onUserClick && userUid && userUid !== 'unknown') {
+            onUserClick(userUid);
         }
     };
 
@@ -220,7 +222,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-[#71767b] text-xs font-bold">
                         <Repeat className="w-3 h-3"/>
-                        <span onClick={(e) => handleUserClick(e, userUid)} className="hover:underline cursor-pointer">{userName} أعاد النشر</span>
+                        <span onClick={handleProfileClick} className="hover:underline cursor-pointer">{userName} أعاد النشر</span>
                     </div>
                     {canDelete && (
                         <button className="text-gray-500 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-500/10" onClick={handleDelete}>
@@ -230,12 +232,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                 </div>
                 <div className="border border-[#2f3336] rounded-2xl p-3 mt-1 hover:bg-[#16181c] transition-colors">
                     <div className="flex gap-3">
-                         <div className="shrink-0" onClick={(e) => handleUserClick(e, originalUser.uid)}>
+                         <div className="shrink-0" onClick={(e) => { e.stopPropagation(); onUserClick && onUserClick(originalUser.uid); }}>
                             <img src={originalUser.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-8 h-8 rounded-full object-cover hover:opacity-80 transition-opacity" />
                         </div>
                         <div>
                              <div className="flex items-center gap-1 text-[14px]">
-                                <span className="font-bold text-[#e7e9ea] hover:underline" onClick={(e) => handleUserClick(e, originalUser.uid)}>{originalUser.name}</span>
+                                <span className="font-bold text-[#e7e9ea] hover:underline" onClick={(e) => { e.stopPropagation(); onUserClick && onUserClick(originalUser.uid); }}>{originalUser.name}</span>
                                 {renderBadge(originalUser)}
                                 <span className="text-[#71767b] dir-ltr text-sm" dir="ltr">{originalUser.handle}</span>
                             </div>
@@ -255,7 +257,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
             onClick={onClick}
             dir="rtl"
         >
-            <div className="shrink-0" onClick={(e) => handleUserClick(e, userUid)}>
+            <div className="shrink-0" onClick={handleProfileClick}>
                 <img 
                     src={userAvatar} 
                     className="w-11 h-11 rounded-full object-cover border border-[#2f3336] hover:opacity-80 transition-opacity" 
@@ -267,7 +269,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                 <div className="flex items-center justify-between text-[#71767b] text-[15px] leading-tight mb-1">
                     <div className="flex items-center gap-1 overflow-hidden">
                         {post.isPinned && <Pin className="w-3 h-3 text-[#71767b] fill-current mr-1" />}
-                        <span className="font-bold text-[#e7e9ea] truncate hover:underline" onClick={(e) => handleUserClick(e, userUid)}>{userName}</span>
+                        <span className="font-bold text-[#e7e9ea] truncate hover:underline" onClick={handleProfileClick}>{userName}</span>
                         {renderBadge(postUser)}
                         <span className="truncate ltr text-[#71767b] ml-1 text-sm" dir="ltr">{userHandle}</span>
                         <span className="text-[#71767b] px-1">·</span>

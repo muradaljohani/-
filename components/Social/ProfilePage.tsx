@@ -23,31 +23,65 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
     const isOwnProfile = currentUser?.id === userId;
     const isFollowing = currentUser?.following?.includes(userId);
 
+    // --- ADMIN HARDCODED DATA BYPASS ---
+    const ADMIN_BYPASS_IDS = ["admin-fixed-id", "admin-murad-main-id"];
+
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
-            if (!db) {
-                setLoading(false);
-                return;
-            }
+            
+            // 1. Fetch User Data with Bypass Logic
+            let userData: User | null = null;
 
-            try {
-                // 1. Fetch User Data
-                let userData: User | null = null;
+            if (ADMIN_BYPASS_IDS.includes(userId)) {
+                // HARDCODED BYPASS FOR ADMIN
+                userData = {
+                    id: userId,
+                    name: "Murad Aljohani",
+                    username: "IpMurad",
+                    email: "mrada4231@gmail.com",
+                    role: "admin",
+                    isLoggedIn: true,
+                    verified: true,
+                    isIdentityVerified: true,
+                    isGold: true, // Assuming this maps to isGold for UI
+                    avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
+                    coverImage: "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?auto=format&fit=crop&w=1500&q=80",
+                    bio: "Founder & CEO of Milaf | مؤسس مجتمع ميلاف 🦅",
+                    address: "Saudi Arabia",
+                    createdAt: new Date().toISOString(),
+                    lastLogin: new Date().toISOString(),
+                    loginMethod: 'email',
+                    linkedProviders: [],
+                    xp: 99999,
+                    level: 99,
+                    nextLevelXp: 100000,
+                    followers: Array(11711).fill('f'), // Mock array for count
+                    following: Array(42).fill('f'),
+                    primeSubscription: { status: 'active' } as any
+                } as User;
                 
-                if (isOwnProfile && currentUser) {
-                    userData = currentUser;
-                } else {
+                setProfileUser(userData);
+            } else if (isOwnProfile && currentUser) {
+                // Use current session user if looking at own profile
+                userData = currentUser;
+                setProfileUser(currentUser);
+            } else if (db) {
+                // Normal Firestore Query
+                try {
                     const userDoc = await getDoc(doc(db, 'users', userId));
                     if (userDoc.exists()) {
                         userData = { id: userDoc.id, ...userDoc.data() } as User;
+                        setProfileUser(userData);
                     }
+                } catch (error) {
+                    console.error("Error fetching user doc:", error);
                 }
+            }
 
-                setProfileUser(userData);
-
-                // 2. Fetch User Posts
-                if (userData) {
+            // 2. Fetch User Posts
+            if (userData && db) {
+                try {
                     const postsQuery = query(
                         collection(db, 'posts'),
                         where('user.uid', '==', userId)
@@ -63,13 +97,12 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     });
                     
                     setPosts(userPosts);
+                } catch (e) {
+                    console.error("Error fetching posts:", e);
                 }
-
-            } catch (error) {
-                console.error("Error loading profile:", error);
-            } finally {
-                setLoading(false);
             }
+
+            setLoading(false);
         };
 
         fetchData();

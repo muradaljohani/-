@@ -39,7 +39,7 @@ export const SocialService = {
             avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
             verified: true,
             isGold: true,
-            uid: "admin-fixed-id", // Updated to match Feed.tsx injection
+            uid: "admin-murad-id",
             bio: "Founder of Murad Group | Tech Enthusiast 🇸🇦"
         };
 

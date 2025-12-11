@@ -49,22 +49,24 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         if (!db) return; 
 
         try {
-            // 1. Seed Admin Profile (The Fix for Viral Posts Link)
             const adminId = "admin-fixed-id";
             const adminRef = doc(db, "users", adminId);
             
-            // Check if admin doc exists to avoid unnecessary writes, but ensure fields are there
-            const adminSnap = await getDoc(adminRef).catch(() => null);
+            let adminSnap;
+            try {
+                adminSnap = await getDoc(adminRef);
+            } catch (err) {
+                // Silent fail or minimal log
+                return;
+            }
 
-            // If missing or incomplete, inject the Admin Profile
-            if (!adminSnap || !adminSnap.exists()) {
-                 console.log("Creating Admin Profile for Viral Posts...");
+            const adminData = adminSnap.exists() ? adminSnap.data() : null;
+
+            if (!adminSnap.exists() || !adminData?.isAdmin) {
                  await setDoc(adminRef, {
                     uid: adminId,
-                    id: adminId,
                     name: "Murad Aljohani",
                     handle: "@IpMurad",
-                    username: "IpMurad",
                     email: "mrada4231@gmail.com",
                     avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
                     bio: "Founder & CEO of Milaf | مؤسس مجتمع ميلاف 🦅",
@@ -75,26 +77,24 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                     isVerified: true,
                     isIdentityVerified: true,
                     isGold: true,
-                    followers: 11711, // Mock number for prestige
+                    followers: 11711, 
                     following: 42
-                }, { merge: true });
+                }, { merge: true }).catch(e => {});
             }
 
-            // 2. Ensure Current User Profile Exists
             if (user && user.id) {
                 const userRef = doc(db, "users", user.id);
-                // Simple merge update to ensure document exists
-                await setDoc(userRef, {
+                setDoc(userRef, {
                     uid: user.id,
                     name: user.name,
                     email: user.email,
                     avatar: user.avatar,
                     lastLogin: serverTimestamp()
-                }, { merge: true });
+                }, { merge: true }).catch(e => {});
             }
 
         } catch (e) {
-            console.error("Seeding Error:", e);
+            // Ignore
         }
     };
 
