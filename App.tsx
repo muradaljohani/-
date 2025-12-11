@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { ToastProvider } from './components/Interactive/ToastContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -31,16 +31,10 @@ import { SocialLayout } from './components/Social/SocialLayout';
 import { PublishPortal } from './components/PublishPortal';
 
 const AppContent = () => {
-  const { user } = useAuth();
-  const [currentView, setCurrentView] = useState('social'); // Default to social if logged in
+  const [currentView, setCurrentView] = useState('landing');
   const [courseId, setCourseId] = useState<string | null>(null);
   const [socialSubView, setSocialSubView] = useState<string | undefined>(undefined);
   const { theme, cycleTheme } = useTheme();
-
-  // If NOT logged in, force Landing Page
-  if (!user) {
-      return <LandingPage />;
-  }
 
   // Simple Router
   const navigate = (view: string) => {
@@ -69,7 +63,7 @@ const AppContent = () => {
     const handleNavigation = () => {
         const path = window.location.pathname;
         if (path === '/' || path === '') {
-            setCurrentView('social'); // Default logged in view
+            setCurrentView('landing');
         } else if (path.startsWith('/courses/')) {
             const id = path.split('/')[2];
             if (id) {
@@ -87,7 +81,7 @@ const AppContent = () => {
         } else {
             // Strip leading slash
             const viewName = path.substring(1);
-            setCurrentView(viewName || 'social');
+            setCurrentView(viewName || 'landing');
         }
     };
 
@@ -100,38 +94,54 @@ const AppContent = () => {
 
   const renderView = () => {
     switch (currentView) {
-      case 'jobs': return <NationalJobsPortal onBack={() => navigate('social')} />;
-      case 'academy': return <TrainingCenter onClose={() => navigate('social')} />;
-      case 'training': return <TrainingCenter onClose={() => navigate('social')} />;
-      case 'market': return <ServicesMarketplace isOpen={true} onClose={() => navigate('social')} />;
-      case 'haraj': return <HarajPortal onBack={() => navigate('social')} />;
+      case 'jobs': return <NationalJobsPortal onBack={() => navigate('landing')} />;
+      case 'academy': return <TrainingCenter onClose={() => navigate('landing')} />;
+      case 'training': return <TrainingCenter onClose={() => navigate('landing')} />;
+      case 'market': return <ServicesMarketplace isOpen={true} onClose={() => navigate('landing')} />;
+      case 'haraj': return <HarajPortal onBack={() => navigate('landing')} />;
       case 'corporate': 
       case 'group': return <MuradGroupPortal onNavigate={navigate} />;
-      case 'support': return <SupportPortal onExit={() => navigate('social')} />;
-      case 'meta': return <MuradMeta onExit={() => navigate('social')} />;
+      case 'support': return <SupportPortal onExit={() => navigate('landing')} />;
+      case 'meta': return <MuradMeta onExit={() => navigate('landing')} />;
       case 'cloud': return <CloudMarketing onNavigate={navigate} />;
-      case 'assistant': return <SmartAssistantPage onBack={() => navigate('social')} />;
-      case 'dopamine': return <MuradDopamine onExit={() => navigate('social')} />;
-      case 'domains': return <MuradDomain onExit={() => navigate('social')} />;
-      case 'profile': return <UniversalProfileHub isOpen={true} onClose={() => navigate('social')} />;
-      case 'settings': return <UserFieldsDashboard onBack={() => navigate('social')} />;
+      case 'assistant': return <SmartAssistantPage onBack={() => navigate('landing')} />;
+      case 'dopamine': return <MuradDopamine onExit={() => navigate('landing')} />;
+      case 'domains': return <MuradDomain onExit={() => navigate('landing')} />;
+      case 'profile': return <UniversalProfileHub isOpen={true} onClose={() => navigate('landing')} />;
+      case 'settings': return <UserFieldsDashboard onBack={() => navigate('landing')} />;
       case 'courses': return <CoursesList onBack={() => navigate('academy')} />;
       case 'course-view': return courseId ? <CourseView courseId={courseId} onBack={() => navigate('courses')} /> : <CoursesList onBack={() => navigate('academy')} />;
-      case 'sitemap': return <VisualSitemap onBack={() => navigate('social')} />;
+      case 'sitemap': return <VisualSitemap onBack={() => navigate('landing')} />;
       case 'social': return <SocialLayout onBack={() => navigate('landing')} initialView={socialSubView} />;
-      case 'publish': return <PublishPortal onBack={() => navigate('social')} />;
+      case 'publish': return <PublishPortal onBack={() => navigate('landing')} />;
       
       // Handle nested routes for group/cloud/dopamine by matching prefix
       default:
         if (currentView.startsWith('group')) return <MuradGroupPortal onNavigate={navigate} />;
         if (currentView.startsWith('cloud')) return <CloudMarketing onNavigate={navigate} />;
-        if (currentView.startsWith('dopamine')) return <MuradDopamine onExit={() => navigate('social')} />;
-        if (currentView.startsWith('support')) return <SupportPortal onExit={() => navigate('social')} />;
-        if (currentView.startsWith('social')) return <SocialLayout onBack={() => navigate('social')} initialView={socialSubView} />;
-        if (currentView.startsWith('assistant')) return <SmartAssistantPage onBack={() => navigate('social')} />;
+        if (currentView.startsWith('dopamine')) return <MuradDopamine onExit={() => navigate('landing')} />;
+        if (currentView.startsWith('support')) return <SupportPortal onExit={() => navigate('landing')} />;
+        if (currentView.startsWith('social')) return <SocialLayout onBack={() => navigate('landing')} initialView={socialSubView} />;
+        if (currentView.startsWith('assistant')) return <SmartAssistantPage onBack={() => navigate('landing')} />;
         
-        // Default Fallback
-        return <SocialLayout onBack={() => navigate('landing')} initialView="feed" />;
+        return (
+          <>
+            <Header 
+              onNavigate={navigate} 
+              theme={theme === 'light' ? 'light' : 'dark'} 
+              toggleTheme={cycleTheme} 
+            />
+            <LandingPage 
+                onStart={() => navigate('profile')} 
+                onSearch={(q) => console.log(q)}
+                onOpenTraining={() => navigate('academy')}
+                onOpenJobs={() => navigate('jobs')}
+                onOpenMarket={() => navigate('market')}
+            />
+            <Footer />
+            <MilafBot />
+          </>
+        );
     }
   };
 
@@ -139,7 +149,6 @@ const AppContent = () => {
     <div className="min-h-screen bg-white dark:bg-black text-black dark:text-[#e7e9ea] transition-colors duration-200 font-sans">
        <SEOHelmet title="Mylaf Murad | National Platform" />
        {renderView()}
-       <MilafBot />
     </div>
   );
 };

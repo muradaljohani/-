@@ -12,6 +12,7 @@ export const VerificationModal: React.FC<Props> = ({ isOpen, onClose, user }) =>
     if (!isOpen || !user) return null;
 
     // Logic to determine if it's the Founder/Admin
+    // Checks handle, specific UID, or isAdmin flag
     const isFounder = user.handle === '@IpMurad' || user.isAdmin === true || user.uid === 'admin-fixed-id';
     
     // Theme Configuration
@@ -35,25 +36,12 @@ export const VerificationModal: React.FC<Props> = ({ isOpen, onClose, user }) =>
         btnBg: 'bg-white text-black hover:bg-blue-50'
     };
 
-    let joinDate = isFounder ? 'ديسمبر 2025' : 'حديثاً';
-    try {
-        if (user.createdAt) {
-            // Safely handle Firestore Timestamp or Date string/object
-            const dateObj = user.createdAt.toDate ? user.createdAt.toDate() : new Date(user.createdAt);
-            if (!isNaN(dateObj.getTime())) {
-                joinDate = dateObj.toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' });
-            }
-        }
-    } catch (e) {
-        // Fallback silently if date parsing fails
-    }
+    const joinDate = user.createdAt 
+        ? new Date(user.createdAt.toDate ? user.createdAt.toDate() : user.createdAt).toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' })
+        : (isFounder ? 'ديسمبر 2025' : 'حديثاً');
 
     return (
-        <div 
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" 
-            onClick={(e) => { e.stopPropagation(); onClose(); }} 
-            dir="rtl"
-        >
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} dir="rtl">
             <div 
                 className="relative w-full max-w-sm bg-[#16181c] rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border border-[#2f3336]"
                 onClick={e => e.stopPropagation()}
@@ -61,7 +49,7 @@ export const VerificationModal: React.FC<Props> = ({ isOpen, onClose, user }) =>
                 {/* Decorative Top Line */}
                 <div className={`h-1.5 w-full ${theme.bg}`}></div>
                 
-                <button onClick={(e) => { e.stopPropagation(); onClose(); }} className="absolute top-4 left-4 p-2 text-gray-500 hover:text-white transition-colors rounded-full hover:bg-white/10">
+                <button onClick={onClose} className="absolute top-4 left-4 p-2 text-gray-500 hover:text-white transition-colors rounded-full hover:bg-white/10">
                     <X className="w-5 h-5"/>
                 </button>
 
@@ -89,7 +77,7 @@ export const VerificationModal: React.FC<Props> = ({ isOpen, onClose, user }) =>
 
                     {/* Action */}
                     <button 
-                        onClick={(e) => { e.stopPropagation(); onClose(); }}
+                        onClick={onClose}
                         className={`w-full py-3.5 rounded-full font-bold text-sm transition-all transform active:scale-95 ${theme.btnBg}`}
                     >
                         فهمت
