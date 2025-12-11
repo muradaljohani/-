@@ -62,7 +62,7 @@ export class NexusBrain {
         try {
             jobs = JSON.parse(localStorage.getItem('allJobs') || '[]');
         } catch (e) {
-            console.warn('NexusBrain: Error parsing allJobs', e);
+            console.warn("NexusBrain: Failed to parse jobs", e);
             jobs = [];
         }
 
@@ -84,7 +84,7 @@ export class NexusBrain {
         try {
             storedCourses = JSON.parse(localStorage.getItem('mylaf_custom_courses') || '[]');
         } catch (e) {
-            console.warn('NexusBrain: Error parsing mylaf_custom_courses', e);
+            console.warn("NexusBrain: Failed to parse courses", e);
             storedCourses = [];
         }
 
@@ -109,14 +109,14 @@ export class NexusBrain {
         try {
             products = JSON.parse(localStorage.getItem('allProducts') || '[]');
         } catch (e) {
-            console.warn('NexusBrain: Error parsing allProducts', e);
+            console.warn("NexusBrain: Failed to parse products", e);
             products = [];
         }
 
         try {
             services = JSON.parse(localStorage.getItem('mylaf_services') || '[]');
         } catch (e) {
-            console.warn('NexusBrain: Error parsing mylaf_services', e);
+            console.warn("NexusBrain: Failed to parse services", e);
             services = [];
         }
 

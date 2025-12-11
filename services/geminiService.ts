@@ -19,6 +19,23 @@ const getYoutubeId = (url: string) => {
     return (match && match[2].length === 11) ? match[2] : null;
 };
 
+// Safe JSON Parse Helper for AI Responses
+const safeAIJsonParse = (text: string) => {
+    try {
+        // Remove markdown code blocks if present
+        let cleanText = text.trim();
+        if (cleanText.startsWith('```json')) {
+            cleanText = cleanText.replace(/^```json\s*/, '').replace(/\s*```$/, '');
+        } else if (cleanText.startsWith('```')) {
+            cleanText = cleanText.replace(/^```\s*/, '').replace(/\s*```$/, '');
+        }
+        return JSON.parse(cleanText);
+    } catch (e) {
+        console.error("Failed to parse AI JSON response:", e);
+        return {};
+    }
+};
+
 // --- REAL OPEN-SOURCE LIBRARY DATABASE ---
 const REAL_BOOKS_DB: Book[] = [
     {
@@ -205,24 +222,33 @@ export const fetchJoobleJobs = async (keywords: string, location: string) => {
 export const generateAICourseContent = async (topic: string, level: string): Promise<any> => {
   const prompt = `قم بإنشاء هيكل دورة تدريبية JSON عن "${topic}" مستوى ${level}. الحقول: title, description, hours, category, lessons (array of 5 items). JSON ONLY.`;
   
-  const response = await ai.models.generateContent({
-    model: CHAT_MODEL_NAME,
-    contents: prompt,
-    config: { responseMimeType: "application/json" }
-  });
-  return JSON.parse(response.text || '{}');
+  try {
+    const response = await ai.models.generateContent({
+      model: CHAT_MODEL_NAME,
+      contents: prompt,
+      config: { responseMimeType: "application/json" }
+    });
+    return safeAIJsonParse(response.text || '{}');
+  } catch (error) {
+    console.error("AI Generation Error", error);
+    return {};
+  }
 };
 
 export const analyzeProfileWithAI = async (fullUserProfile: User): Promise<any> => {
   // Simplified prompt for speed
   const prompt = `Analyze user profile: ${JSON.stringify({name: fullUserProfile.name, skills: fullUserProfile.skills})}. Return JSON with: overview, personalityArchetype, skillsRadar, globalMarketMatch, topMatchedRoles, salaryProjection, criticalGaps, recommendedActions. Arabic.`;
   
-  const response = await ai.models.generateContent({
-    model: CHAT_MODEL_NAME,
-    contents: prompt,
-    config: { responseMimeType: "application/json" }
-  });
-  return JSON.parse(response.text || '{}');
+  try {
+    const response = await ai.models.generateContent({
+      model: CHAT_MODEL_NAME,
+      contents: prompt,
+      config: { responseMimeType: "application/json" }
+    });
+    return safeAIJsonParse(response.text || '{}');
+  } catch (error) {
+    return {};
+  }
 };
 
 export const streamChatResponse = async (
