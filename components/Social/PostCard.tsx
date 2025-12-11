@@ -7,6 +7,7 @@ import {
 import { doc, updateDoc, increment, addDoc, collection, serverTimestamp, db, deleteDoc } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { formatRelativeTime } from '../../utils';
+import { VerificationModal } from './VerificationModal';
 
 interface PostCardProps {
     post: any;
@@ -25,6 +26,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     
     const [retweeted, setRetweeted] = useState(false);
     const [retweetCount, setRetweetCount] = useState(post?.retweets || 0);
+
+    // Modal State for Verification Info
+    const [showVerifyInfo, setShowVerifyInfo] = useState(false);
 
     // Defensive check: If post is null or empty object, return nothing
     if (!post || Object.keys(post).length === 0) return null;
@@ -84,6 +88,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         if (onUserClick && userUid && userUid !== 'unknown') {
             onUserClick(userUid);
         }
+    };
+
+    const handleBadgeClick = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setShowVerifyInfo(true);
     };
 
     const handleLike = async (e: React.MouseEvent) => {
@@ -156,8 +165,16 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
 
     const renderBadge = (u: any) => {
         if (!u) return null;
-        if (u.isGold) return <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 ml-1" />;
-        if (u.verified) return <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500 ml-1" />;
+        if (u.isGold) return (
+            <span onClick={handleBadgeClick} className="cursor-pointer hover:opacity-80 transition-opacity ml-1 inline-flex">
+                <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+            </span>
+        );
+        if (u.verified) return (
+            <span onClick={handleBadgeClick} className="cursor-pointer hover:opacity-80 transition-opacity ml-1 inline-flex">
+                <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />
+            </span>
+        );
         return null;
     };
 
@@ -225,6 +242,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         const isOriginalFounder = originalUser.handle === '@IpMurad' || origUid === 'admin-fixed-id';
         
         return (
+            <>
             <div className="p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors cursor-pointer" onClick={onClick} dir="rtl">
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-[#71767b] text-xs font-bold">
@@ -247,7 +265,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                                 <span className="font-bold text-[#e7e9ea] hover:underline" onClick={(e) => { e.stopPropagation(); if (onUserClick && origUid !== 'unknown') onUserClick(origUid); }}>{originalUser.name}</span>
                                 {renderBadge(originalUser)}
                                 {isOriginalFounder && (
-                                    <span className="flex items-center gap-1 px-2 py-0.5 mx-1 bg-yellow-500/10 border border-yellow-500/40 rounded-full">
+                                    <span onClick={handleBadgeClick} className="flex items-center gap-1 px-2 py-0.5 mx-1 bg-yellow-500/10 border border-yellow-500/40 rounded-full cursor-pointer hover:bg-yellow-500/20 transition-colors">
                                         <span className="text-[10px] font-bold text-yellow-500 leading-none pb-0.5">
                                             حساب المؤسس الرسمي
                                         </span>
@@ -265,10 +283,18 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                     </div>
                 </div>
             </div>
+            {/* Modal Render */}
+            <VerificationModal 
+                isOpen={showVerifyInfo} 
+                onClose={() => setShowVerifyInfo(false)} 
+                user={post.originalUser} // Use original user data for modal content
+            />
+            </>
         );
     }
 
     return (
+        <>
         <div 
             className={`flex gap-3 p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors cursor-pointer ${post.isPinned ? 'bg-[#16181c]/50' : ''} font-sans`}
             onClick={onClick}
@@ -289,7 +315,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                         <span className="font-bold text-[#e7e9ea] truncate hover:underline" onClick={handleProfileClick}>{userName}</span>
                         {renderBadge(postUser)}
                         {isFounder && (
-                            <span className="flex items-center gap-1 px-2 py-0.5 mx-1 bg-yellow-500/10 border border-yellow-500/40 rounded-full shrink-0">
+                            <span onClick={handleBadgeClick} className="flex items-center gap-1 px-2 py-0.5 mx-1 bg-yellow-500/10 border border-yellow-500/40 rounded-full shrink-0 cursor-pointer hover:bg-yellow-500/20 transition-colors">
                                 <span className="text-[10px] font-bold text-yellow-500 leading-none pb-0.5">
                                     حساب المؤسس الرسمي
                                 </span>
@@ -384,6 +410,14 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                     </div>
                 </div>
             </div>
+            
+            {/* Modal */}
+            <VerificationModal 
+                isOpen={showVerifyInfo} 
+                onClose={() => setShowVerifyInfo(false)} 
+                user={postUser} 
+            />
         </div>
+        </>
     );
 };
