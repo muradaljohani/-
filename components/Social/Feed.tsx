@@ -48,12 +48,14 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     const forceSeedPosts = async () => {
         try {
             // 1. Seed Admin Profile (The Fix for User Not Found)
-            // Ensures the 'admin-fixed-id' document exists in 'users' collection
             const adminId = "admin-fixed-id";
             const adminRef = doc(db, "users", adminId);
             const adminSnap = await getDoc(adminRef);
 
-            if (!adminSnap.exists() || !adminSnap.data().isAdmin) {
+            // Safe check for data existence
+            const adminData = adminSnap.exists() ? adminSnap.data() : null;
+
+            if (!adminSnap.exists() || !adminData?.isAdmin) {
                  await setDoc(adminRef, {
                     uid: adminId,
                     name: "Murad Aljohani",
@@ -74,7 +76,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             }
 
             // 2. Ensure Current User Profile Exists
-            if (user) {
+            if (user && user.id) {
                 await setDoc(doc(db, "users", user.id), {
                     uid: user.id,
                     name: user.name,
@@ -85,7 +87,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             }
 
         } catch (e) {
-            console.error("Seeding Error:", e);
+            console.error("Seeding Warning:", e);
         }
     };
 
@@ -104,7 +106,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         if (activeTab === 'foryou') {
             q = query(postsRef, limit(100));
         } else {
-            if (user) {
+            if (user && user.id) {
                 q = query(
                   postsRef,
                   where("user.uid", "==", user.id),
@@ -154,6 +156,11 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         }, (err) => {
             console.error("Firestore Feed Error:", err);
             if (isMounted) {
+               // Ignore permission errors for non-logged in users on 'following' tab
+               if (activeTab === 'following' && !user) {
+                   setLoading(false);
+                   return;
+               }
                if (err.code !== 'permission-denied') {
                   setError("حدث خطأ أثناء تحميل المنشورات.");
                }
@@ -189,14 +196,10 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
 
       const postsRef = collection(db, 'posts');
       
-      // Strict User Data Construction
-      // Uses the isAdmin flag from AuthContext (synced with Firestore)
       const userData = {
           name: user.name || "User",
-          // Force @IpMurad if admin, otherwise use stored username or fallback
           handle: isAdmin || user.username === 'IpMurad' ? '@IpMurad' : (user.username ? `@${user.username}` : `@${user.id.slice(0,8)}`),
           avatar: user.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=User",
-          // Force verification for admin
           verified: isAdmin ? true : (user.isIdentityVerified || false),
           isGold: isAdmin ? true : (user.primeSubscription?.status === 'active'),
           uid: user.id

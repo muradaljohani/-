@@ -26,7 +26,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     const [retweeted, setRetweeted] = useState(false);
     const [retweetCount, setRetweetCount] = useState(post?.retweets || 0);
 
-    if (!post) return null;
+    // Defensive check: If post is null or empty object, return nothing
+    if (!post || Object.keys(post).length === 0) return null;
     
     const postUser = post.user || {
         name: 'Unknown User',
@@ -35,8 +36,9 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         uid: 'unknown'
     };
 
-    const isOwner = user && postUser.uid ? user.id === postUser.uid : false;
-    const canDelete = isAdmin || (user && postUser.uid === user.id);
+    // Ensure uid exists before comparison
+    const isOwner = user && postUser.uid && user.id ? user.id === postUser.uid : false;
+    const canDelete = isAdmin || isOwner;
 
     const getYouTubeId = (text: string) => {
         if (!text) return null;
@@ -74,7 +76,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
 
     const handleUserClick = (e: React.MouseEvent, uid: string) => {
         e.stopPropagation();
-        if (onUserClick && uid) {
+        if (onUserClick && uid && uid !== 'unknown') {
             onUserClick(uid);
         }
     };
@@ -212,7 +214,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     };
 
     if (post.type === 'repost') {
-        const originalUser = post.originalUser || { name: 'Unknown', handle: '@unknown' };
+        const originalUser = post.originalUser || { name: 'Unknown', handle: '@unknown', uid: 'unknown' };
         return (
             <div className="p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors cursor-pointer" onClick={onClick} dir="rtl">
                 <div className="flex items-center justify-between mb-2">
