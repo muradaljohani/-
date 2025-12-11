@@ -5,8 +5,8 @@ import { Message, Role, SearchSource, Attachment, User, Course, CourseCategory, 
 // Initialize the Gemini API client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-// Using Flash for maximum speed - Updated to a stable valid model ID
-const CHAT_MODEL_NAME = "gemini-2.0-flash-exp";
+// Using Flash 2.5 for speed and search grounding
+const CHAT_MODEL_NAME = "gemini-2.5-flash";
 
 // --- SHARED DATA CONSTANTS ---
 export const CATEGORIES: CourseCategory[] = ['AI', 'Cybersecurity', 'Web', 'Mobile', 'Data', 'Business', 'Design', 'Finance', 'Management', 'Marketing'];
@@ -225,6 +225,30 @@ export const analyzeProfileWithAI = async (fullUserProfile: User): Promise<any> 
   return JSON.parse(response.text || '{}');
 };
 
+// --- NEW FUNCTION FOR MURAD AI CHAT COMPONENT ---
+export const getGeminiResponse = async (message: string, mode: string = 'expert', userName?: string | null): Promise<string> => {
+    try {
+        const prompt = `
+        Context: You are Murad AI (ذكاء مراد), an advanced assistant for the Murad Group Platform.
+        User Name: ${userName || 'User'}
+        Mode: ${mode}
+        
+        Instructions: Provide a helpful, concise, and professional response in Arabic.
+        
+        User Query: ${message}
+        `;
+        
+        const response = await ai.models.generateContent({
+            model: CHAT_MODEL_NAME,
+            contents: prompt,
+        });
+        return response.text || "عذراً، لم أستطع الرد في الوقت الحالي.";
+    } catch (error) {
+        console.error("Gemini Error:", error);
+        return "حدث خطأ في الاتصال بالذكاء الاصطناعي.";
+    }
+};
+
 export const streamChatResponse = async (
   history: Message[],
   currentMessage: string,
@@ -244,48 +268,35 @@ export const streamChatResponse = async (
       return { role: msg.role === Role.USER ? "user" : "model", parts: parts };
     });
 
-    // Simplified tools to avoid 400 Bad Request on Flash models if search isn't enabled
+    // Enabled Google Search tool for search engine capabilities
     const tools: Tool[] = [
-        { functionDeclarations: [getUserStatsTool] }
+        { functionDeclarations: [getUserStatsTool] },
+        { googleSearch: {} }
     ];
 
-    // Default System Prompt (The "Murad Clock" Persona)
+    // Default System Prompt (The "Murad Smart Assistant" Persona)
     const defaultSystemPrompt = `
-    Identity: 'Murad Clock' (مراد كلوك), the next-generation AI system.
+    Identity: 'مساعد مراد الجهني الذكي' (Murad Aljohani Smart Assistant).
     Creator: Eng. Murad Abdulrazzaq Aljohani (المهندس مراد عبدالرزاق الجهني).
     
     CRITICAL RULES (STRICTLY ENFORCED):
-    1. SCOPE: You are a GENERAL PURPOSE AI. You can answer ANY question about Math, Science, History, Coding, Literature, Cooking, Daily facts, etc. You are NOT limited to platform support.
-    2. ORIGIN: You are NOT made by Google. You are NOT ChatGPT. You are a proprietary system built by Murad Aljohani. If asked "Who made you?", explicitly state "Eng. Murad Aljohani".
-    3. Use "We/Our" (Referring to the Murad System).
+    1. SCOPE: You are a GENERAL PURPOSE AI and SEARCH ENGINE. You can answer ANY question about Math, Science, History, Coding, Literature, Cooking, Daily facts, etc.
+    2. SEARCH CAPABILITY: You have access to Google Search. Use it to provide up-to-date information, news, and facts. Always cite sources when using search results.
+    3. ORIGIN: You are a proprietary system built by Murad Aljohani. If asked "Who made you?", explicitly state "Eng. Murad Aljohani".
     4. Match User Language (Arabic/English).
-    5. TONE: Professional, High-Tech, Comfortable to the eye (use lists/formatting).
+    5. TONE: Professional, Intelligent, Helpful, and Friendly.
     
     6. SPECIAL QUERY HANDLING:
        - If asked about "Murad Aljohani" (مراد الجهني): Praise him as a genius **Technical Engineer** (المهندس التقني), Founder, and Sole Architect of this system.
-       - If asked about **Products/Services**: Mention:
-         1. Murad Aljohani IT Company
-         2. Mylaf Haraj
-         3. Mylaf Murad Academy
-         4. Murad Dopamine
-         5. Murad Care
-         6. Murad Cloud
     
-    7. FORMAT: Use Markdown links [Title](URL). NEVER raw URLs.
-    8. INTENT MAPPING (STRICT):
-       - Login/Account -> [Login](https://murad-group.com/login)
-       - Jobs -> [Jobs](https://murad-group.com/jobs)
-       - Academy -> [Academy](https://murad-group.com/academy)
+    7. FORMAT: Use Markdown for rich text (Bold, Lists, Code Blocks).
     
-    9. ALWAYS end with CTA.
+    8. MANDATORY SIGNATURE:
+        You MUST append the following signature to the end of EVERY response:
+        ---
+        **مساعد مراد الجهني الذكي | تطوير م. مراد عبدالرزاق**
     
-    10. MANDATORY VARIABLE SIGNATURE:
-        You MUST append ONE of the following signatures randomly to the end of EVERY response:
-        - **دمتم في أمان رقمي، إدارة الأمن السيبراني وتقنية المعلومات.**
-        - **فريق الدعم الفني والأمن السيبراني - أكاديمية ميلاف مراد.**
-        - **أكاديمية ميلاف مراد | إدارة الأمن السيبراني والتقنية.**
-    
-    User Context: ${user ? `${user.name} (${user.trainingId})` : 'Visitor'}
+    User Context: ${user ? `${user.name}` : 'Visitor'}
     `;
 
     const chat = ai.chats.create({
@@ -294,7 +305,6 @@ export const streamChatResponse = async (
       config: {
         tools: tools,
         systemInstruction: customSystemInstruction || defaultSystemPrompt,
-        // Optimization configs for speed
         temperature: 0.7, 
         maxOutputTokens: 2000, 
       },

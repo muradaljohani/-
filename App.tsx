@@ -20,6 +20,7 @@ import { SEOHelmet } from './components/SEOHelmet';
 // New Imports
 import { MuradMeta } from './components/Meta/MuradMeta';
 import { CloudMarketing } from './components/Cloud/CloudMarketing';
+import { SmartAssistantPage } from './components/SmartAssistantPage';
 import { MuradDopamine } from './components/Dopamine/MuradDopamine';
 import { MuradDomain } from './components/Domain/MuradDomain';
 import { UserFieldsDashboard } from './components/UserFieldsDashboard';
@@ -102,8 +103,8 @@ const AppContent = () => {
       case 'group': return <MuradGroupPortal onNavigate={navigate} />;
       case 'support': return <SupportPortal onExit={() => navigate('landing')} />;
       case 'meta': return <MuradMeta onExit={() => navigate('landing')} />;
-      case 'cloud': 
-      case 'clock-system': return <CloudMarketing onNavigate={navigate} />;
+      case 'cloud': return <CloudMarketing onNavigate={navigate} />;
+      case 'assistant': return <SmartAssistantPage onBack={() => navigate('landing')} />;
       case 'dopamine': return <MuradDopamine onExit={() => navigate('landing')} />;
       case 'domains': return <MuradDomain onExit={() => navigate('landing')} />;
       case 'profile': return <UniversalProfileHub isOpen={true} onClose={() => navigate('landing')} />;
@@ -121,6 +122,7 @@ const AppContent = () => {
         if (currentView.startsWith('dopamine')) return <MuradDopamine onExit={() => navigate('landing')} />;
         if (currentView.startsWith('support')) return <SupportPortal onExit={() => navigate('landing')} />;
         if (currentView.startsWith('social')) return <SocialLayout onBack={() => navigate('landing')} initialView={socialSubView} />;
+        if (currentView.startsWith('assistant')) return <SmartAssistantPage onBack={() => navigate('landing')} />;
         
         return (
           <>
