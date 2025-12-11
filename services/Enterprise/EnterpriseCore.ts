@@ -11,6 +11,17 @@ import { UserJob, Course, ProductListing } from '../../types';
  * UPGRADE v3.0: SEO AUTOPILOT CORE & GOOGLE INDEXING API BRIDGE
  */
 
+// Safe JSON Parse Helper for Enterprise Core
+const safeJsonParse = (jsonString: string | null, fallback: any = null) => {
+    if (!jsonString) return fallback;
+    try {
+        return JSON.parse(jsonString);
+    } catch (e) {
+        console.warn("[EnterpriseCore] JSON Parse Warning: Invalid data found in storage.", e);
+        return fallback;
+    }
+};
+
 // --- 1. THE 'HYPER-SPEED' ACCELERATOR (Performance Engine) ---
 class Accelerator {
     private static cache = new Map<string, { data: any, expiry: number }>();
@@ -37,8 +48,8 @@ class Accelerator {
         // Disk Check
         const disk = localStorage.getItem(`ent_cache_${key}`);
         if (disk) {
-            const parsed = JSON.parse(disk);
-            if (Date.now() < parsed.expiry) {
+            const parsed = safeJsonParse(disk);
+            if (parsed && Date.now() < parsed.expiry) {
                 this.cache.set(key, parsed); // Rehydrate memory
                 return parsed.data;
             }
@@ -167,7 +178,9 @@ class DB_Optimizer {
             const raw = localStorage.getItem(table);
             if (!raw) return;
 
-            const data = JSON.parse(raw);
+            const data = safeJsonParse(raw);
+            if (!Array.isArray(data)) return; // Protection against corrupted non-array data
+
             const active: any[] = [];
             const cold: any[] = [];
 
@@ -182,7 +195,7 @@ class DB_Optimizer {
 
             if (cold.length > 0) {
                 const archiveKey = `archive_${table}`;
-                const existingArchive = JSON.parse(localStorage.getItem(archiveKey) || '[]');
+                const existingArchive = safeJsonParse(localStorage.getItem(archiveKey), []);
                 localStorage.setItem(archiveKey, JSON.stringify([...existingArchive, ...cold]));
                 localStorage.setItem(table, JSON.stringify(active));
                 

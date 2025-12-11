@@ -110,12 +110,23 @@ export const useAuth = () => {
   return context;
 };
 
+// Safe JSON Parse Helper
+const safeParse = (key: string, fallback: any) => {
+    try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : fallback;
+    } catch (e) {
+        console.warn(`[AuthContext] Failed to parse ${key} from localStorage. Resetting to default.`, e);
+        return fallback;
+    }
+};
+
 // Mock Helper
 const createMockUser = (base: Partial<User>): User => ({
     id: base.id || `u_${Date.now()}`,
     name: base.name || 'User',
     email: base.email || '',
-    avatar: base.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${base.name}`,
+    avatar: base.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${base.name || 'User'}`,
     role: 'student',
     isLoggedIn: true,
     verified: true,
@@ -145,15 +156,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showLoginModal, setShowLoginModal] = useState(false);
   
-  // Data Holders
-  const [allJobs, setAllJobs] = useState<any[]>(() => JSON.parse(localStorage.getItem('allJobs') || '[]'));
-  const [allServices, setAllServices] = useState<any[]>(() => JSON.parse(localStorage.getItem('mylaf_services') || '[]'));
-  const [allProducts, setAllProducts] = useState<any[]>(() => JSON.parse(localStorage.getItem('allProducts') || '[]'));
+  // Data Holders with Safe Parsing
+  const [allJobs, setAllJobs] = useState<any[]>(() => safeParse('allJobs', []));
+  const [allServices, setAllServices] = useState<any[]>(() => safeParse('mylaf_services', []));
+  const [allProducts, setAllProducts] = useState<any[]>(() => safeParse('allProducts', []));
   const [myTransactions, setMyTransactions] = useState<any[]>([]);
-  const [manualJobs, setManualJobs] = useState<any[]>(() => JSON.parse(localStorage.getItem('manual_jobs') || '[]'));
-  const [adminConfig, setAdminConfig] = useState<any>(() => JSON.parse(localStorage.getItem('admin_config') || '{}'));
+  const [manualJobs, setManualJobs] = useState<any[]>(() => safeParse('manual_jobs', []));
+  const [adminConfig, setAdminConfig] = useState<any>(() => safeParse('admin_config', {}));
   
-  const [storedUsers, setStoredUsers] = useState<User[]>(() => JSON.parse(localStorage.getItem('mylaf_users') || '[]'));
+  const [storedUsers, setStoredUsers] = useState<User[]>(() => safeParse('mylaf_users', []));
 
   // Placeholder refs
   const brain = { 
@@ -170,9 +181,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsAdmin(true);
     }
 
-    const localSession = localStorage.getItem('mylaf_session');
+    const localSession = safeParse('mylaf_session', null);
     if (localSession) {
-         setUser(JSON.parse(localSession));
+         setUser(localSession);
     }
 
     if (auth) {
@@ -602,7 +613,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           users: storedUsers,
           jobs: manualJobs,
           products: allProducts,
-          transactions: JSON.parse(localStorage.getItem('mylaf_transactions') || '[]'),
+          transactions: safeParse('mylaf_transactions', []),
           config: adminConfig,
           timestamp: new Date().toISOString()
       };
