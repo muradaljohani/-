@@ -30,7 +30,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     // Modal State for Verification Info
     const [showVerifyInfo, setShowVerifyInfo] = useState(false);
 
-    // Defensive check: If post is null or empty object, return nothing
+    // Defensive check
     if (!post || Object.keys(post).length === 0) return null;
     
     // Ensure post.user exists and has default values if missing
@@ -82,9 +82,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         }
     };
 
-    // --- CRITICAL FIX: PROFILE NAVIGATION HANDLER ---
     const handleProfileClick = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent opening post details
+        e.stopPropagation(); 
         if (onUserClick && userUid && userUid !== 'unknown') {
             onUserClick(userUid);
         }
@@ -237,7 +236,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
 
     if (post.type === 'repost') {
         const originalUser = post.originalUser || { name: 'Unknown', handle: '@unknown', uid: 'unknown' };
-        // Determine original user UID safely
         const origUid = originalUser.uid || originalUser.id || 'unknown';
         const isOriginalFounder = originalUser.handle === '@IpMurad' || origUid === 'admin-fixed-id';
         
@@ -283,11 +281,11 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                     </div>
                 </div>
             </div>
-            {/* Modal Render */}
+            {/* Modal Render - Moved Outside clickable container */}
             <VerificationModal 
                 isOpen={showVerifyInfo} 
                 onClose={() => setShowVerifyInfo(false)} 
-                user={post.originalUser} // Use original user data for modal content
+                user={post.originalUser} 
             />
             </>
         );
