@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown } from 'lucide-react';
 import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
@@ -50,7 +50,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
                     // Cover: "M" Logo (Elon Musk style - Black background, White text)
                     coverImage: "https://ui-avatars.com/api/?name=M&background=000000&color=ffffff&size=1920&font-size=0.5&bold=true&length=1",
-                    bio: "الذكاء الاصطناعي الخاص بمجتمع ميلاف 🤖\nThe AI of Mylaf Community",
+                    bio: "بجانبك هل تراني ؟",
                     address: "Digital World",
                     createdAt: new Date(2025, 0, 1).toISOString(),
                     lastLogin: new Date().toISOString(),
@@ -166,6 +166,8 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
     const displayFollowers = profileUser.followersCount !== undefined ? profileUser.followersCount : (profileUser.followers?.length || 0);
     const displayFollowing = profileUser.followingCount !== undefined ? profileUser.followingCount : (profileUser.following?.length || 0);
 
+    const isAdminUser = profileUser.role === 'admin';
+
     return (
         <div className="min-h-screen bg-black text-[#e7e9ea] font-sans pb-20" dir="rtl">
             
@@ -175,7 +177,10 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     <ArrowRight className="w-5 h-5 text-white rtl:rotate-180"/>
                 </button>
                 <div className="flex flex-col">
-                    <h2 className="font-bold text-lg text-white leading-tight">{profileUser.name}</h2>
+                    <h2 className="font-bold text-lg text-white leading-tight flex items-center gap-1">
+                        {profileUser.name}
+                        {isAdminUser && <Crown className="w-4 h-4 text-amber-500 fill-amber-500" />}
+                    </h2>
                     <p className="text-xs text-[#71767b]">{posts.length} منشور</p>
                 </div>
             </div>
@@ -194,14 +199,21 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                 
                 {/* Avatar & Action Button Row */}
                 <div className="flex justify-between items-start">
-                    <div className="-mt-[15%] md:-mt-[10%] mb-3">
-                         <div className="w-[25%] min-w-[80px] max-w-[130px] aspect-square rounded-full border-4 border-black bg-black overflow-hidden relative">
+                    <div className="-mt-[15%] md:-mt-[10%] mb-3 relative">
+                         {/* Avatar Container with Admin Crown */}
+                         <div className={`w-[25vw] min-w-[80px] max-w-[130px] aspect-square rounded-full border-4 ${isAdminUser ? 'border-amber-500' : 'border-black'} bg-black overflow-hidden relative`}>
                              <img 
                                 src={profileUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${profileUser.id}`} 
                                 className="w-full h-full object-cover"
                                 alt={profileUser.name}
                             />
                          </div>
+                         {/* Absolute Crown Badge */}
+                         {isAdminUser && (
+                             <div className="absolute bottom-1 right-1 bg-amber-500 text-black p-1 rounded-full border-2 border-black shadow-lg" title="Admin">
+                                 <Crown className="w-4 h-4 fill-black" />
+                             </div>
+                         )}
                     </div>
                     <div className="mt-3">
                         {isOwnProfile ? (
@@ -233,10 +245,15 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
 
                 {/* Name & Handle */}
                 <div className="mt-1">
-                    <h1 className="font-black text-xl text-white flex items-center gap-1">
+                    <h1 className="font-black text-xl text-white flex items-center gap-1 flex-wrap">
                         {profileUser.name}
                         {profileUser.isVerified && <CheckCircle2 className="w-5 h-5 text-[#1d9bf0] fill-[#1d9bf0] text-white" />}
-                        {profileUser.role === 'admin' && <span className="bg-[#eff3f4] text-black text-[10px] px-1 rounded ml-1 border border-white">Admin</span>}
+                        {isAdminUser && (
+                            <span className="flex items-center gap-1 bg-amber-500/20 text-amber-500 text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30 ml-2">
+                                <Crown className="w-3 h-3 fill-current"/>
+                                <span>مسؤول (Admin)</span>
+                            </span>
+                        )}
                     </h1>
                     <p className="text-[#71767b] text-sm dir-ltr text-right font-mono">@{profileUser.username || profileUser.id.slice(0,8)}</p>
                 </div>
