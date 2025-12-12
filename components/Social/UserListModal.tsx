@@ -23,29 +23,32 @@ export const UserListModal: React.FC<Props> = ({ isOpen, onClose, title, userIds
                 setLoading(true);
                 const fetchedUsers: User[] = [];
 
-                // Limit to first 20 for performance in this demo
-                // In production, use pagination
-                const idsToFetch = userIds.slice(0, 20);
+                // SPECIAL: If this is the "Admin" or "Murad" profile, generate high-quality mocks
+                // The profile page passes 'mock-follower-1' for admin profiles
+                if (userIds.includes('mock-follower-1')) {
+                     // Generate distinct, high-quality mock profiles
+                     const mocks = Array.from({ length: 15 }).map((_, i) => ({
+                         id: `mock-admin-follower-${i}`,
+                         name: i === 0 ? "سارة التقنية" : i === 1 ? "محمد المطور" : `متابع مميز ${i+1}`,
+                         username: `user_${i+100}`,
+                         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${i+50}`,
+                         bio: 'مهتم بالتقنية والبرمجة | مطور واجهات',
+                         verified: i < 3 // First 3 are verified
+                     } as unknown as User));
+                     setUsers(mocks);
+                     setLoading(false);
+                     return;
+                }
 
-                if (idsToFetch.length === 0) {
+                // If real user list is empty
+                if (!userIds || userIds.length === 0) {
                     setUsers([]);
                     setLoading(false);
                     return;
                 }
 
-                // If these are mock admin IDs, generate mock users
-                if (userIds.includes('mock-follower-1')) {
-                     const mocks = Array.from({ length: 5 }).map((_, i) => ({
-                         id: `mock-${i}`,
-                         name: `مستخدم ميلاف ${i+1}`,
-                         username: `user_${i+1}`,
-                         avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${i}`,
-                         bio: 'عضو في مجتمع ميلاف'
-                     } as User));
-                     setUsers(mocks);
-                     setLoading(false);
-                     return;
-                }
+                // Limit to first 20 for performance in this demo
+                const idsToFetch = userIds.slice(0, 20);
 
                 // Real Firebase Fetch
                 try {
@@ -72,7 +75,10 @@ export const UserListModal: React.FC<Props> = ({ isOpen, onClose, title, userIds
     if (!isOpen) return null;
 
     const handleFollowClick = (targetId: string) => {
-        if (!currentUser) return;
+        if (!currentUser) {
+            alert("يجب تسجيل الدخول لمتابعة المستخدمين.");
+            return;
+        }
         const isFollowing = currentUser.following?.includes(targetId);
         if (isFollowing) {
             unfollowUser(targetId);
@@ -94,14 +100,14 @@ export const UserListModal: React.FC<Props> = ({ isOpen, onClose, title, userIds
                 </div>
 
                 {/* List */}
-                <div className="flex-1 overflow-y-auto p-2">
+                <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-gray-700">
                     {loading ? (
                         <div className="flex justify-center items-center py-10">
                             <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
                         </div>
                     ) : users.length === 0 ? (
                         <div className="text-center py-10 text-gray-500 text-sm">
-                            لا يوجد مستخدمين هنا.
+                            القائمة فارغة حالياً.
                         </div>
                     ) : (
                         <div className="space-y-1">
@@ -115,14 +121,20 @@ export const UserListModal: React.FC<Props> = ({ isOpen, onClose, title, userIds
                                             <img 
                                                 src={u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${u.id}`} 
                                                 className="w-10 h-10 rounded-full object-cover border border-[#2f3336]"
+                                                alt={u.name}
                                             />
-                                            <div className="flex flex-col">
-                                                <span className="text-white font-bold text-sm">{u.name}</span>
+                                            <div className="flex flex-col text-left">
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-white font-bold text-sm truncate max-w-[150px]">{u.name}</span>
+                                                    {u.verified && (
+                                                        <span className="bg-blue-500 rounded-full p-0.5"><div className="w-1.5 h-1.5 bg-white rounded-full"></div></span>
+                                                    )}
+                                                </div>
                                                 <span className="text-gray-500 text-xs dir-ltr text-right">@{u.username || u.id.slice(0,6)}</span>
                                             </div>
                                         </div>
                                         
-                                        {!isMe && currentUser && (
+                                        {!isMe && (
                                             <button 
                                                 onClick={() => handleFollowClick(u.id)}
                                                 className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${

@@ -8,15 +8,78 @@ interface Props {
   onClose: () => void;
 }
 
+// Comprehensive List of Country Codes
 const COUNTRY_CODES = [
-    { code: '+966', country: 'السعودية (KSA)', flag: '🇸🇦' },
-    { code: '+971', country: 'الإمارات (UAE)', flag: '🇦🇪' },
-    { code: '+965', country: 'الكويت (KW)', flag: '🇰🇼' },
-    { code: '+974', country: 'قطر (QA)', flag: '🇶🇦' },
-    { code: '+968', country: 'عمان (OM)', flag: '🇴🇲' },
-    { code: '+973', country: 'البحرين (BH)', flag: '🇧🇭' },
-    { code: '+20', country: 'مصر (EG)', flag: '🇪🇬' },
-    { code: '+962', country: 'الأردن (JO)', flag: '🇯🇴' },
+    // GCC & Arab World
+    { code: '+966', country: 'السعودية', flag: '🇸🇦' },
+    { code: '+971', country: 'الإمارات', flag: '🇦🇪' },
+    { code: '+965', country: 'الكويت', flag: '🇰🇼' },
+    { code: '+974', country: 'قطر', flag: '🇶🇦' },
+    { code: '+968', country: 'عمان', flag: '🇴🇲' },
+    { code: '+973', country: 'البحرين', flag: '🇧🇭' },
+    { code: '+20', country: 'مصر', flag: '🇪🇬' },
+    { code: '+964', country: 'العراق', flag: '🇮🇶' },
+    { code: '+962', country: 'الأردن', flag: '🇯🇴' },
+    { code: '+961', country: 'لبنان', flag: '🇱🇧' },
+    { code: '+970', country: 'فلسطين', flag: '🇵🇸' },
+    { code: '+963', country: 'سوريا', flag: '🇸🇾' },
+    { code: '+967', country: 'اليمن', flag: '🇾🇪' },
+    { code: '+218', country: 'ليبيا', flag: '🇱🇾' },
+    { code: '+249', country: 'السودان', flag: '🇸🇩' },
+    { code: '+212', country: 'المغرب', flag: '🇲🇦' },
+    { code: '+216', country: 'تونس', flag: '🇹🇳' },
+    { code: '+213', country: 'الجزائر', flag: '🇩🇿' },
+    { code: '+222', country: 'موريتانيا', flag: '🇲🇷' },
+    { code: '+252', country: 'الصومال', flag: '🇸🇴' },
+    { code: '+253', country: 'جيبوتي', flag: '🇩🇯' },
+    { code: '+269', country: 'جزر القمر', flag: '🇰🇲' },
+
+    // North America
+    { code: '+1', country: 'أمريكا/كندا', flag: '🇺🇸/🇨🇦' },
+
+    // Europe
+    { code: '+44', country: 'المملكة المتحدة', flag: '🇬🇧' },
+    { code: '+49', country: 'ألمانيا', flag: '🇩🇪' },
+    { code: '+33', country: 'فرنسا', flag: '🇫🇷' },
+    { code: '+39', country: 'إيطاليا', flag: '🇮🇹' },
+    { code: '+34', country: 'إسبانيا', flag: '🇪🇸' },
+    { code: '+31', country: 'هولندا', flag: '🇳🇱' },
+    { code: '+32', country: 'بلجيكا', flag: '🇧🇪' },
+    { code: '+41', country: 'سويسرا', flag: '🇨🇭' },
+    { code: '+46', country: 'السويد', flag: '🇸🇪' },
+    { code: '+47', country: 'النرويج', flag: '🇳🇴' },
+    { code: '+45', country: 'الدانمارك', flag: '🇩🇰' },
+    { code: '+353', country: 'أيرلندا', flag: '🇮🇪' },
+    { code: '+7', country: 'روسيا', flag: '🇷🇺' },
+    { code: '+380', country: 'أوكرانيا', flag: '🇺🇦' },
+    { code: '+90', country: 'تركيا', flag: '🇹🇷' },
+    { code: '+30', country: 'اليونان', flag: '🇬🇷' },
+
+    // Asia
+    { code: '+91', country: 'الهند', flag: '🇮🇳' },
+    { code: '+92', country: 'باكستان', flag: '🇵🇰' },
+    { code: '+880', country: 'بنغلاديش', flag: '🇧🇩' },
+    { code: '+94', country: 'سريلانكا', flag: '🇱🇰' },
+    { code: '+63', country: 'الفلبين', flag: '🇵🇭' },
+    { code: '+62', country: 'إندونيسيا', flag: '🇮🇩' },
+    { code: '+60', country: 'ماليزيا', flag: '🇲🇾' },
+    { code: '+65', country: 'سنغافورة', flag: '🇸🇬' },
+    { code: '+66', country: 'تايلاند', flag: '🇹🇭' },
+    { code: '+84', country: 'فيتنام', flag: '🇻🇳' },
+    { code: '+86', country: 'الصين', flag: '🇨🇳' },
+    { code: '+81', country: 'اليابان', flag: '🇯🇵' },
+    { code: '+82', country: 'كوريا الجنوبية', flag: '🇰🇷' },
+
+    // Oceania
+    { code: '+61', country: 'أستراليا', flag: '🇦🇺' },
+    { code: '+64', country: 'نيوزيلندا', flag: '🇳🇿' },
+
+    // South America & Africa (Others)
+    { code: '+55', country: 'البرازيل', flag: '🇧🇷' },
+    { code: '+54', country: 'الأرجنتين', flag: '🇦🇷' },
+    { code: '+27', country: 'جنوب أفريقيا', flag: '🇿🇦' },
+    { code: '+234', country: 'نيجيريا', flag: '🇳🇬' },
+    { code: '+251', country: 'إثيوبيا', flag: '🇪🇹' },
 ];
 
 export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
@@ -50,7 +113,11 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
       let pNum = '';
       
       if (user.phone) {
-          const foundCode = COUNTRY_CODES.find(c => user.phone?.startsWith(c.code));
+          // Find the longest matching code to ensure accuracy (e.g. distinguishing +1 from +123)
+          // Sort codes by length descending to match the specific one first
+          const sortedCodes = [...COUNTRY_CODES].sort((a, b) => b.code.length - a.code.length);
+          const foundCode = sortedCodes.find(c => user.phone?.startsWith(c.code));
+          
           if (foundCode) {
               pCode = foundCode.code;
               pNum = user.phone.replace(foundCode.code, '');
@@ -210,17 +277,17 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
               />
             </div>
 
-            {/* Phone Number Section */}
+            {/* Phone Number Section with All Countries */}
             <div className="space-y-1">
                 <label className="text-slate-500 text-xs font-bold px-1">رقم الجوال (يظهر في البايو)</label>
                 <div className="flex gap-2" dir="ltr">
                     <select 
                         value={formData.phoneCode}
                         onChange={e => setFormData({...formData, phoneCode: e.target.value})}
-                        className="bg-[#16181c] border border-slate-700 rounded-md p-3 text-white focus:border-blue-500 outline-none w-28 text-sm"
+                        className="bg-[#16181c] border border-slate-700 rounded-md p-3 text-white focus:border-blue-500 outline-none w-32 text-sm text-center appearance-none"
                     >
                         {COUNTRY_CODES.map(c => (
-                            <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+                            <option key={c.code} value={c.code}>{c.flag} {c.code} {c.country}</option>
                         ))}
                     </select>
                     <input 

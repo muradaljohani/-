@@ -1,4 +1,5 @@
 
+
 export enum Role {
   USER = 'user',
   MODEL = 'model'
@@ -951,6 +952,7 @@ export interface User {
   isLoggedIn: boolean;
   loginMethod: LoginProvider;
   verified: boolean; 
+  isGold?: boolean;
   linkedProviders: LoginProvider[]; 
   createdAt: string;
   lastLogin: string;

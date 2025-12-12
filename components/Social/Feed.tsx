@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   collection, 
@@ -18,6 +17,27 @@ import { PostCard } from './PostCard';
 import { Image, BarChart2, Smile, MapPin, Loader2, X, Wand2, Feather, WifiOff } from 'lucide-react';
 import { uploadImage } from '../../src/services/storageService';
 import { StoriesBar } from '../Stories/StoriesBar';
+import { validateContentSafety } from '../../services/geminiService';
+
+// --- MURAD AI PROFILE CONSTANT (Must match ProfilePage) ---
+const MURAD_AI_PROFILE_DATA = {
+    id: "murad-ai-bot-id",
+    name: "Murad AI",
+    username: "MURAD",
+    email: "ai@murad-group.com",
+    avatar: "https://cdn-icons-png.flaticon.com/512/4712/4712109.png", 
+    coverImage: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1000&auto=format&fit=crop", 
+    bio: "الذكاء الاصطناعي الرسمي لمجتمع ميلاف. 🤖✨\nأساعدك في البحث، التحليل، والإجابة على استفساراتك.\n\nPowered by Murad-Group AI Core.",
+    address: "Digital World 🌐",
+    role: 'bot',
+    isIdentityVerified: true,
+    isVerified: true,
+    isGold: true,
+    customFormFields: { 
+        website: 'https://murad-group.com/ai',
+        youtube: 'https://youtube.com/@MuradAI'
+    }
+};
 
 interface FeedProps {
     onOpenLightbox?: (src: string) => void;
@@ -40,6 +60,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
+  const [isReviewing, setIsReviewing] = useState(false); // New state for safety check
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -49,20 +70,12 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         if (!db) return; 
 
         try {
+            // 1. Seed Admin
             const adminId = "admin-fixed-id";
             const adminRef = doc(db, "users", adminId);
-            
-            let adminSnap;
-            try {
-                adminSnap = await getDoc(adminRef);
-            } catch (err) {
-                // Silent fail or minimal log
-                return;
-            }
+            const adminSnap = await getDoc(adminRef);
 
-            const adminData = adminSnap.exists() ? adminSnap.data() : null;
-
-            if (!adminSnap.exists() || !adminData?.isAdmin) {
+            if (!adminSnap.exists()) {
                  await setDoc(adminRef, {
                     uid: adminId,
                     name: "Murad Aljohani",
@@ -82,8 +95,17 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                 }, { merge: true }).catch(e => {});
             }
 
+            // 2. Seed Murad AI Bot
+            const aiRef = doc(db, "users", "murad-ai-bot-id");
+            const aiSnap = await getDoc(aiRef);
+            if (!aiSnap.exists()) {
+                await setDoc(aiRef, MURAD_AI_PROFILE_DATA, { merge: true }).catch(e => {});
+            }
+
+            // 3. Ensure current user doc
             if (user && user.id) {
                 const userRef = doc(db, "users", user.id);
+                // We do a lightweight merge to ensure it exists without overwriting complex fields
                 setDoc(userRef, {
                     uid: user.id,
                     name: user.name,
@@ -201,6 +223,20 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
         return;
     }
     if (!newPostText.trim() && !selectedFile) return;
+
+    // --- SAFETY CHECK GATEKEEPER ---
+    if (newPostText.trim()) {
+        setIsReviewing(true);
+        const isUnsafe = await validateContentSafety(newPostText);
+        setIsReviewing(false);
+
+        if (isUnsafe) {
+            alert("🚫 تم رفض المنشور! المحتوى مخالف لمعايير مجتمع ميلاف (كراهية أو إيذاء نفس).");
+            return;
+        }
+    }
+    // -------------------------------
+
     setIsUploading(true);
 
     try {
@@ -357,11 +393,11 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
               </div>
               <button 
                 onClick={handlePost}
-                disabled={(!newPostText.trim() && !selectedFile) || isUploading}
+                disabled={(!newPostText.trim() && !selectedFile) || isUploading || isReviewing}
                 className="bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold py-1.5 px-5 rounded-full disabled:opacity-50 transition-all text-sm flex items-center gap-2"
               >
-                {isUploading && <Loader2 className="w-4 h-4 animate-spin"/>}
-                نشر
+                {(isUploading || isReviewing) && <Loader2 className="w-4 h-4 animate-spin"/>}
+                {isReviewing ? 'جاري المراجعة...' : (isUploading ? 'نشر...' : 'نشر')}
               </button>
             </div>
           </div>

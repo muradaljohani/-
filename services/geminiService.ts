@@ -91,6 +91,34 @@ export const analyzeProfileWithAI = async (fullUserProfile: User): Promise<any> 
   return JSON.parse(response.text || '{}');
 };
 
+/**
+ * Validates text content for safety using Gemini.
+ * Returns true if the content is UNSAFE, false if SAFE.
+ */
+export const validateContentSafety = async (text: string): Promise<boolean> => {
+  if (!text || text.trim().length === 0) return false;
+
+  try {
+    const prompt = `You are a strict content moderator. Analyze this text: '${text}'.
+    Rules: REJECT any hate speech, self-harm, harassment, sexual content, or extreme violence.
+    Output ONLY one word: 'SAFE' or 'UNSAFE'.`;
+
+    const response = await ai.models.generateContent({
+      model: CHAT_MODEL_NAME,
+      contents: prompt,
+    });
+
+    const result = response.text?.trim().toUpperCase();
+    return result === 'UNSAFE';
+  } catch (error) {
+    console.error("Safety Check Error:", error);
+    // In case of API error, we default to blocking potentially harmful content if we can't verify it,
+    // or allowing it if availability is priority. For a strict system, we log and return false (safe) to avoid blocking valid users on network errors,
+    // but in a production strict environment, you might handle this differently.
+    return false;
+  }
+};
+
 // --- NEW FUNCTION FOR MURAD AI CHAT COMPONENT ---
 export const getGeminiResponse = async (message: string, mode: string = 'expert', userName?: string | null): Promise<string> => {
     try {

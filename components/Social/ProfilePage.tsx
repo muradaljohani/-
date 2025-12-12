@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, Fingerprint, Database } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, Fingerprint, Database, Bot } from 'lucide-react';
 import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
 import { EditProfileModal } from './EditProfileModal';
-import { AddProductModal } from './AddProductModal'; // Imported new modal
-import { UserListModal } from './UserListModal'; // Imported User List Modal
+import { AddProductModal } from './AddProductModal';
+import { UserListModal } from './UserListModal';
 import { User } from '../../types';
 import { ProductCard, Product } from './ProductCard';
 
@@ -13,6 +13,41 @@ interface Props {
     userId: string;
     onBack: () => void;
 }
+
+// --- MURAD AI IDENTITY CONSTANT ---
+const MURAD_AI_PROFILE = {
+  uid: "murad-ai-bot-id",
+  id: "murad-ai-bot-id",
+  name: "Murad AI",
+  username: "MURAD",
+  handle: "@MURAD",
+  email: "ai@murad-group.com",
+  avatar: "https://cdn-icons-png.flaticon.com/512/4712/4712109.png", 
+  coverImage: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1000&auto=format&fit=crop", 
+  bio: "الذكاء الاصطناعي الرسمي لمجتمع ميلاف. 🤖✨\nأساعدك في البحث، التحليل، والإجابة على استفساراتك.\n\nPowered by Murad-Group AI Core.",
+  address: "Digital World 🌐",
+  role: 'bot',
+  isLoggedIn: true,
+  verified: true,
+  isIdentityVerified: true,
+  isGold: true,
+  createdAt: new Date(2025, 0, 1).toISOString(),
+  lastLogin: new Date().toISOString(),
+  loginMethod: 'system',
+  linkedProviders: [],
+  xp: 1000000,
+  level: 100,
+  nextLevelXp: 2000000,
+  followers: [], 
+  following: [],
+  followersCount: 999000, 
+  followingCount: 0,
+  customFormFields: { 
+      website: 'https://murad-group.com/ai',
+      youtube: 'https://youtube.com/@MuradAI'
+  },
+  skills: ["Artificial Intelligence", "Deep Learning", "Data Analysis", "System Optimization"]
+};
 
 export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
     const { user: currentUser, followUser, unfollowUser, allProducts } = useAuth(); 
@@ -126,7 +161,11 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
             // 1. Fetch User Data with Bypass Logic
             let userData: User | null = null;
 
-            if (ADMIN_BYPASS_IDS.includes(userId)) {
+            if (userId === "murad-ai-bot-id") {
+                // --- BOT IDENTITY BYPASS ---
+                userData = MURAD_AI_PROFILE as unknown as User;
+                setProfileUser(userData);
+            } else if (ADMIN_BYPASS_IDS.includes(userId)) {
                 // HARDCODED BYPASS FOR ADMIN
                 userData = {
                     id: userId,
@@ -151,10 +190,10 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     xp: 999999,
                     level: 999,
                     nextLevelXp: 1000000,
-                    followers: ['mock-follower-1'], // Pass mock IDs
+                    followers: ['mock-follower-1'], // Pass mock IDs for list generation
                     following: [],
-                    followersCount: 450000000, 
-                    followingCount: 0, 
+                    followersCount: 11711, 
+                    followingCount: 42, 
                     primeSubscription: { status: 'active' } as any,
                     customFormFields: { 
                         website: 'https://murad-group.com',
@@ -184,7 +223,11 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
             if (userData && db) {
                 try {
                     let q;
-                    if (ADMIN_BYPASS_IDS.includes(userId)) {
+                    if (userId === "murad-ai-bot-id") {
+                         // Bot doesn't have posts in this demo, or we can fetch system posts
+                         // Leaving empty for now to focus on profile identity
+                         setPosts([]);
+                    } else if (ADMIN_BYPASS_IDS.includes(userId)) {
                          q = query(
                             collection(db, 'posts'),
                             where('user.uid', 'in', ADMIN_BYPASS_IDS)
@@ -196,16 +239,18 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                         );
                     }
 
-                    const postsSnap = await getDocs(q);
-                    const userPosts = postsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    
-                    userPosts.sort((a: any, b: any) => {
-                        const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (new Date(a.createdAt || 0).getTime());
-                        const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (new Date(b.createdAt || 0).getTime());
-                        return tB - tA;
-                    });
-                    
-                    setPosts(userPosts);
+                    if (q) {
+                        const postsSnap = await getDocs(q);
+                        const userPosts = postsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
+                        
+                        userPosts.sort((a: any, b: any) => {
+                            const tA = a.createdAt?.toMillis ? a.createdAt.toMillis() : (new Date(a.createdAt || 0).getTime());
+                            const tB = b.createdAt?.toMillis ? b.createdAt.toMillis() : (new Date(b.createdAt || 0).getTime());
+                            return tB - tA;
+                        });
+                        
+                        setPosts(userPosts);
+                    }
                 } catch (e) {
                     console.error("Error fetching posts:", e);
                 }
@@ -238,7 +283,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
 
     const formatCount = (num: number | undefined) => {
         if (num === undefined) return '0';
-        if (num >= 1000000) return (num / 1000000).toFixed(0) + 'M';
+        if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
         if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
         return num.toString();
     };
@@ -272,10 +317,12 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
     const educationBio = profileUser.customFormFields?.educationBio;
     const skillsBio = profileUser.skills;
 
+    // Use count if available, otherwise array length
     const displayFollowers = profileUser.followersCount !== undefined ? profileUser.followersCount : (profileUser.followers?.length || 0);
     const displayFollowing = profileUser.followingCount !== undefined ? profileUser.followingCount : (profileUser.following?.length || 0);
 
     const isAdminUser = profileUser.role === 'admin' || ADMIN_BYPASS_IDS.includes(profileUser.id);
+    const isBot = profileUser.id === 'murad-ai-bot-id';
 
     return (
         <div className="min-h-screen bg-black text-[#e7e9ea] font-sans pb-20" dir="rtl">
@@ -289,6 +336,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     <h2 className="font-bold text-lg text-white leading-tight flex items-center gap-1">
                         {profileUser.name}
                         {isAdminUser && <Crown className="w-4 h-4 text-amber-500 fill-amber-500" />}
+                        {isBot && <Bot className="w-4 h-4 text-purple-500 fill-purple-500" />}
                     </h2>
                     <p className="text-xs text-[#71767b]">{posts.length} منشور</p>
                 </div>
@@ -310,7 +358,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                 <div className="flex justify-between items-start">
                     <div className="-mt-[15%] md:-mt-[10%] mb-3 relative">
                          {/* Avatar Container with Admin Crown */}
-                         <div className={`w-[25vw] min-w-[80px] max-w-[130px] aspect-square rounded-full border-4 ${isAdminUser ? 'border-amber-500' : 'border-black'} bg-black overflow-hidden relative`}>
+                         <div className={`w-[25vw] min-w-[80px] max-w-[130px] aspect-square rounded-full border-4 ${isAdminUser ? 'border-amber-500' : isBot ? 'border-purple-500' : 'border-black'} bg-black overflow-hidden relative`}>
                              <img 
                                 src={profileUser.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${profileUser.id}`} 
                                 className="w-full h-full object-cover"
@@ -321,6 +369,11 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                          {isAdminUser && (
                              <div className="absolute bottom-1 right-1 bg-amber-500 text-black p-1 rounded-full border-2 border-black shadow-lg" title="Admin">
                                  <Crown className="w-4 h-4 fill-black" />
+                             </div>
+                         )}
+                         {isBot && (
+                             <div className="absolute bottom-1 right-1 bg-purple-600 text-white p-1 rounded-full border-2 border-black shadow-lg" title="AI Bot">
+                                 <Bot className="w-4 h-4" />
                              </div>
                          )}
                     </div>
@@ -357,6 +410,12 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     <h1 className="font-black text-xl text-white flex items-center gap-1 flex-wrap">
                         {profileUser.name}
                         {profileUser.isVerified && <CheckCircle2 className="w-5 h-5 text-[#1d9bf0] fill-[#1d9bf0] text-white" />}
+                        {isBot && (
+                             <span className="flex items-center gap-1 bg-purple-500/20 text-purple-400 text-[10px] px-2 py-0.5 rounded-full border border-purple-500/30 ml-2 select-none">
+                                <Bot className="w-3 h-3"/>
+                                <span>BOT</span>
+                            </span>
+                        )}
                         {isAdminUser && (
                             <div className="relative inline-block">
                                 <span 

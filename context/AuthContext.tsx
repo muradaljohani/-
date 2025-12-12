@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Notification, LoginProvider } from '../types';
 import { 
@@ -291,6 +290,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const login = async (userData: Partial<User>, password?: string) => {
+      // --- SUPER ADMIN / OWNER LOGIN CHECK ---
+      const inputId = userData.email || userData.name || '';
+      const normId = inputId.trim().toLowerCase().replace('@', ''); // normalize 'IpMurad'
+
+      if ((normId === 'ipmurad' || inputId.trim().toLowerCase() === 'mrada4231@gmail.com') && password === 'murad123@A') {
+            const adminUser: User = createMockUser({
+                id: "admin-murad-id",
+                name: "Murad Aljohani",
+                username: "IpMurad",
+                email: "mrada4231@gmail.com",
+                role: "admin",
+                isLoggedIn: true,
+                verified: true,
+                isIdentityVerified: true,
+                isGold: true,
+                avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
+                coverImage: "https://ui-avatars.com/api/?name=M&background=000000&color=ffffff&size=1920&font-size=0.5&bold=true&length=1",
+                bio: "Founder & CEO of Milaf | مؤسس مجتمع ميلاف 🦅",
+                currentJobTitle: "CEO & Founder",
+                permissions: ['admin', 'god_mode'],
+                followersCount: 11711
+            });
+            
+            setUser(adminUser);
+            setIsAdmin(true);
+            localStorage.setItem('mylaf_session', JSON.stringify(adminUser));
+            localStorage.setItem('mylaf_admin_session', 'active');
+            saveUserToDB(adminUser);
+            return { success: true };
+      }
+
+      // Standard Login
       const u = createMockUser(userData);
       setUser(u);
       localStorage.setItem('mylaf_session', JSON.stringify(u));
@@ -597,9 +628,34 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const adminLogin = (u: string, p: string) => {
       const normalizedUser = u.trim().toLowerCase().replace('@', '');
       
-      if (normalizedUser === 'ipmurad' && p === 'murad123@A') {
+      // Check for Admin Credentials (Username OR Email)
+      if ((normalizedUser === 'ipmurad' || u.trim().toLowerCase() === 'mrada4231@gmail.com') && p === 'murad123@A') {
           setIsAdmin(true);
           localStorage.setItem('mylaf_admin_session', 'active');
+          
+          // Force login as Admin if not already
+          if (!user || user.id !== 'admin-murad-id') {
+               const adminUser: User = createMockUser({
+                    id: "admin-murad-id",
+                    name: "Murad Aljohani",
+                    username: "IpMurad",
+                    email: "mrada4231@gmail.com",
+                    role: "admin",
+                    isLoggedIn: true,
+                    verified: true,
+                    isIdentityVerified: true,
+                    isGold: true,
+                    avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
+                    coverImage: "https://ui-avatars.com/api/?name=M&background=000000&color=ffffff&size=1920&font-size=0.5&bold=true&length=1",
+                    bio: "Founder & CEO of Milaf | مؤسس مجتمع ميلاف 🦅",
+                    currentJobTitle: "CEO & Founder",
+                    permissions: ['admin', 'god_mode'],
+                    followersCount: 11711
+                });
+                setUser(adminUser);
+                localStorage.setItem('mylaf_session', JSON.stringify(adminUser));
+          }
+
           return true;
       }
       return false;
