@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Camera, Save, Loader2, Link as LinkIcon, MapPin, Youtube } from 'lucide-react';
+import { X, Camera, Save, Loader2, Link as LinkIcon, MapPin, Youtube, Phone, GraduationCap, Cpu } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { uploadImage } from '../../src/services/storageService';
 
@@ -8,6 +7,17 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const COUNTRY_CODES = [
+    { code: '+966', country: 'السعودية (KSA)', flag: '🇸🇦' },
+    { code: '+971', country: 'الإمارات (UAE)', flag: '🇦🇪' },
+    { code: '+965', country: 'الكويت (KW)', flag: '🇰🇼' },
+    { code: '+974', country: 'قطر (QA)', flag: '🇶🇦' },
+    { code: '+968', country: 'عمان (OM)', flag: '🇴🇲' },
+    { code: '+973', country: 'البحرين (BH)', flag: '🇧🇭' },
+    { code: '+20', country: 'مصر (EG)', flag: '🇪🇬' },
+    { code: '+962', country: 'الأردن (JO)', flag: '🇯🇴' },
+];
 
 export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const { user, updateProfile } = useAuth();
@@ -21,7 +31,11 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
     website: '',
     youtube: '',
     photoURL: '',
-    bannerURL: ''
+    bannerURL: '',
+    phoneCode: '+966',
+    phoneNumber: '',
+    educationBio: '',
+    skillsBio: ''
   });
 
   // Refs for file inputs
@@ -31,6 +45,20 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   // Initialize with current user data
   useEffect(() => {
     if (user && isOpen) {
+      // Parse existing phone number if available
+      let pCode = '+966';
+      let pNum = '';
+      
+      if (user.phone) {
+          const foundCode = COUNTRY_CODES.find(c => user.phone?.startsWith(c.code));
+          if (foundCode) {
+              pCode = foundCode.code;
+              pNum = user.phone.replace(foundCode.code, '');
+          } else {
+              pNum = user.phone;
+          }
+      }
+
       setFormData({
         displayName: user.name || '',
         bio: user.bio || '',
@@ -38,7 +66,11 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
         website: user.customFormFields?.website || '',
         youtube: user.customFormFields?.youtube || '',
         photoURL: user.avatar || '',
-        bannerURL: user.coverImage || ''
+        bannerURL: user.coverImage || '',
+        phoneCode: pCode,
+        phoneNumber: pNum,
+        educationBio: user.customFormFields?.educationBio || '',
+        skillsBio: user.skills ? user.skills.join(', ') : ''
       });
     }
   }, [user, isOpen]);
@@ -50,16 +82,22 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
     setIsSaving(true);
 
     try {
+      const fullPhone = formData.phoneNumber ? `${formData.phoneCode}${formData.phoneNumber}` : '';
+      const skillsArray = formData.skillsBio.split(',').map(s => s.trim()).filter(Boolean);
+
       await updateProfile({
         name: formData.displayName,
         bio: formData.bio,
         address: formData.location,
         avatar: formData.photoURL,
         coverImage: formData.bannerURL,
+        phone: fullPhone,
+        skills: skillsArray,
         customFormFields: {
             ...user.customFormFields,
             website: formData.website,
-            youtube: formData.youtube
+            youtube: formData.youtube,
+            educationBio: formData.educationBio
         }
       });
       onClose();
@@ -115,7 +153,7 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto scrollbar-hide">
           
           {/* Images Section */}
           <div className="relative mb-16">
@@ -170,6 +208,62 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
                 className="w-full bg-transparent border border-slate-700 rounded-md p-3 text-white focus:border-blue-500 focus:outline-none transition-colors h-24 resize-none"
                 placeholder="اكتب نبذة عن نفسك..."
               />
+            </div>
+
+            {/* Phone Number Section */}
+            <div className="space-y-1">
+                <label className="text-slate-500 text-xs font-bold px-1">رقم الجوال (يظهر في البايو)</label>
+                <div className="flex gap-2" dir="ltr">
+                    <select 
+                        value={formData.phoneCode}
+                        onChange={e => setFormData({...formData, phoneCode: e.target.value})}
+                        className="bg-[#16181c] border border-slate-700 rounded-md p-3 text-white focus:border-blue-500 outline-none w-28 text-sm"
+                    >
+                        {COUNTRY_CODES.map(c => (
+                            <option key={c.code} value={c.code}>{c.flag} {c.code}</option>
+                        ))}
+                    </select>
+                    <input 
+                        type="tel"
+                        value={formData.phoneNumber}
+                        onChange={e => setFormData({...formData, phoneNumber: e.target.value.replace(/\D/g,'')})}
+                        className="flex-1 bg-transparent border border-slate-700 rounded-md p-3 text-white focus:border-blue-500 focus:outline-none transition-colors"
+                        placeholder="5xxxxxxxx"
+                    />
+                    <div className="absolute right-8 mt-3.5 pointer-events-none">
+                         <Phone className="w-5 h-5 text-slate-500"/>
+                    </div>
+                </div>
+            </div>
+
+            {/* Education Section */}
+            <div className="space-y-1">
+                <label className="text-slate-500 text-xs font-bold px-1">التعليم (يظهر تحت رقم الهاتف)</label>
+                <div className="relative">
+                    <input 
+                        type="text" 
+                        value={formData.educationBio} 
+                        onChange={e => setFormData({...formData, educationBio: e.target.value})}
+                        className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-white focus:border-blue-500 focus:outline-none transition-colors"
+                        placeholder="مثال: بكالوريوس هندسة برمجيات - جامعة الملك سعود"
+                    />
+                    <GraduationCap className="absolute left-3 top-3.5 w-5 h-5 text-slate-500"/>
+                </div>
+            </div>
+
+            {/* Skills Section */}
+            <div className="space-y-1">
+                <label className="text-slate-500 text-xs font-bold px-1">المهارات (افصل بينها بفاصلة)</label>
+                <div className="relative">
+                    <input 
+                        type="text" 
+                        value={formData.skillsBio} 
+                        onChange={e => setFormData({...formData, skillsBio: e.target.value})}
+                        className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-white focus:border-blue-500 focus:outline-none transition-colors"
+                        placeholder="مثال: برمجة، تصميم، تسويق، إدارة"
+                    />
+                    <Cpu className="absolute left-3 top-3.5 w-5 h-5 text-slate-500"/>
+                </div>
             </div>
 
             <div className="space-y-1">

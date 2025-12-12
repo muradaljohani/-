@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-    Plus, MessageSquare, Menu, X, ArrowLeft, Bot, Sparkles
+    Plus, MessageSquare, Menu, X, ArrowLeft
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { streamChatResponse } from '../services/geminiService';
@@ -22,6 +22,9 @@ export const SmartAssistantPage: React.FC<Props> = ({ onBack }) => {
     
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const abortControllerRef = useRef<AbortController | null>(null);
+
+    // Load history from session/local storage later if needed. For now, empty or mock.
+    // We could store previous chats in localStorage to persist sidebar history.
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -110,11 +113,14 @@ export const SmartAssistantPage: React.FC<Props> = ({ onBack }) => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                    <div className="text-xs font-bold text-gray-500 px-3 py-2 uppercase tracking-widest">سجل البحث</div>
-                    {/* Placeholder for history - in real app connect to storage */}
+                    <div className="text-xs font-bold text-gray-500 px-3 py-2 uppercase tracking-widest">السجل (تجريبي)</div>
                     <button className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors text-sm text-gray-300 truncate text-right group">
                         <MessageSquare className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors"/>
-                        من هو مراد الجهني؟
+                        بحث عن وظائف...
+                    </button>
+                    <button className="w-full flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition-colors text-sm text-gray-300 truncate text-right group">
+                        <MessageSquare className="w-4 h-4 text-gray-500 group-hover:text-white transition-colors"/>
+                        شرح الكود...
                     </button>
                 </div>
 
@@ -131,7 +137,7 @@ export const SmartAssistantPage: React.FC<Props> = ({ onBack }) => {
                 {/* Header (Mobile) */}
                 <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-30">
                     <button onClick={() => setSidebarOpen(true)} className="p-2 -mr-2 text-gray-400 hover:text-white"><Menu className="w-6 h-6"/></button>
-                    <span className="font-bold text-sm text-gray-200">مساعد مراد الجهني</span>
+                    <span className="font-bold text-sm text-gray-200">مساعد مراد الذكي</span>
                     <button onClick={() => setMessages([])} className="p-2 -ml-2 text-gray-400 hover:text-white"><Plus className="w-6 h-6"/></button>
                 </div>
 
@@ -139,17 +145,12 @@ export const SmartAssistantPage: React.FC<Props> = ({ onBack }) => {
                 <div className="flex-1 overflow-y-auto w-full scrollbar-thin scrollbar-thumb-gray-700/50 scrollbar-track-transparent">
                     {messages.length === 0 ? (
                         <div className="flex flex-col items-center justify-center min-h-full px-4 pb-20 pt-10">
-                            <div className="w-24 h-24 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-blue-900/50 animate-fade-in-up border border-white/10">
-                                <Bot className="w-12 h-12 text-white" />
+                            <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-3xl flex items-center justify-center mb-8 shadow-2xl shadow-blue-900/50 animate-fade-in-up">
+                                <span className="text-4xl font-black text-white">M</span>
                             </div>
-                            <h1 className="text-3xl md:text-5xl font-black text-white mb-4 text-center tracking-tight animate-fade-in-up delay-100 leading-tight">
-                                مساعد مراد الجهني الذكي
-                            </h1>
-                            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold mb-8 animate-fade-in-up delay-150">
-                                <Sparkles className="w-3 h-3"/> محرك بحث وتوليد متطور
-                            </div>
+                            <h1 className="text-3xl md:text-4xl font-black text-white mb-3 text-center tracking-tight animate-fade-in-up delay-100">مساعد مراد الجهني الذكي</h1>
                             <p className="text-gray-400 text-lg mb-12 text-center max-w-lg font-light leading-relaxed animate-fade-in-up delay-200">
-                                أنا مساعدك الشخصي الذكي، تم تطويري بواسطة المهندس مراد الجهني. اسألني عن أي شيء، ابحث في الويب، أو اطلب المساعدة التقنية.
+                                محرك بحث متطور، مساعد شخصي، وخبير تقني في منصة واحدة. كيف يمكنني مساعدتك اليوم؟
                             </p>
                             
                             <StarterPrompts onSelect={(prompt) => handleSend(prompt)} />

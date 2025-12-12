@@ -7,7 +7,6 @@ import {
 import { doc, updateDoc, increment, addDoc, collection, serverTimestamp, db, deleteDoc } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { formatRelativeTime } from '../../utils';
-import { VerificationSheet } from './VerificationSheet';
 
 interface PostCardProps {
     post: any;
@@ -27,23 +26,18 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
     const [retweeted, setRetweeted] = useState(false);
     const [retweetCount, setRetweetCount] = useState(post?.retweets || 0);
 
-    // Sheet State for Verification Info
-    const [showVerifySheet, setShowVerifySheet] = useState(false);
-
-    // Defensive check
+    // Defensive check: If post is null or empty object, return nothing
     if (!post || Object.keys(post).length === 0) return null;
     
+    // Ensure post.user exists and has default values if missing
     const postUser = post.user || {};
+    const userName = postUser.name || 'Unknown User';
     const userHandle = postUser.handle || '@unknown';
     const userAvatar = postUser.avatar || "https://api.dicebear.com/7.x/initials/svg?seed=Unknown";
+    // Fallback for UID to ensure clickable even if data is slightly malformed
     const userUid = postUser.uid || postUser.id || 'unknown';
 
-    // --- FOUNDER CHECK & NAME OVERRIDE ---
-    const isFounder = userHandle === '@IpMurad' || userUid === 'admin-fixed-id';
-    
-    // Force English Name for Founder
-    const displayName = isFounder ? "Murad Aljohani" : (postUser.name || 'Unknown User');
-
+    // Ensure uid exists before comparison
     const isOwner = user && userUid !== 'unknown' && user.id ? user.id === userUid : false;
     const canDelete = isAdmin || isOwner;
 
@@ -81,16 +75,12 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         }
     };
 
+    // --- CRITICAL FIX: PROFILE NAVIGATION HANDLER ---
     const handleProfileClick = (e: React.MouseEvent) => {
-        e.stopPropagation(); 
+        e.stopPropagation(); // Prevent opening post details
         if (onUserClick && userUid && userUid !== 'unknown') {
             onUserClick(userUid);
         }
-    };
-
-    const handleBadgeClick = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setShowVerifySheet(true);
     };
 
     const handleLike = async (e: React.MouseEvent) => {
@@ -161,28 +151,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
         if (onOpenLightbox) onOpenLightbox(img);
     };
 
-    const renderBadge = () => {
-        if (isFounder) {
-             return (
-                <span onClick={handleBadgeClick} className="cursor-pointer hover:opacity-80 transition-opacity ml-1 inline-flex shrink-0">
-                    <Crown className="w-4 h-4 text-[#ffd700] fill-[#ffd700]" />
-                </span>
-             );
-        }
-        if (postUser.isGold) {
-             return (
-                <span onClick={handleBadgeClick} className="cursor-pointer hover:opacity-80 transition-opacity ml-1 inline-flex shrink-0">
-                    <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-                </span>
-             );
-        }
-        if (postUser.verified) {
-             return (
-                <span onClick={handleBadgeClick} className="cursor-pointer hover:opacity-80 transition-opacity ml-1 inline-flex shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500" />
-                </span>
-             );
-        }
+    const renderBadge = (u: any) => {
+        if (!u) return null;
+        if (u.isGold) return <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400 ml-1" />;
+        if (u.verified) return <CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500 ml-1" />;
         return null;
     };
 
@@ -245,25 +217,15 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
 
     if (post.type === 'repost') {
         const originalUser = post.originalUser || { name: 'Unknown', handle: '@unknown', uid: 'unknown' };
+        // Determine original user UID safely
         const origUid = originalUser.uid || originalUser.id || 'unknown';
-        const isOriginalFounder = originalUser.handle === '@IpMurad' || origUid === 'admin-fixed-id';
-        const origDisplayName = isOriginalFounder ? "Murad Aljohani" : originalUser.name;
         
-        // Badge for original user
-        const renderOrigBadge = () => {
-            if (isOriginalFounder) return <span onClick={(e)=>{e.stopPropagation(); setShowVerifySheet(true);}} className="cursor-pointer ml-1 inline-flex shrink-0"><Crown className="w-3.5 h-3.5 text-[#ffd700] fill-[#ffd700]" /></span>;
-            if (originalUser.isGold) return <span onClick={(e)=>{e.stopPropagation(); setShowVerifySheet(true);}} className="cursor-pointer ml-1 inline-flex shrink-0"><Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" /></span>;
-            if (originalUser.verified) return <span onClick={(e)=>{e.stopPropagation(); setShowVerifySheet(true);}} className="cursor-pointer ml-1 inline-flex shrink-0"><CheckCircle2 className="w-3.5 h-3.5 text-blue-500 fill-blue-500" /></span>;
-            return null;
-        };
-
         return (
-            <>
             <div className="p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors cursor-pointer" onClick={onClick} dir="rtl">
                 <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2 text-[#71767b] text-xs font-bold">
                         <Repeat className="w-3 h-3"/>
-                        <span onClick={handleProfileClick} className="hover:underline cursor-pointer">{displayName} أعاد النشر</span>
+                        <span onClick={handleProfileClick} className="hover:underline cursor-pointer">{userName} أعاد النشر</span>
                     </div>
                     {canDelete && (
                         <button className="text-gray-500 hover:text-red-500 transition-colors p-1.5 rounded-full hover:bg-red-500/10" onClick={handleDelete}>
@@ -278,8 +240,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                         </div>
                         <div>
                              <div className="flex items-center gap-1 text-[14px]">
-                                <span className="font-bold text-[#e7e9ea] hover:underline" onClick={(e) => { e.stopPropagation(); if (onUserClick && origUid !== 'unknown') onUserClick(origUid); }}>{origDisplayName}</span>
-                                {renderOrigBadge()}
+                                <span className="font-bold text-[#e7e9ea] hover:underline" onClick={(e) => { e.stopPropagation(); if (onUserClick && origUid !== 'unknown') onUserClick(origUid); }}>{originalUser.name}</span>
+                                {renderBadge(originalUser)}
                                 <span className="text-[#71767b] text-sm" dir="ltr">{originalUser.handle}</span>
                             </div>
                             <div className="text-[14px] text-[#e7e9ea] mt-1">
@@ -289,19 +251,10 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                     </div>
                 </div>
             </div>
-            
-            {/* Modal */}
-            <VerificationSheet 
-                isOpen={showVerifySheet} 
-                onClose={() => setShowVerifySheet(false)} 
-                user={post.originalUser} // Pass original user for the modal
-            />
-            </>
         );
     }
 
     return (
-        <>
         <div 
             className={`flex gap-3 p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors cursor-pointer ${post.isPinned ? 'bg-[#16181c]/50' : ''} font-sans`}
             onClick={onClick}
@@ -311,7 +264,7 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                 <img 
                     src={userAvatar} 
                     className="w-11 h-11 rounded-full object-cover border border-[#2f3336] hover:opacity-80 transition-opacity" 
-                    alt={displayName} 
+                    alt={userName} 
                 />
             </div>
 
@@ -319,8 +272,8 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                 <div className="flex items-center justify-between text-[#71767b] text-[15px] leading-tight mb-1">
                     <div className="flex items-center gap-1 overflow-hidden">
                         {post.isPinned && <Pin className="w-3 h-3 text-[#71767b] fill-current mr-1" />}
-                        <span className="font-bold text-[#e7e9ea] truncate hover:underline" onClick={handleProfileClick}>{displayName}</span>
-                        {renderBadge()}
+                        <span className="font-bold text-[#e7e9ea] truncate hover:underline" onClick={handleProfileClick}>{userName}</span>
+                        {renderBadge(postUser)}
                         <span className="truncate text-[#71767b] ml-1 text-sm" dir="ltr">{userHandle}</span>
                         <span className="text-[#71767b] px-1">·</span>
                         <span className="text-[#71767b] text-sm hover:underline">{formatRelativeTime(post.createdAt || post.timestamp)}</span>
@@ -407,14 +360,6 @@ export const PostCard: React.FC<PostCardProps> = ({ post, onOpenLightbox, onShar
                     </div>
                 </div>
             </div>
-            
-            {/* Sheet */}
-            <VerificationSheet 
-                isOpen={showVerifySheet} 
-                onClose={() => setShowVerifySheet(false)} 
-                user={postUser} 
-            />
         </div>
-        </>
     );
 };

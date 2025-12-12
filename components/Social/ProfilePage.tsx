@@ -1,6 +1,5 @@
-
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu } from 'lucide-react';
 import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
@@ -112,6 +111,8 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
                     coverImage: "https://ui-avatars.com/api/?name=M&background=000000&color=ffffff&size=1920&font-size=0.5&bold=true&length=1",
                     bio: "بجانبك هل تراني ؟",
+                    phone: "0590113665",
+                    skills: ["Leadership", "Innovation", "Development"],
                     address: "Digital World",
                     createdAt: new Date(2025, 0, 1).toISOString(),
                     lastLogin: new Date().toISOString(),
@@ -125,7 +126,10 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     followersCount: 450000000, 
                     followingCount: 0, 
                     primeSubscription: { status: 'active' } as any,
-                    customFormFields: { website: 'https://murad-group.com' }
+                    customFormFields: { 
+                        website: 'https://murad-group.com',
+                        educationBio: 'كليات الخليج'
+                    }
                 } as User;
                 
                 setProfileUser(userData);
@@ -235,12 +239,13 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
         : 'منذ فترة';
     
     const websiteUrl = profileUser.customFormFields?.website || profileUser.businessProfile?.website;
+    const educationBio = profileUser.customFormFields?.educationBio;
+    const skillsBio = profileUser.skills;
 
     const displayFollowers = profileUser.followersCount !== undefined ? profileUser.followersCount : (profileUser.followers?.length || 0);
     const displayFollowing = profileUser.followingCount !== undefined ? profileUser.followingCount : (profileUser.following?.length || 0);
 
     const isAdminUser = profileUser.role === 'admin' || ADMIN_BYPASS_IDS.includes(profileUser.id);
-    const isFounder = profileUser.username === 'IpMurad' || profileUser.id === 'admin-fixed-id' || profileUser.id === 'admin-murad-main-id';
 
     return (
         <div className="min-h-screen bg-black text-[#e7e9ea] font-sans pb-20" dir="rtl">
@@ -322,17 +327,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     <h1 className="font-black text-xl text-white flex items-center gap-1 flex-wrap">
                         {profileUser.name}
                         {profileUser.isVerified && <CheckCircle2 className="w-5 h-5 text-[#1d9bf0] fill-[#1d9bf0] text-white" />}
-                        {isFounder && (
-                            <span className="flex items-center gap-1 px-2 py-0.5 mx-1 bg-yellow-500/10 border border-yellow-500/40 rounded-full">
-                                <span className="text-[10px] font-bold text-yellow-500 leading-none pb-0.5">
-                                    حساب المؤسس الرسمي
-                                </span>
-                                <svg className="w-3 h-3 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
-                                    <path d="M10 2a1 1 0 011 1v1.323l3.954 1.582 1.599-.8a1 1 0 01.894 1.79l-1.233.616 1.738 5.42a1 1 0 01-.285 1.05A3.989 3.989 0 0115 15a3.989 3.989 0 01-2.667-1.019 1 1 0 00-.556.834c-.045.722-1.133.722-1.178 0a1 1 0 00-.556-.834A3.989 3.989 0 017.333 15 3.989 3.989 0 015 13.97a1 1 0 01-.285-1.05l1.738-5.42-1.233-.616a1 1 0 01.894-1.79l1.599.8L10 4.323V3a1 1 0 011-1z" />
-                                </svg>
-                            </span>
-                        )}
-                        {isAdminUser && !isFounder && (
+                        {isAdminUser && (
                             <div className="relative inline-block">
                                 <span 
                                     onClick={() => setShowAdminTooltip(!showAdminTooltip)}
@@ -342,11 +337,11 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                                     <span>مسؤول (Admin)</span>
                                 </span>
                                 {showAdminTooltip && (
-                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 bg-[#1e293b] border border-amber-500/30 text-white text-xs p-3 rounded-xl shadow-xl z-50 text-center animate-fade-in-up">
+                                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-64 bg-[#1e293b] border border-amber-500/30 text-white text-xs p-3 rounded-xl shadow-xl z-50 text-center animate-fade-in-up">
                                         <div className="font-bold text-amber-500 mb-1 flex items-center justify-center gap-1">
-                                            <ShieldCheck className="w-3 h-3"/> هذا الحساب موثَّق.
+                                            <ShieldCheck className="w-3 h-3"/> حساب موثَّق
                                         </div>
-                                        <p className="text-gray-300">لانه من مالك المجتمع</p>
+                                        <p className="text-gray-300">تم توثيق هذا الحساب لكونه الحساب الرسمي لمؤسس ومالك مجتمع ميلاف.</p>
                                         <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1e293b] border-b border-r border-amber-500/30 rotate-45"></div>
                                     </div>
                                 )}
@@ -363,8 +358,50 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     <p className="mt-3 text-[15px] text-[#e7e9ea] leading-relaxed whitespace-pre-wrap">{profileUser.bio}</p>
                 )}
 
+                {/* --- New Bio Additions: Phone, Education, Skills --- */}
+                <div className="mt-3 space-y-2">
+                    {/* Phone Number (Verified) */}
+                    {profileUser.phone && (
+                        <div className="flex items-center gap-2 text-sm">
+                            <div className="p-1.5 bg-emerald-500/10 rounded-full">
+                                <Phone className="w-3.5 h-3.5 text-emerald-500" />
+                            </div>
+                            <span className="font-mono text-[#e7e9ea] dir-ltr">{profileUser.phone}</span>
+                            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold border border-emerald-500/30">
+                                <CheckCircle2 className="w-3 h-3" /> رقم هاتف موثق
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Education */}
+                    {educationBio && (
+                        <div className="flex items-start gap-2 text-sm">
+                            <div className="p-1.5 bg-blue-500/10 rounded-full mt-0.5">
+                                <GraduationCap className="w-3.5 h-3.5 text-blue-400" />
+                            </div>
+                            <span className="text-gray-300 leading-snug">{educationBio}</span>
+                        </div>
+                    )}
+
+                    {/* Skills */}
+                    {skillsBio && skillsBio.length > 0 && (
+                        <div className="flex items-start gap-2 text-sm mt-1">
+                            <div className="p-1.5 bg-purple-500/10 rounded-full mt-0.5">
+                                <Cpu className="w-3.5 h-3.5 text-purple-400" />
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                {skillsBio.map((skill, index) => (
+                                    <span key={index} className="bg-[#16181c] border border-[#2f3336] text-gray-300 px-2 py-0.5 rounded-md text-xs">
+                                        {skill}
+                                    </span>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+                </div>
+
                 {/* Metadata */}
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[#71767b] text-[14px] mt-3 items-center">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[#71767b] text-[14px] mt-4 pt-3 border-t border-[#2f3336] items-center">
                     {profileUser.address && (
                         <div className="flex items-center gap-1">
                             <MapPin className="w-4 h-4"/> {profileUser.address}
@@ -380,6 +417,38 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     )}
                     <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4"/> انضم في {joinDate}
+                    </div>
+                    
+                    {/* About Icon (M) */}
+                    <div className="relative group cursor-pointer">
+                        <div className="w-5 h-5 rounded-full bg-[#71767b] flex items-center justify-center text-black font-black text-[10px] hover:bg-white transition-colors">
+                            M
+                        </div>
+                        
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-[#1e293b] border border-white/10 rounded-xl p-4 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 text-right">
+                             <h3 className="text-white font-bold text-sm border-b border-white/10 pb-2 mb-2">بطاقة المعلومات</h3>
+                             <div className="space-y-2 text-xs">
+                                 <div className="flex justify-between">
+                                     <span className="text-gray-500">الاسم الكامل:</span>
+                                     <span className="text-gray-200">{profileUser.name}</span>
+                                 </div>
+                                 <div className="flex justify-between">
+                                     <span className="text-gray-500">الحالة:</span>
+                                     <span className={profileUser.isIdentityVerified ? "text-emerald-400" : "text-gray-400"}>
+                                        {profileUser.isIdentityVerified ? 'موثق رسمياً' : 'عضو'}
+                                     </span>
+                                 </div>
+                                 <div className="flex justify-between">
+                                     <span className="text-gray-500">تاريخ الانضمام:</span>
+                                     <span className="text-gray-200 font-mono">{new Date(profileUser.createdAt).toLocaleDateString('en-GB')}</span>
+                                 </div>
+                                 <div className="flex justify-between">
+                                     <span className="text-gray-500">المعرف:</span>
+                                     <span className="text-gray-200 font-mono">{profileUser.trainingId || profileUser.id.substring(0,8)}</span>
+                                 </div>
+                             </div>
+                             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1e293b] rotate-45 border-b border-r border-white/10"></div>
+                        </div>
                     </div>
                 </div>
 
