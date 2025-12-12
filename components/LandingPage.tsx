@@ -15,7 +15,6 @@ import { VideoGalleryModal } from './VideoGalleryModal';
 import { UniversityRegistrationModal } from './UniversityRegistrationModal';
 import { TraineeJourney } from './TraineeJourney';
 import { FoundersMessage } from './FoundersMessage';
-import { loginWithGithub, loginWithYahoo } from '../src/services/authService';
 
 interface LandingPageProps {
   onStart: () => void;
@@ -64,24 +63,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, onSearch, onO
   const handleStartJourney = () => {
       // Trigger the new University Registration Flow
       setIsUniversityRegOpen(true);
-  };
-
-  const handleGithubLogin = async () => {
-    try {
-        await loginWithGithub();
-        onStart(); // Navigate to dashboard upon success
-    } catch (e) {
-        console.error("Github Login Failed from Landing", e);
-    }
-  };
-
-  const handleYahooLogin = async () => {
-    try {
-        await loginWithYahoo();
-        onStart(); // Navigate to dashboard upon success
-    } catch (e) {
-        console.error("Yahoo Login Failed from Landing", e);
-    }
   };
 
   // --- HERO SLIDER DATA ---
@@ -205,24 +186,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, onSearch, onO
                             <button onClick={() => setIsVideoGalleryOpen(true)} className="px-10 py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold text-lg border border-white/20 transition-all flex items-center justify-center gap-3 backdrop-blur-md active:scale-95 touch-manipulation">
                                 <PlayCircle className="w-6 h-6"/> شاهد الفيديو
                             </button>
-                            {index === 0 && (
-                                <div className="flex gap-2">
-                                    <button 
-                                        onClick={handleGithubLogin} 
-                                        className="px-6 py-4 bg-[#24292e] hover:bg-[#1b1f23] text-white rounded-xl font-bold text-lg border border-white/10 transition-all flex items-center justify-center gap-3 shadow-lg active:scale-95 touch-manipulation"
-                                        title="تسجيل الدخول باستخدام GitHub"
-                                    >
-                                        <Github className="w-6 h-6"/>
-                                    </button>
-                                    <button 
-                                        onClick={handleYahooLogin} 
-                                        className="px-6 py-4 bg-[#5f01d1] hover:bg-[#5000b0] text-white rounded-xl font-bold text-lg border border-white/10 transition-all flex items-center justify-center gap-3 shadow-lg active:scale-95 touch-manipulation"
-                                        title="تسجيل الدخول باستخدام Yahoo"
-                                    >
-                                        <Mail className="w-6 h-6"/>
-                                    </button>
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>

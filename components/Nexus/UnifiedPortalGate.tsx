@@ -40,16 +40,7 @@ export const UnifiedPortalGate: React.FC<Props> = ({ isOpen, onClose, onLoginSuc
                 onLoginSuccess();
                 onClose();
             } else {
-                // Mock success for demo if specific keywords are used
-                if (identifier.length > 3) {
-                    // Force login for demo purposes if backend fails
-                    // In production, handle error properly
-                    await login({ name: 'المستخدم التجريبي', email: 'demo@mylaf.com' }, 'password');
-                    onLoginSuccess();
-                    onClose();
-                } else {
-                    setError('بيانات الدخول غير صحيحة');
-                }
+                setError('بيانات الدخول غير صحيحة');
             }
         }, 1500);
     };

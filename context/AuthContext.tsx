@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Notification, LoginProvider } from '../types';
 import { 
@@ -5,7 +6,8 @@ import {
     googleProvider, facebookProvider, twitterProvider, githubProvider,
     signInWithPopup, signOut, onAuthStateChanged,
     doc, setDoc, getDoc, collection, addDoc, updateDoc,
-    ref, uploadBytes, getDownloadURL
+    ref, uploadBytes, getDownloadURL,
+    OAuthProvider
 } from '../src/lib/firebase'; // Use local shim
 import { WalletSystem } from '../services/Economy/WalletSystem';
 import { SubscriptionCore } from '../services/Subscription/SubscriptionCore';
@@ -255,6 +257,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         case 'facebook': provider = facebookProvider; break;
         case 'twitter': provider = twitterProvider; break;
         case 'github': provider = githubProvider; break;
+        case 'yahoo': provider = new OAuthProvider('yahoo.com'); break;
+        case 'microsoft': provider = new OAuthProvider('microsoft.com'); break;
       }
 
       if (provider && auth) {
@@ -263,29 +267,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
          throw new Error(`Provider ${providerName} not supported via Firebase.`);
       }
     } catch (error: any) {
-      // Handle Unauthorized Domain Error specifically
-      if (error.code === 'auth/unauthorized-domain') {
-        console.warn(`[Auth] Domain not authorized in Firebase Console. This is expected in preview environments (localhost/stackblitz). Falling back to Demo User.`);
-        alert("⚠️ تنبيه: البيئة الحالية غير مصرح لها باستخدام تسجيل الدخول المباشر (Firebase Auth Domain). سيتم تسجيل الدخول كمستخدم تجريبي.");
-      } else {
-        console.error(`${providerName} Sign In Error:`, error);
-      }
-      
-      // Fallback Logic for Preview Environments or Errors
-      console.warn(`Activating Fail-Safe Demo Mode for ${providerName} due to error.`);
-      
-      const demoUser = createMockUser({
-          id: `${providerName}_user_${Date.now()}`,
-          name: `مستخدم ${providerName.charAt(0).toUpperCase() + providerName.slice(1)} (تجريبي)`,
-          email: `user@${providerName}.com`,
-          avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${providerName}`,
-          loginMethod: providerName,
-          isIdentityVerified: true
-      });
-      
-      setUser(demoUser);
-      localStorage.setItem('mylaf_session', JSON.stringify(demoUser));
-      saveUserToDB(demoUser);
+      console.error(`${providerName} Sign In Error:`, error);
+      alert("فشل تسجيل الدخول. يرجى التحقق من الإعدادات أو المحاولة لاحقاً.");
+      // No fallback to demo user here. Strict auth.
     }
   };
 

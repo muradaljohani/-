@@ -1,7 +1,7 @@
 
 import { auth, db, googleProvider, githubProvider, signInWithPopup, signOut } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, OAuthProvider } from 'firebase/auth';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, OAuthProvider, linkWithPopup, User } from 'firebase/auth';
 
 const ADMIN_EMAIL = "mrada4231@gmail.com"; // The ONLY Super Admin
 
@@ -200,6 +200,48 @@ export const loginWithYahoo = async () => {
     }
     throw error;
   }
+};
+
+/**
+ * Link an authentication provider to the current user
+ */
+export const linkAccount = async (currentUser: User, providerName: 'google' | 'github' | 'yahoo') => {
+    let provider;
+    
+    switch (providerName) {
+        case 'google':
+            provider = googleProvider;
+            break;
+        case 'github':
+            provider = githubProvider;
+            break;
+        case 'yahoo':
+            provider = new OAuthProvider('yahoo.com');
+            break;
+        default:
+            throw new Error('Unknown provider');
+    }
+
+    try {
+        const result = await linkWithPopup(currentUser, provider);
+        const user = result.user;
+        const userRef = doc(db, 'users', user.uid);
+        
+        // Update flags in Firestore
+        const updateData: any = { isVerified: true }; // General verification boost
+        if (providerName === 'github') updateData.isGithubVerified = true;
+        if (providerName === 'yahoo') updateData.isYahooVerified = true;
+        
+        await setDoc(userRef, updateData, { merge: true });
+        
+        return user;
+    } catch (error: any) {
+        console.error("Link Account Error:", error);
+        if (error.code === 'auth/credential-already-in-use') {
+            throw new Error('هذا الحساب مرتبط بالفعل بمستخدم آخر.');
+        }
+        throw error;
+    }
 };
 
 /**

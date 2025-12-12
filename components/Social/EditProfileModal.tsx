@@ -1,93 +1,31 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Camera, Save, Loader2, Link as LinkIcon, MapPin, Youtube, Phone, GraduationCap, Cpu, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { X, Camera, Save, Loader2, Link as LinkIcon, MapPin, Youtube, Phone, GraduationCap, Cpu, ShieldCheck, Eye, EyeOff, CheckCircle2, Github, Mail, Globe } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { uploadImage } from '../../src/services/storageService';
 import { PhoneVerifyModal } from './PhoneVerifyModal';
+import { linkAccount } from '../../src/services/authService';
+import { auth } from '../../src/lib/firebase';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
 }
 
-// Comprehensive List of Country Codes
-const COUNTRY_CODES = [
-    // GCC & Arab World
-    { code: '+966', country: 'السعودية', flag: '🇸🇦' },
-    { code: '+971', country: 'الإمارات', flag: '🇦🇪' },
-    { code: '+965', country: 'الكويت', flag: '🇰🇼' },
-    { code: '+974', country: 'قطر', flag: '🇶🇦' },
-    { code: '+968', country: 'عمان', flag: '🇴🇲' },
-    { code: '+973', country: 'البحرين', flag: '🇧🇭' },
-    { code: '+20', country: 'مصر', flag: '🇪🇬' },
-    { code: '+964', country: 'العراق', flag: '🇮🇶' },
-    { code: '+962', country: 'الأردن', flag: '🇯🇴' },
-    { code: '+961', country: 'لبنان', flag: '🇱🇧' },
-    { code: '+970', country: 'فلسطين', flag: '🇵🇸' },
-    { code: '+963', country: 'سوريا', flag: '🇸🇾' },
-    { code: '+967', country: 'اليمن', flag: '🇾🇪' },
-    { code: '+218', country: 'ليبيا', flag: '🇱🇾' },
-    { code: '+249', country: 'السودان', flag: '🇸🇩' },
-    { code: '+212', country: 'المغرب', flag: '🇲🇦' },
-    { code: '+216', country: 'تونس', flag: '🇹🇳' },
-    { code: '+213', country: 'الجزائر', flag: '🇩🇿' },
-    { code: '+222', country: 'موريتانيا', flag: '🇲🇷' },
-    { code: '+252', country: 'الصومال', flag: '🇸🇴' },
-    { code: '+253', country: 'جيبوتي', flag: '🇩🇯' },
-    { code: '+269', country: 'جزر القمر', flag: '🇰🇲' },
+// --- Custom Icons for Providers ---
+const GoogleIcon = () => (
+    <svg className="w-4 h-4" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#fff"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+);
 
-    // North America
-    { code: '+1', country: 'أمريكا/كندا', flag: '🇺🇸/🇨🇦' },
-
-    // Europe
-    { code: '+44', country: 'المملكة المتحدة', flag: '🇬🇧' },
-    { code: '+49', country: 'ألمانيا', flag: '🇩🇪' },
-    { code: '+33', country: 'فرنسا', flag: '🇫🇷' },
-    { code: '+39', country: 'إيطاليا', flag: '🇮🇹' },
-    { code: '+34', country: 'إسبانيا', flag: '🇪🇸' },
-    { code: '+31', country: 'هولندا', flag: '🇳🇱' },
-    { code: '+32', country: 'بلجيكا', flag: '🇧🇪' },
-    { code: '+41', country: 'سويسرا', flag: '🇨🇭' },
-    { code: '+46', country: 'السويد', flag: '🇸🇪' },
-    { code: '+47', country: 'النرويج', flag: '🇳🇴' },
-    { code: '+45', country: 'الدانمارك', flag: '🇩🇰' },
-    { code: '+353', country: 'أيرلندا', flag: '🇮🇪' },
-    { code: '+7', country: 'روسيا', flag: '🇷🇺' },
-    { code: '+380', country: 'أوكرانيا', flag: '🇺🇦' },
-    { code: '+90', country: 'تركيا', flag: '🇹🇷' },
-    { code: '+30', country: 'اليونان', flag: '🇬🇷' },
-
-    // Asia
-    { code: '+91', country: 'الهند', flag: '🇮🇳' },
-    { code: '+92', country: 'باكستان', flag: '🇵🇰' },
-    { code: '+880', country: 'بنغلاديش', flag: '🇧🇩' },
-    { code: '+94', country: 'سريلانكا', flag: '🇱🇰' },
-    { code: '+63', country: 'الفلبين', flag: '🇵🇭' },
-    { code: '+62', country: 'إندونيسيا', flag: '🇮🇩' },
-    { code: '+60', country: 'ماليزيا', flag: '🇲🇾' },
-    { code: '+65', country: 'سنغافورة', flag: '🇸🇬' },
-    { code: '+66', country: 'تايلاند', flag: '🇹🇭' },
-    { code: '+84', country: 'فيتنام', flag: '🇻🇳' },
-    { code: '+86', country: 'الصين', flag: '🇨🇳' },
-    { code: '+81', country: 'اليابان', flag: '🇯🇵' },
-    { code: '+82', country: 'كوريا الجنوبية', flag: '🇰🇷' },
-
-    // Oceania
-    { code: '+61', country: 'أستراليا', flag: '🇦🇺' },
-    { code: '+64', country: 'نيوزيلندا', flag: '🇳🇿' },
-
-    // South America & Africa (Others)
-    { code: '+55', country: 'البرازيل', flag: '🇧🇷' },
-    { code: '+54', country: 'الأرجنتين', flag: '🇦🇷' },
-    { code: '+27', country: 'جنوب أفريقيا', flag: '🇿🇦' },
-    { code: '+234', country: 'نيجيريا', flag: '🇳🇬' },
-    { code: '+251', country: 'إثيوبيا', flag: '🇪🇹' },
-];
+const YahooIcon = () => (
+    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="#fff"><path d="M12 12.5L8.5 4H5.5l5 9.5V20h3v-6.5l5-9.5h-3L12 12.5z"/></svg>
+);
 
 export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const { user, updateProfile } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [isPhoneVerifyOpen, setIsPhoneVerifyOpen] = useState(false);
+  const [isLinking, setIsLinking] = useState<string | null>(null); // 'google', 'yahoo', 'github' or null
 
   // Form State
   const [formData, setFormData] = useState({
@@ -120,22 +58,42 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
         photoURL: user.avatar || '',
         bannerURL: user.coverImage || '',
         phoneNumber: user.phone || '',
-        isPhoneHidden: user.isPhoneHidden || false, // Assuming isPhoneHidden exists on User type or handled loosely
+        isPhoneHidden: user.isPhoneHidden || false, 
         educationBio: user.customFormFields?.educationBio || '',
         skillsBio: user.skills ? user.skills.join(', ') : ''
       });
     }
   }, [user, isOpen]);
 
+  // Determine Linked Accounts
+  const firebaseUser = auth.currentUser;
+  const providerData = firebaseUser?.providerData || [];
+  
+  const isGoogleLinked = providerData.some(p => p.providerId === 'google.com');
+  const isGithubLinked = providerData.some(p => p.providerId === 'github.com');
+  const isYahooLinked = providerData.some(p => p.providerId === 'yahoo.com');
+
   if (!isOpen || !user) return null;
+
+  const handleLinkAccount = async (provider: 'google' | 'github' | 'yahoo') => {
+      if (!firebaseUser) return;
+      setIsLinking(provider);
+      try {
+          await linkAccount(firebaseUser, provider);
+          alert(`تم ربط حساب ${provider} وتوثيقه بنجاح!`);
+          // Note: State update will happen automatically via AuthContext listener or re-render
+      } catch (e: any) {
+          alert(e.message || "فشل الربط");
+      } finally {
+          setIsLinking(null);
+      }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
 
-    // --- USERNAME VALIDATION LOGIC ---
     if (formData.displayName.toLowerCase().includes('murad')) {
-         // Check if user is authorized (Admin or Bot)
          const authorizedIds = ['admin-fixed-id', 'murad-ai-bot-id', 'admin-murad-id'];
          if (!authorizedIds.includes(user.id)) {
              alert("عذراً، استخدام اسم 'Murad' في الاسم الظاهر محجوز للإدارة والنظام فقط.");
@@ -143,7 +101,6 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
              return;
          }
     }
-    // ----------------------------------
 
     try {
       const skillsArray = formData.skillsBio.split(',').map(s => s.trim()).filter(Boolean);
@@ -154,7 +111,6 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
         address: formData.location,
         avatar: formData.photoURL,
         coverImage: formData.bannerURL,
-        // Phone is updated via PhoneVerifyModal, but we persist the hidden flag here
         isPhoneHidden: formData.isPhoneHidden, 
         skills: skillsArray,
         customFormFields: {
@@ -176,7 +132,7 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'banner') => {
       if (e.target.files && e.target.files[0]) {
           const file = e.target.files[0];
-          setIsSaving(true); // Block saving while uploading
+          setIsSaving(true);
           
           try {
               const path = `users/${user.id}/${type}_${Date.now()}`;
@@ -275,37 +231,96 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
                 />
               </div>
 
-              {/* Phone Number Section (STRICT SMS VERIFICATION) */}
-              <div className="space-y-1">
-                  <label className="text-slate-500 text-xs font-bold px-1 flex items-center gap-2">
-                    <Phone className="w-3 h-3"/> رقم الجوال الموثق
-                  </label>
-                  <div className="flex gap-2 items-center">
-                      <div className="flex-1 relative">
-                          <input 
-                              type="text"
-                              value={formData.phoneNumber || 'غير مرتبط'}
-                              disabled
-                              className="w-full bg-[#16181c] border border-slate-700 rounded-md p-3 pl-10 text-white font-mono opacity-70 cursor-not-allowed"
-                              dir="ltr"
-                          />
-                          {formData.phoneNumber && (
-                              <div className="absolute left-3 top-3.5 flex items-center gap-1 text-emerald-500">
-                                  <ShieldCheck className="w-4 h-4"/>
+              {/* --- VERIFICATION SECTION (New & Existing) --- */}
+              <div className="space-y-3 pt-4 border-t border-slate-800">
+                  <h3 className="text-white font-bold text-sm flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-emerald-500"/> التوثيق والأمان
+                  </h3>
+                  
+                  {/* Phone Verification */}
+                  <div className="flex items-center justify-between bg-[#16181c] p-3 rounded-lg border border-slate-700">
+                      <div className="flex items-center gap-3">
+                          <div className="p-2 bg-emerald-500/10 rounded-full text-emerald-500">
+                              <Phone className="w-4 h-4"/>
+                          </div>
+                          <div>
+                              <div className="text-white text-xs font-bold">رقم الجوال</div>
+                              <div className="text-gray-500 text-[10px] dir-ltr text-right">
+                                  {formData.phoneNumber || 'غير مرتبط'}
                               </div>
-                          )}
+                          </div>
                       </div>
                       <button 
                           type="button"
                           onClick={() => setIsPhoneVerifyOpen(true)}
-                          className="px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md font-bold text-xs transition-colors whitespace-nowrap"
+                          className="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded text-xs font-bold transition-colors"
                       >
-                          {formData.phoneNumber ? 'تغيير الرقم' : 'ربط رقم'}
+                          {formData.phoneNumber ? 'تغيير' : 'ربط'}
                       </button>
                   </div>
-                  
+
+                  {/* Social Linking (New) */}
+                  <div className="grid grid-cols-1 gap-2">
+                      {/* Google */}
+                      <div className="flex items-center justify-between bg-[#16181c] p-3 rounded-lg border border-slate-700">
+                          <div className="flex items-center gap-3">
+                              <div className="p-2 bg-red-500/10 rounded-full">
+                                  <GoogleIcon />
+                              </div>
+                              <div className="text-white text-xs font-bold">Google</div>
+                          </div>
+                          <button 
+                              type="button"
+                              onClick={() => !isGoogleLinked && handleLinkAccount('google')}
+                              disabled={isGoogleLinked || isLinking === 'google'}
+                              className={`px-3 py-1.5 rounded text-xs font-bold transition-colors flex items-center gap-1 ${isGoogleLinked ? 'text-emerald-400 cursor-default' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
+                          >
+                              {isLinking === 'google' && <Loader2 className="w-3 h-3 animate-spin"/>}
+                              {isGoogleLinked ? <><CheckCircle2 className="w-3 h-3"/> موثق</> : 'ربط وتوثيق'}
+                          </button>
+                      </div>
+
+                      {/* Yahoo */}
+                      <div className="flex items-center justify-between bg-[#16181c] p-3 rounded-lg border border-slate-700">
+                          <div className="flex items-center gap-3">
+                              <div className="p-2 bg-purple-500/20 rounded-full">
+                                  <YahooIcon />
+                              </div>
+                              <div className="text-white text-xs font-bold">Yahoo</div>
+                          </div>
+                          <button 
+                              type="button"
+                              onClick={() => !isYahooLinked && handleLinkAccount('yahoo')}
+                              disabled={isYahooLinked || isLinking === 'yahoo'}
+                              className={`px-3 py-1.5 rounded text-xs font-bold transition-colors flex items-center gap-1 ${isYahooLinked ? 'text-emerald-400 cursor-default' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
+                          >
+                              {isLinking === 'yahoo' && <Loader2 className="w-3 h-3 animate-spin"/>}
+                              {isYahooLinked ? <><CheckCircle2 className="w-3 h-3"/> موثق</> : 'ربط وتوثيق'}
+                          </button>
+                      </div>
+
+                      {/* GitHub */}
+                      <div className="flex items-center justify-between bg-[#16181c] p-3 rounded-lg border border-slate-700">
+                          <div className="flex items-center gap-3">
+                              <div className="p-2 bg-gray-700/50 rounded-full text-white">
+                                  <Github className="w-4 h-4"/>
+                              </div>
+                              <div className="text-white text-xs font-bold">GitHub</div>
+                          </div>
+                          <button 
+                              type="button"
+                              onClick={() => !isGithubLinked && handleLinkAccount('github')}
+                              disabled={isGithubLinked || isLinking === 'github'}
+                              className={`px-3 py-1.5 rounded text-xs font-bold transition-colors flex items-center gap-1 ${isGithubLinked ? 'text-emerald-400 cursor-default' : 'bg-slate-800 hover:bg-slate-700 text-white'}`}
+                          >
+                              {isLinking === 'github' && <Loader2 className="w-3 h-3 animate-spin"/>}
+                              {isGithubLinked ? <><CheckCircle2 className="w-3 h-3"/> موثق</> : 'ربط وتوثيق'}
+                          </button>
+                      </div>
+                  </div>
+
                   {/* Privacy Toggle */}
-                  <div className="flex items-center gap-2 mt-2 px-1">
+                  <div className="flex items-center gap-2 mt-2 px-1 pt-2">
                       <button 
                           type="button" 
                           onClick={() => setFormData(prev => ({ ...prev, isPhoneHidden: !prev.isPhoneHidden }))}
@@ -315,7 +330,7 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
                       </button>
                       <span className="text-xs text-slate-400 flex items-center gap-1">
                           {formData.isPhoneHidden ? <EyeOff className="w-3 h-3"/> : <Eye className="w-3 h-3"/>}
-                          إخفاء الرقم في الملف الشخصي
+                          إخفاء رقم الهاتف في الملف الشخصي
                       </span>
                   </div>
               </div>
