@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Phone, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
-import { doc, updateDoc, db } from '../../src/lib/firebase';
+import { doc, updateDoc, db, auth } from '../../src/lib/firebase';
 import { verifyUserPhoneNumber, confirmPhoneCode, setupRecaptcha } from '../../src/services/authService';
 import { useAuth } from '../../context/AuthContext';
 import { ConfirmationResult } from 'firebase/auth';
@@ -28,37 +28,61 @@ export const PhoneVerifyModal: React.FC<Props> = ({ isOpen, onClose }) => {
         setOtp('');
         setError('');
         setLoading(false);
+        setConfirmationResult(null);
 
-        // Cleanup on unmount/close to prevent "client element has been removed"
-        return () => {
-            if ((window as any).recaptchaVerifier) {
-                try { (window as any).recaptchaVerifier.clear(); } catch(e) {}
-                (window as any).recaptchaVerifier = null;
-            }
-        };
+        // Cleanup on open to ensure clean slate for Recaptcha
+        if ((window as any).recaptchaVerifier) {
+            try { (window as any).recaptchaVerifier.clear(); } catch(e) {}
+            (window as any).recaptchaVerifier = null;
+        }
     }
   }, [isOpen, user]);
 
   const handleSendCode = async () => {
-    if (!phone) return setError("يرجى إدخال رقم الهاتف");
+    // 1. Validation
+    if (!phone) {
+        alert("يرجى إدخال رقم الهاتف");
+        return;
+    }
+
+    // E.164 Format Check
+    if (!phone.startsWith('+')) {
+        alert("تنبيه: يرجى إدخال الرقم بالصيغة الدولية.\nمثال: +966500000000");
+        return;
+    }
+
     setLoading(true);
     setError('');
-    
+
+    console.log("[PhoneVerify] REAL Firebase Request to:", phone);
+
     try {
-      // Initialize reCAPTCHA on the specific DOM element
-      // Using a slight delay to ensure DOM is rendered if necessary, mostly for safety
+      // 2. Initialize Recaptcha (Robust)
       const appVerifier = setupRecaptcha('recaptcha-container');
       
+      // 3. Send SMS (Real Firebase Call)
       const result = await verifyUserPhoneNumber(phone, appVerifier);
+      
       setConfirmationResult(result);
       setStep('otp');
+      console.log("[PhoneVerify] SMS Sent Successfully via Firebase");
+
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || "فشل إرسال الرمز. تأكد من صحة الرقم.");
+      console.error("[PhoneVerify] SMS Error:", err);
       
-      // If error, clear recaptcha to allow retry
+      let msg = "فشل إرسال الرمز. حاول مرة أخرى.";
+      if (err.code === 'auth/invalid-phone-number') msg = "رقم الهاتف غير صحيح.";
+      if (err.code === 'auth/too-many-requests') msg = "تم تجاوز حد المحاولات. يرجى الانتظار.";
+      if (err.code === 'auth/quota-exceeded') msg = "تم تجاوز حد الرسائل المسموح به لهذا اليوم.";
+      if (err.code === 'auth/credential-already-in-use') msg = "هذا الرقم مرتبط بحساب آخر بالفعل.";
+      if (err.message) msg += `\n(${err.message})`;
+
+      alert("خطأ في الإرسال:\n" + msg);
+      setError(msg);
+
+      // Cleanup on error to allow retry
       if ((window as any).recaptchaVerifier) {
-          (window as any).recaptchaVerifier.clear();
+          try { (window as any).recaptchaVerifier.clear(); } catch(e) {}
           (window as any).recaptchaVerifier = null;
       }
     } finally {
@@ -72,22 +96,24 @@ export const PhoneVerifyModal: React.FC<Props> = ({ isOpen, onClose }) => {
     setError('');
 
     try {
+      // Real Confirmation
       await confirmPhoneCode(confirmationResult, otp);
-      
+      console.log("[PhoneVerify] OTP Confirmed");
+
       // Update User Profile in Firestore
-      if (user) {
+      if (user && auth.currentUser) {
           const userRef = doc(db, 'users', user.id);
           await updateDoc(userRef, {
               phone: phone,
               isPhoneVerified: true
           });
-          
-          // Update Local Context
-          updateProfile({
-              phone: phone,
-              isPhoneVerified: true
-          });
       }
+      
+      // Update Local Context
+      updateProfile({
+          phone: phone,
+          isPhoneVerified: true
+      });
 
       setStep('success');
       setTimeout(() => {
@@ -95,7 +121,17 @@ export const PhoneVerifyModal: React.FC<Props> = ({ isOpen, onClose }) => {
       }, 2500);
       
     } catch (err: any) {
-      setError("رمز التحقق غير صحيح");
+      console.error("[PhoneVerify] OTP Error:", err);
+      
+      if (err.code === 'auth/credential-already-in-use') {
+          const msg = "هذا الرقم مرتبط بحساب آخر بالفعل. لا يمكن ربطه بالحساب الحالي.";
+          setError(msg);
+          alert(msg);
+      } else if (err.code === 'auth/invalid-verification-code') {
+          setError("رمز التحقق غير صحيح.");
+      } else {
+          setError("حدث خطأ أثناء التحقق. انتهت صلاحية الرمز أو حدث خطأ في النظام.");
+      }
     } finally {
       setLoading(false);
     }
@@ -111,13 +147,18 @@ export const PhoneVerifyModal: React.FC<Props> = ({ isOpen, onClose }) => {
                 <h3 className="text-white font-bold flex items-center gap-2">
                     <ShieldCheck className="w-5 h-5 text-emerald-500"/> توثيق رقم الجوال
                 </h3>
-                <button onClick={onClose}><X className="w-5 h-5 text-gray-400 hover:text-white"/></button>
+                <button onClick={onClose} className="p-2 hover:bg-slate-700 rounded-full"><X className="w-5 h-5 text-gray-400 hover:text-white"/></button>
             </div>
 
             <div className="p-6">
                 {step === 'input' && (
                     <div className="space-y-4">
-                        <p className="text-gray-400 text-sm">أدخل رقم الجوال لاستلام رمز التحقق (OTP) عبر رسالة نصية.</p>
+                        <p className="text-gray-400 text-sm">
+                            أدخل رقم الجوال بالصيغة الدولية لاستلام رمز التحقق (OTP) من Firebase.
+                            <br/>
+                            <span className="text-xs text-amber-500">مثال: +9665xxxxxxxx</span>
+                        </p>
+                        
                         <div className="relative" dir="ltr">
                             <input 
                                 type="tel" 
@@ -128,10 +169,11 @@ export const PhoneVerifyModal: React.FC<Props> = ({ isOpen, onClose }) => {
                             />
                             <Phone className="absolute left-3 top-3.5 w-5 h-5 text-gray-500"/>
                         </div>
+                        
                         {error && <div className="text-red-400 text-xs bg-red-500/10 p-2 rounded">{error}</div>}
                         
-                        {/* THE RECAPTCHA CONTAINER */}
-                        <div id="recaptcha-container"></div>
+                        {/* THE RECAPTCHA CONTAINER (MUST BE VISIBLE) */}
+                        <div id="recaptcha-container" className="my-2"></div>
                         
                         <button 
                             onClick={handleSendCode} 
@@ -139,7 +181,7 @@ export const PhoneVerifyModal: React.FC<Props> = ({ isOpen, onClose }) => {
                             className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {loading && <Loader2 className="w-4 h-4 animate-spin"/>}
-                            إرسال الرمز
+                            {loading ? 'جاري الإرسال...' : 'إرسال الرمز'}
                         </button>
                     </div>
                 )}
@@ -174,7 +216,7 @@ export const PhoneVerifyModal: React.FC<Props> = ({ isOpen, onClose }) => {
                             <CheckCircle2 className="w-10 h-10 text-emerald-400"/>
                         </div>
                         <h3 className="text-2xl font-bold text-white mb-2">تم التوثيق بنجاح!</h3>
-                        <p className="text-gray-400 text-sm">رقم الجوال مؤكد الآن في حسابك. يمكنك الاستفادة من جميع المزايا.</p>
+                        <p className="text-gray-400 text-sm">رقم الجوال مؤكد الآن في حسابك.</p>
                     </div>
                 )}
             </div>

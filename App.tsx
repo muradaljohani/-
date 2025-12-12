@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './components/Interactive/ToastContext';
 import { LanguageProvider } from './context/LanguageContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -31,6 +31,7 @@ import { SocialLayout } from './components/Social/SocialLayout';
 import { PublishPortal } from './components/PublishPortal';
 
 const AppContent = () => {
+  const { user, logout } = useAuth();
   const [currentView, setCurrentView] = useState('landing');
   const [courseId, setCourseId] = useState<string | null>(null);
   const [socialSubView, setSocialSubView] = useState<string | undefined>(undefined);

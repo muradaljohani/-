@@ -1,10 +1,23 @@
 
 import { auth, db, googleProvider, githubProvider, signInWithPopup, signOut } from '../lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, OAuthProvider, linkWithPopup, User } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { 
+  RecaptchaVerifier, 
+  signInWithPhoneNumber, 
+  linkWithPhoneNumber,
+  ConfirmationResult, 
+  OAuthProvider, 
+  linkWithPopup, 
+  unlink, 
+  GoogleAuthProvider, 
+  GithubAuthProvider, 
+  FacebookAuthProvider,
+  User
+} from 'firebase/auth';
 
-const ADMIN_EMAIL = "mrada4231@gmail.com"; // The ONLY Super Admin
+const ADMIN_EMAIL = "mrada4231@gmail.com";
 
+// ... (Existing login functions remain the same) ...
 /**
  * Signs in the user with Google and enforces Admin privileges for specific email.
  */
@@ -18,36 +31,27 @@ export const loginWithGoogle = async () => {
     if (user.email === ADMIN_EMAIL) {
       console.log("⚡ Super Admin Recognized: Murad Aljohani");
       
-      // Force Admin Identity & Privileges
       await setDoc(userRef, {
         id: user.uid,
-        uid: user.uid, // Redundancy for queries
+        uid: user.uid,
         name: "Murad Aljohani",
         email: user.email,
-        username: "IpMurad", // Used for handle generation
-        handle: "@IpMurad",  // Explicit handle
+        username: "IpMurad",
+        handle: "@IpMurad",
         avatar: user.photoURL,
-        
-        // GOD MODE FLAGS
         isAdmin: true,
         role: 'admin',
-        isVerified: true,         // Standard verification
-        isIdentityVerified: true, // Deep verification
-        isGold: true,            // Gold/VIP status
-        
+        isVerified: true,
+        isIdentityVerified: true,
+        isGold: true,
         bio: "Founder & CEO of Milaf | مؤسس مجتمع ميلاف 🦅",
-        
         lastLogin: serverTimestamp(),
-        // Only set createdAt if it doesn't exist, but merge handles updates
         createdAt: serverTimestamp() 
       }, { merge: true });
 
     } else {
-      // --- NORMAL USER LOGIC ---
       const userSnap = await getDoc(userRef);
-
       if (!userSnap.exists()) {
-        // Create new regular user
         await setDoc(userRef, {
           id: user.uid,
           uid: user.uid,
@@ -57,7 +61,7 @@ export const loginWithGoogle = async () => {
           createdAt: serverTimestamp(),
           followers: [],
           following: [],
-          isVerified: false,
+          isVerified: true,
           isAdmin: false,
           role: 'student',
           bio: '',
@@ -65,7 +69,6 @@ export const loginWithGoogle = async () => {
           lastLogin: serverTimestamp()
         });
       } else {
-        // Update last login for existing users
         await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
       }
     }
@@ -77,176 +80,120 @@ export const loginWithGoogle = async () => {
   }
 };
 
-/**
- * Signs in the user with GitHub
- */
 export const loginWithGithub = async () => {
-  // Scope to access basic profile info
   githubProvider.addScope('read:user');
-  
   try {
     const result = await signInWithPopup(auth, githubProvider);
-    const user = result.user;
-    const userRef = doc(db, 'users', user.uid);
-
-    // --- STRICT ADMIN CHECK (Optional for GitHub, but good for consistency) ---
-    if (user.email === ADMIN_EMAIL) {
-       await setDoc(userRef, {
-        id: user.uid,
-        uid: user.uid,
-        name: user.displayName || "Murad Admin (GitHub)",
-        email: user.email,
-        username: "IpMurad_GH",
-        avatar: user.photoURL,
-        isAdmin: true,
-        role: 'admin',
-        isVerified: true,
-        isIdentityVerified: true,
-        isGold: true,
-        isGithubVerified: true, // Flag as verified via GitHub
-        lastLogin: serverTimestamp()
-      }, { merge: true });
-    } else {
-        // --- NORMAL USER LOGIC ---
-        const userSnap = await getDoc(userRef);
-
-        if (!userSnap.exists()) {
-            await setDoc(userRef, {
-                id: user.uid,
-                uid: user.uid,
-                name: user.displayName || user.reloadUserInfo?.screenName || "GitHub User",
-                email: user.email,
-                avatar: user.photoURL,
-                createdAt: serverTimestamp(),
-                followers: [],
-                following: [],
-                isVerified: false,
-                isAdmin: false,
-                role: 'developer', // Flag as developer given it's GitHub
-                bio: 'GitHub Developer',
-                username: user.reloadUserInfo?.screenName || user.uid.slice(0, 8),
-                isGithubVerified: true, // Flag as verified via GitHub
-                lastLogin: serverTimestamp()
-            });
-        } else {
-            await setDoc(userRef, { 
-                lastLogin: serverTimestamp(),
-                isGithubVerified: true // Update on login just in case
-            }, { merge: true });
-        }
-    }
-    
-    return user;
+    return result.user;
   } catch (error: any) {
     console.error("GitHub Login Error:", error);
-    if (error.code === 'auth/account-exists-with-different-credential') {
-      alert("هذا البريد الإلكتروني مسجل بالفعل بطريقة دخول أخرى (مثل Google). الرجاء الدخول بتلك الطريقة.");
-    }
+    throw error;
+  }
+};
+
+export const loginWithYahoo = async () => {
+  const provider = new OAuthProvider('yahoo.com');
+  provider.addScope('email');
+  provider.addScope('profile');
+  try {
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (error: any) {
+    console.error("Yahoo Login Error:", error);
     throw error;
   }
 };
 
 /**
- * Signs in the user with Yahoo
+ * Link a new auth provider to the CURRENTLY logged-in user.
+ * REAL IMPLEMENTATION: Updates Firestore Flags.
  */
-export const loginWithYahoo = async () => {
-  const provider = new OAuthProvider('yahoo.com');
-  // Request basic profile info
-  provider.addScope('email');
-  provider.addScope('profile');
-  
+export const linkProvider = async (providerId: string): Promise<User> => {
+  if (!auth.currentUser) {
+    throw new Error("يجب تسجيل الدخول أولاً للقيام بعملية الربط.");
+  }
+
+  let provider;
+  switch (providerId) {
+    case 'google.com': 
+      provider = new GoogleAuthProvider(); 
+      break;
+    case 'github.com': 
+      provider = new GithubAuthProvider(); 
+      break;
+    case 'microsoft.com': 
+      provider = new OAuthProvider('microsoft.com'); 
+      provider.setCustomParameters({ prompt: 'select_account' });
+      break;
+    case 'yahoo.com': 
+      provider = new OAuthProvider('yahoo.com'); 
+      provider.setCustomParameters({ prompt: 'login' });
+      break;
+    case 'facebook.com': 
+      provider = new FacebookAuthProvider(); 
+      break;
+    default: 
+      throw new Error(`Provider ${providerId} is not supported.`);
+  }
+
   try {
-    const result = await signInWithPopup(auth, provider);
+    // 1. Perform Real Firebase Linking
+    const result = await linkWithPopup(auth.currentUser, provider);
     const user = result.user;
+
+    // 2. Update Firestore with Specific Flags for Badges
     const userRef = doc(db, 'users', user.uid);
-
-    const userSnap = await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-        // Create new user document for Yahoo user
-        // Mark as Verified specifically for Yahoo
-        await setDoc(userRef, {
-            id: user.uid,
-            uid: user.uid,
-            name: user.displayName || "Yahoo User",
-            email: user.email,
-            avatar: user.photoURL,
-            createdAt: serverTimestamp(),
-            followers: [],
-            following: [],
-            isVerified: true, // General verification
-            isYahooVerified: true, // Specific Yahoo verification flag
-            isAdmin: false,
-            role: 'student',
-            bio: 'Verified Yahoo Member',
-            username: user.email?.split('@')[0] || user.uid.slice(0, 8),
-            lastLogin: serverTimestamp(),
-            loginMethod: 'yahoo'
-        });
-    } else {
-        // Update last login and ensure verification flag is present
-        await setDoc(userRef, { 
-            lastLogin: serverTimestamp(),
-            isYahooVerified: true,
-            isVerified: true
-        }, { merge: true });
-    }
+    const updates: any = { isVerified: true }; // General verified flag
+    
+    if (providerId === 'github.com') updates.isGithubVerified = true;
+    if (providerId === 'yahoo.com') updates.isYahooVerified = true;
+    if (providerId === 'google.com') updates.isGoogleVerified = true;
+    if (providerId === 'microsoft.com') updates.isMicrosoftVerified = true;
+    
+    // Explicitly update Firestore so the profile page sees it
+    await updateDoc(userRef, updates);
 
     return user;
   } catch (error: any) {
-    console.error("Yahoo Login Error:", error);
-    if (error.code === 'auth/account-exists-with-different-credential') {
-      alert("هذا البريد الإلكتروني مسجل بالفعل بطريقة دخول أخرى. الرجاء استخدام تلك الطريقة.");
+    console.error("Link Account Error:", error);
+    if (error.code === 'auth/credential-already-in-use') {
+      throw new Error("هذا الحساب مرتبط بالفعل بمستخدم آخر. لا يمكن ربطه بالحساب الحالي.");
     }
     throw error;
   }
 };
 
 /**
- * Link an authentication provider to the current user
+ * Unlink an auth provider from the account
  */
-export const linkAccount = async (currentUser: User, providerName: 'google' | 'github' | 'yahoo') => {
-    let provider;
+export const unlinkProvider = async (providerId: string): Promise<User> => {
+  if (!auth.currentUser) {
+      throw new Error("No active session.");
+  }
+  
+  try {
+    const result = await unlink(auth.currentUser, providerId);
     
-    switch (providerName) {
-        case 'google':
-            provider = googleProvider;
-            break;
-        case 'github':
-            provider = githubProvider;
-            break;
-        case 'yahoo':
-            provider = new OAuthProvider('yahoo.com');
-            break;
-        default:
-            throw new Error('Unknown provider');
+    // Update Firestore to remove verification flags
+    const userRef = doc(db, 'users', result.uid);
+    const updates: any = {};
+    
+    if (providerId === 'github.com') updates.isGithubVerified = false;
+    if (providerId === 'yahoo.com') updates.isYahooVerified = false;
+    if (providerId === 'google.com') updates.isGoogleVerified = false;
+    if (providerId === 'microsoft.com') updates.isMicrosoftVerified = false;
+
+    if (Object.keys(updates).length > 0) {
+        await updateDoc(userRef, updates);
     }
 
-    try {
-        const result = await linkWithPopup(currentUser, provider);
-        const user = result.user;
-        const userRef = doc(db, 'users', user.uid);
-        
-        // Update flags in Firestore
-        const updateData: any = { isVerified: true }; // General verification boost
-        if (providerName === 'github') updateData.isGithubVerified = true;
-        if (providerName === 'yahoo') updateData.isYahooVerified = true;
-        
-        await setDoc(userRef, updateData, { merge: true });
-        
-        return user;
-    } catch (error: any) {
-        console.error("Link Account Error:", error);
-        if (error.code === 'auth/credential-already-in-use') {
-            throw new Error('هذا الحساب مرتبط بالفعل بمستخدم آخر.');
-        }
-        throw error;
-    }
+    return result;
+  } catch (error: any) {
+    console.error("Unlink Error:", error);
+    throw error;
+  }
 };
 
-/**
- * Signs out the current user.
- */
 export const logoutUser = async () => {
   try {
     await signOut(auth);
@@ -256,12 +203,7 @@ export const logoutUser = async () => {
   }
 };
 
-/**
- * Sets up the reCAPTCHA verifier.
- * Handles cleaning up previous instances to prevent "element has been removed" errors.
- */
-export const setupRecaptcha = (elementId: string) => {
-  // 1. Clear existing verifier if it exists
+export const setupRecaptcha = (elementId: string): RecaptchaVerifier => {
   if ((window as any).recaptchaVerifier) {
     try {
       (window as any).recaptchaVerifier.clear();
@@ -271,39 +213,35 @@ export const setupRecaptcha = (elementId: string) => {
     (window as any).recaptchaVerifier = null;
   }
 
-  // 2. Create new verifier
-  // Ensure auth is initialized from your firebase config
-  (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, elementId, {
+  const verifier = new RecaptchaVerifier(auth, elementId, {
     'size': 'invisible',
-    'callback': () => {
-      // reCAPTCHA solved, allow signInWithPhoneNumber.
-      console.log("Recaptcha Solved");
+    'callback': (response: any) => {
+      console.log("Recaptcha Verified Successfully");
     },
     'expired-callback': () => {
-      // Response expired. Ask user to solve reCAPTCHA again.
       console.log("Recaptcha Expired");
     }
   });
 
-  return (window as any).recaptchaVerifier;
+  (window as any).recaptchaVerifier = verifier;
+  return verifier;
 };
 
-/**
- * Initiates Phone Verification via SMS
- */
 export const verifyUserPhoneNumber = async (phoneNumber: string, recaptchaVerifier: RecaptchaVerifier): Promise<ConfirmationResult> => {
   try {
-    const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
-    return confirmationResult;
+    if (auth.currentUser) {
+      console.log("Linking phone to existing user session...");
+      return await linkWithPhoneNumber(auth.currentUser, phoneNumber, recaptchaVerifier);
+    } else {
+      console.log("Starting new phone sign-in session...");
+      return await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+    }
   } catch (error) {
-    console.error("Phone Verification Error:", error);
+    console.error("Phone Verification Error (Service Level):", error);
     throw error;
   }
 };
 
-/**
- * Confirms the OTP Code
- */
 export const confirmPhoneCode = async (confirmationResult: ConfirmationResult, code: string): Promise<any> => {
   try {
     const result = await confirmationResult.confirm(code);

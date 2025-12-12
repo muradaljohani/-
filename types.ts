@@ -947,6 +947,15 @@ export interface AuthProviderData {
   photoURL?: string;
 }
 
+export interface PrivacySettings {
+    showPhone: boolean;
+    showEmail: boolean;
+    showGoogle?: boolean;
+    showGithub?: boolean;
+    showYahoo?: boolean;
+    showMicrosoft?: boolean;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -969,7 +978,11 @@ export interface User {
   createdAt: string;
   lastLogin: string;
   authToken?: string;
-  joinDate?: string; 
+  joinDate?: string;
+  
+  // NEW PRIVACY & CONNECTED ACCOUNTS
+  privacy?: PrivacySettings;
+  providerEmails?: Record<string, string>; // e.g. { 'google.com': 'user@gmail.com' }
   
   citizenshipId?: string; 
   karma?: number; 
@@ -1021,6 +1034,8 @@ export interface User {
   isIdentityVerified?: boolean; 
   isGithubVerified?: boolean; // NEW: Verified via GitHub
   isYahooVerified?: boolean; // NEW: Verified via Yahoo
+  isGoogleVerified?: boolean;
+  isMicrosoftVerified?: boolean;
   kycStatus?: 'none' | 'pending' | 'verified';
   isBiometricVerified?: boolean;
   kycData?: KYCData; 
@@ -1106,4 +1121,3 @@ export interface AuthResponse {
   user?: Partial<User>;
   error?: string;
 }
-

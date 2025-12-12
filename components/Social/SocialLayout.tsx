@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
     Home, Search, Bell, Mail, Image as ImageIcon, Video, X, User, PlusCircle, MessageSquare, Plus, Feather
@@ -320,6 +321,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                         <ProfilePage 
                             userId={visitedUserId} 
                             onBack={() => { setView('feed'); setVisitedUserId(null); }} 
+                            onStartChat={handleStartChat}
                         />
                     )}
                     

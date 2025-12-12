@@ -4,6 +4,9 @@ import { X, Fingerprint, Loader2, AlertCircle, Eye, EyeOff, UserPlus, User, Mail
 import { useAuth } from '../context/AuthContext';
 import { LoginProvider } from '../types';
 import { RealAuthService } from '../services/realAuthService';
+import { PhoneVerifyModal } from './Social/PhoneVerifyModal';
+import { auth, db, doc, getDoc } from '../src/lib/firebase';
+import { logoutUser } from '../src/services/authService';
 
 // --- SOCIAL ICONS ---
 const Icons = {
@@ -53,7 +56,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
   if (!isOpen) return null;
 
   // --- Handlers ---
-
+  
   const handleLogin = async (provider?: LoginProvider) => {
       setError(null);
       setIsLoading(true);
@@ -63,19 +66,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
               await signInWithProvider(provider);
               onLoginSuccess?.();
           } else if (provider === 'nafath') {
-              // Legacy/Mock providers - Nafath treated as "Phone Number" in requested flow for now if not real
-              // Or if provider is 'phone', handle standard phone auth.
-              // For now, let's keep the mock Nafath behavior for 'nafath' key, but the button will be labeled "Phone Number"
-              const res = await RealAuthService.requestNafathLogin('1010101010'); // Mock ID
+              // Legacy/Mock providers
+              const res = await RealAuthService.requestNafathLogin('1010101010');
               if (res.status === 'WAITING') {
-                   // Simulate completion
                    setTimeout(async () => {
                        await login({ name: 'مواطن (نفاذ)', isIdentityVerified: true });
                        onLoginSuccess?.();
                    }, 2000);
               }
           } else if (provider === 'apple') {
-             // Mock Apple
              await login({ name: 'Apple User', loginMethod: 'apple' });
              onLoginSuccess?.();
           } else {
@@ -117,7 +116,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                   phone: regData.phone,
                   nationalId: regData.nationalId,
                   role: 'student',
-                  isIdentityVerified: false, // Requires KYC later
+                  isIdentityVerified: false, 
+                  isPhoneVerified: false // Ensure new users are not verified by default
               }, regData.password);
               
               onLoginSuccess?.();
