@@ -1,3 +1,4 @@
+
 import { auth, db, googleProvider, githubProvider, signInWithPopup, signOut } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { 
@@ -11,7 +12,8 @@ import {
   GoogleAuthProvider, 
   GithubAuthProvider, 
   FacebookAuthProvider,
-  User
+  User,
+  onAuthStateChanged
 } from 'firebase/auth';
 
 const ADMIN_EMAIL = "mrada4231@gmail.com";
@@ -103,12 +105,30 @@ export const loginWithYahoo = async () => {
   }
 };
 
+// Helper: Wait for the user to be ready (Resolves the Race Condition)
+const waitForCurrentUser = () => {
+  return new Promise<User>((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      if (user) {
+        resolve(user);
+      } else {
+        reject(new Error("No active session found. Please refresh or login again."));
+      }
+    });
+  });
+};
+
 /**
  * Link a new auth provider to the CURRENTLY logged-in user.
- * REAL IMPLEMENTATION: Direct link without redundant checks.
+ * Includes Session Waiter to prevent null errors on refresh.
  */
 export const linkProvider = async (providerId: string): Promise<User> => {
-  // Direct Provider Setup
+  
+  // 1. Ensure we have a user (Wait for it if necessary)
+  const user = auth.currentUser || (await waitForCurrentUser());
+
+  // 2. Setup Provider
   let provider;
   switch (providerId) {
     case 'google.com': 
@@ -133,15 +153,12 @@ export const linkProvider = async (providerId: string): Promise<User> => {
   }
 
   try {
-    // FORCE the link. The SDK handles null currentUser by throwing an error, which we want.
-    // We assume the UI context ensures the user is logged in.
-    if (!auth.currentUser) throw new Error("No active session found.");
-    
-    const result = await linkWithPopup(auth.currentUser, provider);
-    const user = result.user;
+    // 3. Link
+    const result = await linkWithPopup(user, provider);
+    const linkedUser = result.user;
 
-    // 2. Update Firestore with Specific Flags for Badges
-    const userRef = doc(db, 'users', user.uid);
+    // 4. Update Firestore with Specific Flags for Badges
+    const userRef = doc(db, 'users', linkedUser.uid);
     const updates: any = { isVerified: true }; // General verified flag
     
     if (providerId === 'github.com') updates.isGithubVerified = true;
@@ -152,7 +169,7 @@ export const linkProvider = async (providerId: string): Promise<User> => {
     // Explicitly update Firestore so the profile page sees it
     await updateDoc(userRef, updates);
 
-    return user;
+    return linkedUser;
   } catch (error: any) {
     console.error("Link Account Error:", error);
     if (error.code === 'auth/credential-already-in-use') {

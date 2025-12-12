@@ -1,7 +1,6 @@
 
-
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, Fingerprint, Database, Bot, Github, Facebook, AtSign, Users } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, Fingerprint, Database, Bot, Github, Facebook, AtSign, Users, Info } from 'lucide-react';
 import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
@@ -228,10 +227,6 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
     };
 
     // Helper to check if a provider is linked AND respect privacy for text display
-    // Logic: 
-    // 1. Is linked? (Check linkedProviders array)
-    // 2. Is privacy enabled? (Check privacy object)
-    // 3. Return object { linked: boolean, showText: boolean, text: string }
     const getProviderStatus = (providerId: string, privacyKey: string) => {
         if (!displayUser) return { linked: false, showText: false, text: '' };
         
@@ -247,7 +242,6 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
         if (!isLinked) return { linked: false, showText: false, text: '' };
 
         // Check privacy (Default to TRUE/Visible if undefined, unless we want strict privacy by default)
-        // Let's assume default is Visible if not set to false
         const isVisible = displayUser.privacy ? (displayUser.privacy as any)[privacyKey] !== false : true;
         
         // Get text (Email or handle)
@@ -264,7 +258,12 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
             text: isVisible ? (text || 'Linked Account') : 'حساب موثق (Hidden)' 
         };
     };
-    
+
+    // --- Format Join Date for M Icon ---
+    const joinDate = displayUser?.createdAt 
+        ? new Date(displayUser.createdAt).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long' })
+        : 'يناير 2025';
+
     // --- RENDER ---
     
     if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white">جاري التحميل...</div>;
@@ -458,12 +457,33 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                     )}
                 </div>
 
-                {/* Footer Metadata */}
+                {/* Footer Metadata - RESTORED JOIN DATE AND BIO IN "M" ICON */}
                 <div className="flex flex-wrap gap-x-4 gap-y-1 text-[#71767b] text-[14px] mt-4 pt-3 border-t border-[#2f3336] items-center">
                     {displayUser.address && <div className="flex items-center gap-1"><MapPin className="w-4 h-4"/> {displayUser.address}</div>}
                     {websiteUrl && <div className="flex items-center gap-1"><LinkIcon className="w-4 h-4"/> <a href={websiteUrl} target="_blank" className="text-[#1d9bf0] hover:underline">{websiteUrl.replace(/^https?:\/\//, '')}</a></div>}
+                    
+                    {/* RESTORED JOIN DATE VISUALLY */}
+                    <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4"/>
+                        <span>انضم في {joinDate}</span>
+                    </div>
+
+                    {/* RESTORED DATA IN M ICON TOOLTIP */}
                     <div className="relative group cursor-pointer">
                         <div className="w-5 h-5 rounded-full bg-[#71767b] flex items-center justify-center text-black font-black text-[10px] hover:bg-white transition-colors">M</div>
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 bg-[#192734] border border-[#38444d] rounded-lg p-3 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
+                            <div className="flex items-center gap-2 mb-2 border-b border-[#38444d] pb-1">
+                                <Info className="w-3 h-3 text-blue-400"/>
+                                <span className="font-bold">بيانات النظام</span>
+                            </div>
+                            <div className="space-y-1 text-gray-300">
+                                <p>Join Date: {joinDate}</p>
+                                <p>System ID: {displayUser.uid?.slice(0,8) || 'N/A'}</p>
+                                {displayUser.bio && <p className="mt-2 text-[10px] italic border-t border-[#38444d] pt-1">"{displayUser.bio.substring(0, 50)}..."</p>}
+                            </div>
+                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-[#38444d]"></div>
+                        </div>
                     </div>
                 </div>
 
