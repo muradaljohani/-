@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, Fingerprint, Database, Bot } from 'lucide-react';
 import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
@@ -8,6 +9,7 @@ import { AddProductModal } from './AddProductModal';
 import { UserListModal } from './UserListModal';
 import { User } from '../../types';
 import { ProductCard, Product } from './ProductCard';
+import { PaymentGateway } from '../PaymentGateway';
 
 interface Props {
     userId: string;
@@ -50,7 +52,7 @@ const MURAD_AI_PROFILE = {
 };
 
 export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
-    const { user: currentUser, followUser, unfollowUser, allProducts } = useAuth(); 
+    const { user: currentUser, followUser, unfollowUser, allProducts, purchaseService } = useAuth(); 
     const [profileUser, setProfileUser] = useState<User | null>(null);
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -65,6 +67,10 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
 
     // Google Algo Location State
     const [realLocation, setRealLocation] = useState<string>('جاري التحليل (Google API)...');
+
+    // Purchase State
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [isPaymentGatewayOpen, setIsPaymentGatewayOpen] = useState(false);
 
     const isOwnProfile = currentUser?.id === userId;
     const isFollowing = currentUser?.following?.includes(userId);
@@ -161,8 +167,8 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
             // 1. Fetch User Data with Bypass Logic
             let userData: User | null = null;
 
-            if (userId === "murad-ai-bot-id") {
-                // --- BOT IDENTITY BYPASS ---
+            // --- STRICT BOT IDENTITY ENFORCEMENT ---
+            if (userId === "murad-ai-bot-id" || userId.toLowerCase() === "murad") {
                 userData = MURAD_AI_PROFILE as unknown as User;
                 setProfileUser(userData);
             } else if (ADMIN_BYPASS_IDS.includes(userId)) {
@@ -224,9 +230,11 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                 try {
                     let q;
                     if (userId === "murad-ai-bot-id") {
-                         // Bot doesn't have posts in this demo, or we can fetch system posts
-                         // Leaving empty for now to focus on profile identity
-                         setPosts([]);
+                         // Fetch replies made by bot to show in profile (optional)
+                         q = query(
+                            collection(db, 'posts'),
+                            where('user.uid', '==', 'murad-ai-bot-id')
+                        );
                     } else if (ADMIN_BYPASS_IDS.includes(userId)) {
                          q = query(
                             collection(db, 'posts'),
@@ -272,12 +280,29 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
     };
 
     const handleBuyProduct = (product: Product) => {
-        if(!currentUser) {
+        if (!currentUser) {
             alert("يرجى تسجيل الدخول للشراء");
             return;
         }
-        if(confirm(`هل تريد شراء "${product.title}" بسعر ${product.price} ريال؟`)) {
-            alert("تم إضافة المنتج للسلة (محاكاة)");
+        setSelectedProduct(product);
+        setIsPaymentGatewayOpen(true);
+    };
+
+    const handlePaymentSuccess = (txn: any) => {
+        setIsPaymentGatewayOpen(false);
+        if (selectedProduct && profileUser) {
+             const serviceObj = {
+                 ...selectedProduct,
+                 sellerId: profileUser.id,
+                 sellerName: profileUser.name
+             };
+             const res = purchaseService(serviceObj, txn);
+             if (res.success) {
+                 alert("تم الشراء بنجاح!");
+             } else {
+                 alert("فشل الشراء: " + (res.error || "خطأ غير معروف"));
+             }
+             setSelectedProduct(null);
         }
     };
 
@@ -309,10 +334,6 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
         );
     }
 
-    const joinDate = profileUser.createdAt 
-        ? new Date(profileUser.createdAt).toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' }) 
-        : 'منذ فترة';
-    
     const websiteUrl = profileUser.customFormFields?.website || profileUser.businessProfile?.website;
     const educationBio = profileUser.customFormFields?.educationBio;
     const skillsBio = profileUser.skills;
@@ -504,9 +525,6 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                             </a>
                         </div>
                     )}
-                    <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4"/> انضم في {joinDate}
-                    </div>
                     
                     {/* About Icon (M) with STRICT IMMUTABILITY INDICATION */}
                     <div className="relative group cursor-pointer">
@@ -546,10 +564,6 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                                      </span>
                                  </div>
 
-                                 <div className="flex justify-between items-center">
-                                     <span className="text-gray-500">تاريخ الانضمام:</span>
-                                     <span className="text-gray-200 font-mono">{new Date(profileUser.createdAt).toLocaleDateString('en-GB')}</span>
-                                 </div>
                                  <div className="flex justify-between items-center">
                                      <span className="text-gray-500">المعرف الرقمي:</span>
                                      <span className="text-gray-200 font-mono flex items-center gap-1">
@@ -694,6 +708,16 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                 title={userListType === 'followers' ? 'المتابِعون' : 'يتابِع'}
                 userIds={userListType === 'followers' ? (profileUser.followers || []) : (profileUser.following || [])}
             />
+
+            {selectedProduct && (
+                <PaymentGateway 
+                    isOpen={isPaymentGatewayOpen} 
+                    onClose={() => setIsPaymentGatewayOpen(false)}
+                    amount={selectedProduct.price}
+                    title={`شراء ${selectedProduct.title}`}
+                    onSuccess={handlePaymentSuccess}
+                />
+            )}
         </div>
     );
 };
