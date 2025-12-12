@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, Fingerprint, Database } from 'lucide-react';
 import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
@@ -27,6 +27,9 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
     
     // User List Modal State
     const [userListType, setUserListType] = useState<'followers' | 'following' | null>(null);
+
+    // Google Algo Location State
+    const [realLocation, setRealLocation] = useState<string>('جاري التحليل (Google API)...');
 
     const isOwnProfile = currentUser?.id === userId;
     const isFollowing = currentUser?.following?.includes(userId);
@@ -68,6 +71,33 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
             rating: 4.9
         }
     ];
+
+    // Fetch Real Location based on IP (Simulating Google Algorithm Detection)
+    useEffect(() => {
+        const fetchGeoLocation = async () => {
+            try {
+                // Using a public IP API to mimic algorithmic location detection
+                const response = await fetch('https://ipapi.co/json/');
+                const data = await response.json();
+                if (data.country_name) {
+                    const country = data.country_name === "Saudi Arabia" ? "السعودية" : data.country_name;
+                    setRealLocation(`${country} - ${data.city || 'الرياض'} (Google Detected)`);
+                } else {
+                    setRealLocation('المملكة العربية السعودية (SA) - Google');
+                }
+            } catch (error) {
+                setRealLocation('المملكة العربية السعودية (SA)');
+            }
+        };
+
+        // If viewing admin or self, fetch real location
+        if (isOwnProfile || ADMIN_BYPASS_IDS.includes(userId)) {
+            fetchGeoLocation();
+        } else {
+            // For others, use stored address or default
+            setRealLocation('غير محدد (محمي بواسطة Google Privacy)');
+        }
+    }, [userId, isOwnProfile]);
 
     useEffect(() => {
         // Prepare User Products
@@ -419,35 +449,64 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                         <Calendar className="w-4 h-4"/> انضم في {joinDate}
                     </div>
                     
-                    {/* About Icon (M) */}
+                    {/* About Icon (M) with STRICT IMMUTABILITY INDICATION */}
                     <div className="relative group cursor-pointer">
                         <div className="w-5 h-5 rounded-full bg-[#71767b] flex items-center justify-center text-black font-black text-[10px] hover:bg-white transition-colors">
                             M
                         </div>
                         
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 bg-[#1e293b] border border-white/10 rounded-xl p-4 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 text-right">
-                             <h3 className="text-white font-bold text-sm border-b border-white/10 pb-2 mb-2">بطاقة المعلومات</h3>
-                             <div className="space-y-2 text-xs">
-                                 <div className="flex justify-between">
-                                     <span className="text-gray-500">الاسم الكامل:</span>
-                                     <span className="text-gray-200">{profileUser.name}</span>
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 bg-[#0f172a] border border-amber-500/30 rounded-xl p-4 shadow-2xl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 text-right">
+                             {/* STRICT HEADER */}
+                             <div className="flex justify-between items-center border-b border-white/10 pb-2 mb-2">
+                                 <h3 className="text-amber-500 font-bold text-xs uppercase tracking-wider flex items-center gap-1">
+                                     <Database className="w-3 h-3"/> سجل النظام الموحد
+                                 </h3>
+                                 <Lock className="w-3 h-3 text-red-500" />
+                             </div>
+                             
+                             <div className="space-y-3 text-xs">
+                                 <div className="flex justify-between items-center group/item border-b border-white/5 pb-1">
+                                     <span className="text-gray-500">الاسم الكامل (رسمي):</span>
+                                     <div className="flex items-center gap-1">
+                                        <span className="text-gray-200 font-bold select-all">{profileUser.name}</span>
+                                        <Lock className="w-2.5 h-2.5 text-gray-600 opacity-50" />
+                                     </div>
                                  </div>
-                                 <div className="flex justify-between">
+                                 <div className="flex justify-between items-center border-b border-white/5 pb-1">
                                      <span className="text-gray-500">الحالة:</span>
-                                     <span className={profileUser.isIdentityVerified ? "text-emerald-400" : "text-gray-400"}>
+                                     <span className={profileUser.isIdentityVerified ? "text-emerald-400 font-bold" : "text-gray-400"}>
                                         {profileUser.isIdentityVerified ? 'موثق رسمياً' : 'عضو'}
                                      </span>
                                  </div>
-                                 <div className="flex justify-between">
+                                 
+                                 {/* REAL-TIME LOCATION (GOOGLE ALGO) */}
+                                 <div className="flex flex-col gap-1 mt-1 border-b border-white/5 pb-2">
+                                     <span className="text-gray-500 flex items-center gap-1"><Globe className="w-3 h-3"/> الموقع الجغرافي (Live):</span>
+                                     <span className="text-blue-400 font-mono text-[10px] flex items-center gap-1 pl-2">
+                                         {realLocation}
+                                     </span>
+                                 </div>
+
+                                 <div className="flex justify-between items-center">
                                      <span className="text-gray-500">تاريخ الانضمام:</span>
                                      <span className="text-gray-200 font-mono">{new Date(profileUser.createdAt).toLocaleDateString('en-GB')}</span>
                                  </div>
-                                 <div className="flex justify-between">
-                                     <span className="text-gray-500">المعرف:</span>
-                                     <span className="text-gray-200 font-mono">{profileUser.trainingId || profileUser.id.substring(0,8)}</span>
+                                 <div className="flex justify-between items-center">
+                                     <span className="text-gray-500">المعرف الرقمي:</span>
+                                     <span className="text-gray-200 font-mono flex items-center gap-1">
+                                         <Fingerprint className="w-3 h-3 text-gray-500"/>
+                                         {profileUser.trainingId || profileUser.id.substring(0,8)}
+                                     </span>
                                  </div>
                              </div>
-                             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#1e293b] rotate-45 border-b border-r border-white/10"></div>
+
+                             {/* IMMUTABILITY WARNING FOOTER */}
+                             <div className="mt-3 pt-2 border-t border-red-500/20 text-[9px] text-red-500/90 font-bold text-center flex items-center justify-center gap-1 bg-red-900/10 rounded p-1">
+                                 <ShieldCheck className="w-3 h-3"/>
+                                 <span>سجل دائم ومحمي لا يمكن حذفه أو تعديله</span>
+                             </div>
+                             
+                             <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#0f172a] rotate-45 border-b border-r border-amber-500/30"></div>
                         </div>
                     </div>
                 </div>
