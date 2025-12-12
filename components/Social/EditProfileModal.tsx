@@ -148,6 +148,18 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
     e.preventDefault();
     setIsSaving(true);
 
+    // --- USERNAME VALIDATION LOGIC ---
+    if (formData.displayName.toLowerCase().includes('murad')) {
+         // Check if user is authorized (Admin or Bot)
+         const authorizedIds = ['admin-fixed-id', 'murad-ai-bot-id', 'admin-murad-id'];
+         if (!authorizedIds.includes(user.id)) {
+             alert("عذراً، استخدام اسم 'Murad' في الاسم الظاهر محجوز للإدارة والنظام فقط.");
+             setIsSaving(false);
+             return;
+         }
+    }
+    // ----------------------------------
+
     try {
       const fullPhone = formData.phoneNumber ? `${formData.phoneCode}${formData.phoneNumber}` : '';
       const skillsArray = formData.skillsBio.split(',').map(s => s.trim()).filter(Boolean);
