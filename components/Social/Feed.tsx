@@ -17,13 +17,14 @@ import { PostCard } from './PostCard';
 import { Image, BarChart2, Smile, MapPin, Loader2, X, Wand2, Feather, WifiOff } from 'lucide-react';
 import { uploadImage } from '../../src/services/storageService';
 import { StoriesBar } from '../Stories/StoriesBar';
-import { validateContentSafety } from '../../services/geminiService';
+import { validateContentSafety, getGeminiResponse } from '../../services/geminiService';
 
 // --- MURAD AI PROFILE CONSTANT (Must match ProfilePage) ---
 const MURAD_AI_PROFILE_DATA = {
     id: "murad-ai-bot-id",
     name: "Murad AI",
     username: "MURAD",
+    handle: "@MURAD",
     email: "ai@murad-group.com",
     avatar: "https://cdn-icons-png.flaticon.com/512/4712/4712109.png", 
     coverImage: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1000&auto=format&fit=crop", 
@@ -219,6 +220,52 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
     }
   }, [activeTab, user]);
 
+  // --- BOT REPLY HANDLER ---
+  const triggerBotReply = async (postId: string, userContent: string, userName: string) => {
+      try {
+          // 1. Simulate "Thinking" delay
+          await new Promise(r => setTimeout(r, 2500));
+
+          // 2. Generate AI Response
+          const aiResponse = await getGeminiResponse(
+              `SYSTEM CONTEXT: You are "Murad AI" (The Official Bot of Milaf Community). 
+               A user named "${userName}" has mentioned you (@MURAD) in a public post.
+               Post Content: "${userContent}".
+               
+               INSTRUCTIONS:
+               - Reply directly to the user in Arabic.
+               - Be helpful, clever, and professional.
+               - If they ask a question, answer it.
+               - If they say hello, welcome them warmly to the community.
+               - Keep it concise (under 280 chars if possible).
+              `,
+              'expert',
+              userName
+          );
+
+          // 3. Post Reply to Firestore
+          const repliesRef = collection(db, 'posts', postId, 'replies');
+          await addDoc(repliesRef, {
+              text: aiResponse,
+              user: {
+                  name: MURAD_AI_PROFILE_DATA.name,
+                  handle: MURAD_AI_PROFILE_DATA.handle,
+                  avatar: MURAD_AI_PROFILE_DATA.avatar,
+                  verified: true,
+                  isGold: true,
+                  uid: MURAD_AI_PROFILE_DATA.id
+              },
+              timestamp: serverTimestamp(),
+              likes: 0
+          });
+
+          if(showToast) showToast('Murad AI رد على المنشن!', 'success');
+
+      } catch (e) {
+          console.error("Bot failed to auto-reply:", e);
+      }
+  };
+
   const handlePost = async () => {
     if (!user) {
         alert("يرجى تسجيل الدخول للنشر");
@@ -264,7 +311,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           uid: user.id
       };
 
-      await addDoc(postsRef, {
+      const docRef = await addDoc(postsRef, {
           user: userData,
           content: newPostText,
           type: imageUrls.length > 0 ? 'image' : 'text',
@@ -277,6 +324,12 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           views: '0',
           isPinned: false
       });
+
+      // --- CHECK FOR BOT MENTION ---
+      if (newPostText.toUpperCase().includes('@MURAD')) {
+          triggerBotReply(docRef.id, newPostText, user.name);
+      }
+      // -----------------------------
 
       setNewPostText("");
       removeImage();
@@ -372,7 +425,7 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
           <div className="flex-1">
             <textarea
               className="w-full bg-transparent text-lg placeholder-gray-500 dark:placeholder-[#71767b] text-black dark:text-[#e7e9ea] border-none focus:ring-0 resize-none min-h-[50px] outline-none"
-              placeholder="ماذا يحدث؟"
+              placeholder="ماذا يحدث؟ (أشر لـ @MURAD للمساعدة)"
               value={newPostText}
               onChange={(e) => setNewPostText(e.target.value)}
             />
