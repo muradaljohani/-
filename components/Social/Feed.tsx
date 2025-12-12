@@ -224,8 +224,8 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
   // --- BOT REPLY HANDLER ---
   const triggerBotReply = async (postId: string, userContent: string, userName: string) => {
       try {
-          // 1. Simulate "Thinking" delay
-          await new Promise(r => setTimeout(r, 2500));
+          // SPEED OPTIMIZATION: Removed artificial delay.
+          // The bot will now reply as fast as the API allows.
 
           // 2. Generate AI Response
           const aiResponse = await getGeminiResponse(
