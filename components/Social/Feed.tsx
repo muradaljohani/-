@@ -90,8 +90,10 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
                     isVerified: true,
                     isIdentityVerified: true,
                     isGold: true,
-                    followers: 11711, 
-                    following: 42
+                    followersCount: 450000000, 
+                    following: [], // Empty array for string[] type safety if needed by Firestore schema
+                    followers: [], 
+                    followingCount: 42
                 }, { merge: true }).catch(e => {});
             }
 
@@ -99,7 +101,11 @@ export const Feed: React.FC<FeedProps> = ({ onOpenLightbox, showToast, onPostCli
             const aiRef = doc(db, "users", "murad-ai-bot-id");
             const aiSnap = await getDoc(aiRef);
             if (!aiSnap.exists()) {
-                await setDoc(aiRef, MURAD_AI_PROFILE_DATA, { merge: true }).catch(e => {});
+                await setDoc(aiRef, {
+                    ...MURAD_AI_PROFILE_DATA,
+                    followersCount: 450000000,
+                    followers: []
+                }, { merge: true }).catch(e => {});
             }
 
             // 3. Ensure current user doc

@@ -1,7 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
-    Home, Search, Bell, Mail, Image as ImageIcon, Video, X, User, PlusCircle, MessageSquare
+    Home, Search, Bell, Mail, Image as ImageIcon, Video, X, User, PlusCircle, MessageSquare, Plus, Feather
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -475,6 +474,14 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                 <NavButton icon={Mail} active={view === 'messages'} onClick={() => handleNavigation('messages')} />
             </div>
 
+            {/* Mobile Floating Post Button */}
+            <button
+                onClick={() => setIsComposeOpen(true)}
+                className="md:hidden fixed bottom-20 left-4 z-[90] bg-[#1d9bf0] text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:bg-[#1a8cd8] active:scale-90 transition-transform"
+            >
+                <Feather className="w-7 h-7" />
+            </button>
+
             {/* Compose Modal */}
             {isComposeOpen && (
                 <div className="fixed inset-0 z-[100] bg-white dark:bg-black flex flex-col p-4 animate-in slide-in-from-bottom-10 duration-200">
@@ -494,7 +501,7 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                         </div>
                         <textarea 
                             className="flex-1 bg-transparent text-black dark:text-white text-lg placeholder-gray-500 dark:placeholder-[#71767b] outline-none resize-none h-[40vh]"
-                            placeholder="ماذا يحدث؟"
+                            placeholder="ماذا تريد ان تنشر يا بطل المجتمع؟"
                             value={composeText}
                             onChange={(e) => setComposeText(e.target.value)}
                             autoFocus

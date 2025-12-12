@@ -40,7 +40,7 @@ const MURAD_AI_PROFILE = {
   nextLevelXp: 2000000,
   followers: [], 
   following: [],
-  followersCount: 999000, 
+  followersCount: 450000000, 
   followingCount: 0,
   customFormFields: { 
       website: 'https://murad-group.com/ai',
@@ -192,7 +192,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     nextLevelXp: 1000000,
                     followers: ['mock-follower-1'], // Pass mock IDs for list generation
                     following: [],
-                    followersCount: 11711, 
+                    followersCount: 450000000, 
                     followingCount: 42, 
                     primeSubscription: { status: 'active' } as any,
                     customFormFields: { 
