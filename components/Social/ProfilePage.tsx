@@ -1,6 +1,10 @@
-
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, Fingerprint, Database, Bot, Github, Facebook, AtSign, Users, Info } from 'lucide-react';
+import { 
+  ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, 
+  CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, 
+  ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, 
+  Fingerprint, Database, Bot, Github, Facebook, AtSign, Users 
+} from 'lucide-react';
 import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
@@ -18,7 +22,17 @@ interface Props {
     onStartChat?: (user: User) => void;
 }
 
-// ... (Constants icons mock data unchanged) ...
+// --- Custom Brand Icons for Trust Row ---
+const GoogleIcon = () => (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#fff"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+);
+const MicrosoftIcon = () => (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 23 23"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
+);
+const YahooIcon = () => (
+    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="#6001d2"><path d="M12 12.5L8.5 4H5.5l5 9.5V20h3v-6.5l5-9.5h-3L12 12.5z"/></svg>
+);
+
 // --- MURAD AI IDENTITY CONSTANT ---
 const MURAD_AI_PROFILE = {
   uid: "murad-ai-bot-id",
@@ -54,30 +68,17 @@ const MURAD_AI_PROFILE = {
   skills: ["Artificial Intelligence", "Deep Learning", "Data Analysis", "System Optimization"]
 };
 
-// --- Custom Brand Icons ---
-const GoogleIcon = () => (
-    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
-);
-const MicrosoftIcon = () => (
-    <svg className="w-3.5 h-3.5" viewBox="0 0 23 23"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
-);
-const YahooIcon = () => (
-    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="#6001d2"><path d="M12 12.5L8.5 4H5.5l5 9.5V20h3v-6.5l5-9.5h-3L12 12.5z"/></svg>
-);
-
 export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) => {
-    const { user: currentUser, followUser, unfollowUser, allProducts, purchaseService } = useAuth(); 
+    const { user: currentUser, followUser, unfollowUser, purchaseService } = useAuth(); 
     const [profileUser, setProfileUser] = useState<User | null>(null);
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    // ... (rest of states)
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isAddProductOpen, setIsAddProductOpen] = useState(false); 
     const [activeTab, setActiveTab] = useState<'posts' | 'replies' | 'store' | 'media' | 'likes'>('posts');
     const [userProducts, setUserProducts] = useState<Product[]>([]);
     const [showAdminTooltip, setShowAdminTooltip] = useState(false); 
     const [userListType, setUserListType] = useState<'followers' | 'following' | null>(null);
-    const [realLocation, setRealLocation] = useState<string>('جاري التحليل (Google API)...');
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isPaymentGatewayOpen, setIsPaymentGatewayOpen] = useState(false);
     const [isPhoneVerifyOpen, setIsPhoneVerifyOpen] = useState(false);
@@ -114,14 +115,14 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                     isGold: true, 
                     avatar: "https://i.ibb.co/QjNHDv3F/images-4.jpg",
                     coverImage: "https://ui-avatars.com/api/?name=M&background=000000&color=ffffff&size=1920&font-size=0.5&bold=true&length=1",
-                    bio: "بجانبك هل تراني ؟",
+                    bio: "Founder & CEO of Milaf | مؤسس مجتمع ميلاف 🦅",
                     phone: "0590113665",
-                    skills: ["Leadership", "Innovation", "Development"],
-                    address: "Digital World",
+                    skills: ["Leadership", "Innovation", "Development", "AI Architecture"],
+                    address: "Riyadh, Saudi Arabia",
                     createdAt: new Date(2025, 0, 1).toISOString(),
                     lastLogin: new Date().toISOString(),
                     loginMethod: 'email',
-                    linkedProviders: [],
+                    linkedProviders: ['google.com', 'github.com'],
                     xp: 999999,
                     level: 999,
                     nextLevelXp: 1000000,
@@ -132,8 +133,11 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                     primeSubscription: { status: 'active' } as any,
                     customFormFields: { 
                         website: 'https://murad-group.com',
-                        educationBio: 'كليات الخليج'
-                    }
+                        educationBio: 'جامعة الملك سعود - هندسة برمجيات'
+                    },
+                    isPhoneVerified: true,
+                    isGithubVerified: true,
+                    isGoogleVerified: true
                  } as any);
             } else if (isOwnProfile && currentUser) {
                 // If own profile, we already have data in context
@@ -176,7 +180,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
         fetchData();
     }, [userId, currentUser]); 
 
-    // ... (Handlers same as before) ...
+    // ... (Handlers) ...
     const handleBuyProduct = (product: Product) => {
         if (!currentUser) {
             alert("يرجى تسجيل الدخول للشراء.");
@@ -226,43 +230,16 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
         return num.toString();
     };
 
-    // Helper to check if a provider is linked AND respect privacy for text display
-    const getProviderStatus = (providerId: string, privacyKey: string) => {
-        if (!displayUser) return { linked: false, showText: false, text: '' };
-        
-        // Check linkage
-        const isLinked = displayUser.linkedProviders?.includes(providerId as any) || 
-                         displayUser.providerData?.some((p:any) => p.providerId === providerId) ||
-                         // Fallback flags
-                         (providerId === 'google.com' && displayUser.isGoogleVerified) ||
-                         (providerId === 'github.com' && displayUser.isGithubVerified) ||
-                         (providerId === 'yahoo.com' && displayUser.isYahooVerified) ||
-                         (providerId === 'microsoft.com' && displayUser.isMicrosoftVerified);
-
-        if (!isLinked) return { linked: false, showText: false, text: '' };
-
-        // Check privacy (Default to TRUE/Visible if undefined, unless we want strict privacy by default)
-        const isVisible = displayUser.privacy ? (displayUser.privacy as any)[privacyKey] !== false : true;
-        
-        // Get text (Email or handle)
-        let text = displayUser.providerEmails?.[providerId];
-        if (!text) {
-             // Try to find in providerData if available (only works for own profile/admin usually)
-             const pd = displayUser.providerData?.find((p:any) => p.providerId === providerId);
-             text = pd?.email || 'Linked Account';
-        }
-        
-        return { 
-            linked: true, 
-            showText: isVisible, 
-            text: isVisible ? (text || 'Linked Account') : 'حساب موثق (Hidden)' 
-        };
+    // Helper to check if a provider is linked based on profile data
+    const checkLinked = (providerId: string) => {
+        if (!displayUser) return false;
+        return displayUser.linkedProviders?.includes(providerId as any) || 
+               displayUser.providerData?.some((p:any) => p.providerId === providerId) ||
+               (providerId === 'google.com' && displayUser.isGoogleVerified) ||
+               (providerId === 'github.com' && displayUser.isGithubVerified) ||
+               (providerId === 'yahoo.com' && displayUser.isYahooVerified) ||
+               (providerId === 'microsoft.com' && displayUser.isMicrosoftVerified);
     };
-
-    // --- Format Join Date for M Icon ---
-    const joinDate = displayUser?.createdAt 
-        ? new Date(displayUser.createdAt).toLocaleDateString('ar-SA', { year: 'numeric', month: 'long' })
-        : 'يناير 2025';
 
     // --- RENDER ---
     
@@ -281,21 +258,17 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
     const displayFollowers = displayUser.followersCount !== undefined ? displayUser.followersCount : (displayUser.followers?.length || 0);
     const displayFollowing = displayUser.followingCount !== undefined ? displayUser.followingCount : (displayUser.following?.length || 0);
     
-    // Phone logic: Show if verified AND (privacy allows OR isMe OR isAdmin)
-    const phonePrivacy = displayUser.privacy?.showPhone ?? false; // Default hidden
-    const shouldShowPhone = displayUser.phone && (
-        isOwnProfile || 
-        isAdminUser || 
-        (displayUser.isPhoneVerified && phonePrivacy)
-    );
-    
-    const isMutual = isFollowing && (displayUser.following?.includes(currentUser?.id || '') || false);
+    // Calculate join date
+    const joinDate = displayUser.createdAt ? new Date(displayUser.createdAt).toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' }) : 'يناير 2025';
 
-    // Provider Statuses
-    const googleStatus = getProviderStatus('google.com', 'showGoogle');
-    const githubStatus = getProviderStatus('github.com', 'showGithub');
-    const yahooStatus = getProviderStatus('yahoo.com', 'showYahoo');
-    const msStatus = getProviderStatus('microsoft.com', 'showMicrosoft');
+    // Check linked providers for Trust Row
+    const isGithubLinked = checkLinked('github.com');
+    const isYahooLinked = checkLinked('yahoo.com');
+    const isGoogleLinked = checkLinked('google.com');
+    const isMicrosoftLinked = checkLinked('microsoft.com');
+
+    // Simulate colleagues count for demo (or use real if available)
+    const colleaguesCount = 20; 
 
     return (
         <div className="min-h-screen bg-black text-[#e7e9ea] font-sans pb-20" dir="rtl">
@@ -371,134 +344,87 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                 {/* Bio */}
                 {displayUser.bio && <p className="mt-3 text-[15px] text-[#e7e9ea] leading-relaxed whitespace-pre-wrap">{displayUser.bio}</p>}
 
-                {/* --- VERIFIED IDENTITIES (BADGES WITH PRIVACY) --- */}
-                <div className="mt-3 mb-2 flex flex-wrap gap-2 animate-fade-in-up">
-                    
-                    {/* Yahoo */}
-                    {yahooStatus.linked && (
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-[#6001d2]/20 border border-[#6001d2]/40 rounded-full text-white cursor-help group relative" title={yahooStatus.text}>
-                            <YahooIcon />
-                            <span className={`text-xs font-bold ${yahooStatus.showText ? 'text-[#a67dff]' : 'text-gray-400'}`}>
-                                {yahooStatus.showText ? 'Yahoo' : 'موثق'}
-                            </span>
-                            <CheckCircle2 className="w-3 h-3 text-[#6001d2] fill-current" />
-                        </div>
-                    )}
-
-                    {/* GitHub */}
-                    {githubStatus.linked && (
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-[#24292e]/40 border border-gray-600 rounded-full text-white cursor-help group relative" title={githubStatus.text}>
-                            <Github className="w-3.5 h-3.5" />
-                            <span className={`text-xs font-bold ${githubStatus.showText ? 'text-gray-300' : 'text-gray-500'}`}>
-                                {githubStatus.showText ? 'GitHub' : 'موثق'}
-                            </span>
-                            <CheckCircle2 className="w-3 h-3 text-white fill-current" />
-                        </div>
-                    )}
-
-                    {/* Google */}
-                    {googleStatus.linked && (
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-white/10 border border-white/20 rounded-full text-white cursor-help group relative" title={googleStatus.text}>
-                            <GoogleIcon />
-                            <span className={`text-xs font-bold ${googleStatus.showText ? 'text-gray-200' : 'text-gray-500'}`}>
-                                {googleStatus.showText ? 'Google' : 'موثق'}
-                            </span>
-                            <CheckCircle2 className="w-3 h-3 text-green-500 fill-current" />
-                        </div>
-                    )}
-
-                    {/* Microsoft */}
-                    {msStatus.linked && (
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-blue-500/10 border border-blue-500/30 rounded-full text-white cursor-help group relative" title={msStatus.text}>
-                            <MicrosoftIcon />
-                            <span className={`text-xs font-bold ${msStatus.showText ? 'text-blue-300' : 'text-gray-500'}`}>
-                                {msStatus.showText ? 'Microsoft' : 'موثق'}
-                            </span>
-                            <CheckCircle2 className="w-3 h-3 text-blue-500 fill-current" />
-                        </div>
-                    )}
-                    
-                     {/* Phone */}
-                     {displayUser.isPhoneVerified && (
-                        <div className="flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded-full text-white cursor-help group relative">
-                            <Phone className="w-3 h-3 text-emerald-400" />
-                            <span className="text-xs font-bold text-emerald-400">
-                                {phonePrivacy ? 'هاتف' : 'موثق'}
-                            </span>
-                            <CheckCircle2 className="w-3 h-3 text-emerald-500 fill-current" />
-                        </div>
-                    )}
+                {/* --- 4. TRUST ROW (New Implementation) --- */}
+                <div className="flex items-center gap-3 my-4">
+                  {displayUser.isPhoneVerified && (
+                    <div className="bg-emerald-900/20 p-1.5 rounded-full border border-emerald-900/50" title="رقم هاتف موثق">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    </div>
+                  )}
+                  {isGithubLinked && (
+                    <div className="bg-[#24292e]/40 p-1.5 rounded-full border border-gray-600" title="GitHub">
+                      <Github className="w-3.5 h-3.5 text-white" />
+                    </div>
+                  )}
+                  {isGoogleLinked && (
+                    <div className="bg-white/10 p-1.5 rounded-full border border-white/20" title="Google">
+                      <GoogleIcon />
+                    </div>
+                  )}
+                  {isYahooLinked && (
+                    <div className="bg-[#6001d2]/20 p-1.5 rounded-full border border-[#6001d2]/40" title="Yahoo">
+                      <YahooIcon />
+                    </div>
+                  )}
+                  {isMicrosoftLinked && (
+                     <div className="bg-blue-900/20 p-1.5 rounded-full border border-blue-900/40" title="Microsoft">
+                      <MicrosoftIcon />
+                    </div>
+                  )}
                 </div>
 
-                {/* Info Rows */}
-                <div className="mt-2 space-y-2">
-                    {shouldShowPhone && (
-                        <div className="flex items-center gap-2 text-sm text-gray-400">
-                            <Phone className="w-3.5 h-3.5" />
-                            <span className="font-mono dir-ltr">{displayUser.phone}</span>
-                            <span className="flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded border border-emerald-400/20 font-bold"><CheckCircle2 className="w-3 h-3" /> موثق</span>
-                        </div>
-                    )}
+                {/* --- 5. METADATA ROW (Education + Location + Link + Join Date) --- */}
+                <div className="flex flex-wrap gap-x-4 gap-y-2 text-[#71767b] text-[14px] items-center">
+                    {/* Education */}
                     {educationBio && (
-                        <div className="flex items-start gap-2 text-sm mt-1">
-                            <div className="p-1 bg-blue-500/10 rounded-full mt-0.5"><GraduationCap className="w-3 h-3 text-blue-400" /></div>
-                            <span className="text-gray-300 leading-snug">{educationBio}</span>
+                        <div className="flex items-center gap-1">
+                            <GraduationCap className="w-4 h-4"/>
+                            <span>{educationBio}</span>
                         </div>
                     )}
-                    {skillsBio && skillsBio.length > 0 && (
-                        <div className="flex items-start gap-2 text-sm mt-1">
-                            <div className="p-1 bg-purple-500/10 rounded-full mt-0.5"><Cpu className="w-3 h-3 text-purple-400" /></div>
-                            <div className="flex flex-wrap gap-2">
-                                {skillsBio.map((skill, index) => (
-                                    <span key={index} className="bg-[#16181c] border border-[#2f3336] text-gray-300 px-2 py-0.5 rounded-md text-[11px]">{skill}</span>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                {/* Footer Metadata - RESTORED JOIN DATE AND BIO IN "M" ICON */}
-                <div className="flex flex-wrap gap-x-4 gap-y-1 text-[#71767b] text-[14px] mt-4 pt-3 border-t border-[#2f3336] items-center">
-                    {displayUser.address && <div className="flex items-center gap-1"><MapPin className="w-4 h-4"/> {displayUser.address}</div>}
-                    {websiteUrl && <div className="flex items-center gap-1"><LinkIcon className="w-4 h-4"/> <a href={websiteUrl} target="_blank" className="text-[#1d9bf0] hover:underline">{websiteUrl.replace(/^https?:\/\//, '')}</a></div>}
                     
-                    {/* RESTORED JOIN DATE VISUALLY */}
+                    {displayUser.address && <div className="flex items-center gap-1"><MapPin className="w-4 h-4"/> {displayUser.address}</div>}
+                    
+                    {websiteUrl && (
+                        <div className="flex items-center gap-1">
+                            <LinkIcon className="w-4 h-4"/> 
+                            <a href={websiteUrl} target="_blank" className="text-[#1d9bf0] hover:underline">{websiteUrl.replace(/^https?:\/\//, '')}</a>
+                        </div>
+                    )}
+
                     <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4"/>
                         <span>انضم في {joinDate}</span>
                     </div>
-
-                    {/* RESTORED DATA IN M ICON TOOLTIP */}
-                    <div className="relative group cursor-pointer">
-                        <div className="w-5 h-5 rounded-full bg-[#71767b] flex items-center justify-center text-black font-black text-[10px] hover:bg-white transition-colors">M</div>
-                        {/* Tooltip */}
-                        <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-48 bg-[#192734] border border-[#38444d] rounded-lg p-3 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50 shadow-xl">
-                            <div className="flex items-center gap-2 mb-2 border-b border-[#38444d] pb-1">
-                                <Info className="w-3 h-3 text-blue-400"/>
-                                <span className="font-bold">بيانات النظام</span>
-                            </div>
-                            <div className="space-y-1 text-gray-300">
-                                <p>Join Date: {joinDate}</p>
-                                <p>System ID: {displayUser.uid?.slice(0,8) || 'N/A'}</p>
-                                {displayUser.bio && <p className="mt-2 text-[10px] italic border-t border-[#38444d] pt-1">"{displayUser.bio.substring(0, 50)}..."</p>}
-                            </div>
-                            <div className="absolute top-full left-1/2 -translate-x-1/2 border-8 border-transparent border-t-[#38444d]"></div>
-                        </div>
-                    </div>
                 </div>
 
-                {/* Stats */}
-                <div className="flex gap-5 text-[14px] mt-3 text-[#71767b]">
+                {/* --- 6. SKILLS BADGES --- */}
+                {skillsBio && skillsBio.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mt-4 mb-2">
+                      {skillsBio.map((skill, index) => (
+                        <span key={index} className="flex items-center gap-1 px-3 py-1 bg-[#16181c] border border-[#2f3336] rounded-full text-xs text-gray-300">
+                          <Cpu className="w-3 h-3 text-gray-500" />
+                          {skill}
+                        </span>
+                      ))}
+                    </div>
+                )}
+
+                {/* --- 7. STATS ROW (With Colleagues) --- */}
+                <div className="flex gap-5 text-[14px] mt-4 text-[#71767b] border-b border-[#2f3336] pb-4">
                     <div className="hover:underline cursor-pointer flex gap-1 transition-colors hover:text-white" onClick={() => openUserList('following')}>
-                        <span className="font-bold text-[#e7e9ea]">{formatCount(displayFollowing)}</span> <span>متابع</span>
+                        <span className="font-bold text-[#e7e9ea]">{formatCount(displayFollowing)}</span> <span>متابعة</span>
                     </div>
                     <div className="hover:underline cursor-pointer flex gap-1 transition-colors hover:text-white" onClick={() => openUserList('followers')}>
-                        <span className="font-bold text-[#e7e9ea]">{formatCount(displayFollowers)}</span> <span>متابعين</span>
+                        <span className="font-bold text-[#e7e9ea]">{formatCount(displayFollowers)}</span> <span>متابِع</span>
+                    </div>
+                    {/* Colleagues */}
+                    <div className="hover:underline cursor-pointer flex items-center gap-1 hover:text-white">
+                        <span className="font-bold text-amber-500">{colleaguesCount}</span> 
+                        <span className="text-[#71767b]">زميل</span>
+                        <Users className="w-3 h-3 text-[#71767b]" />
                     </div>
                 </div>
-
-                {/* Mutual */}
-                {isMutual && <div className="flex items-center gap-1.5 text-xs text-gray-500 mt-2 bg-[#16181c] px-3 py-1.5 rounded-lg w-fit border border-[#2f3336]"><Users className="w-3.5 h-3.5 text-blue-500"/><span>أنتم زملاء</span></div>}
             </div>
 
             {/* 4. TABS */}

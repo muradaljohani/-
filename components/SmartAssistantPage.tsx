@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { 
     Plus, MessageSquare, Menu, X, ArrowLeft
@@ -137,7 +136,7 @@ export const SmartAssistantPage: React.FC<Props> = ({ onBack }) => {
                 {/* Header (Mobile) */}
                 <div className="md:hidden flex items-center justify-between p-4 border-b border-white/5 bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-30">
                     <button onClick={() => setSidebarOpen(true)} className="p-2 -mr-2 text-gray-400 hover:text-white"><Menu className="w-6 h-6"/></button>
-                    <span className="font-bold text-sm text-gray-200">مساعد مراد الذكي</span>
+                    <span className="font-bold text-sm text-gray-200">مساعد مراد الجهني الذكي</span>
                     <button onClick={() => setMessages([])} className="p-2 -ml-2 text-gray-400 hover:text-white"><Plus className="w-6 h-6"/></button>
                 </div>
 

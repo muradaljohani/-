@@ -12,12 +12,12 @@ import {
   GoogleAuthProvider, 
   GithubAuthProvider, 
   FacebookAuthProvider,
-  User,
-  onAuthStateChanged
+  User
 } from 'firebase/auth';
 
 const ADMIN_EMAIL = "mrada4231@gmail.com";
 
+// ... (Existing login functions remain the same) ...
 /**
  * Signs in the user with Google and enforces Admin privileges for specific email.
  */
@@ -105,20 +105,14 @@ export const loginWithYahoo = async () => {
 };
 
 /**
- * Link a new auth provider to the current user.
- * Explicitly requires currentUser to avoid 'linkWithPopup' on null.
+ * Link a new auth provider to the CURRENTLY logged-in user.
+ * REAL IMPLEMENTATION: Updates Firestore Flags.
  */
-export const linkProvider = async (currentUser: User, providerId: string): Promise<User> => {
-  
-  // 1. Guard against NULL user (Prevents the crash)
-  if (!currentUser) {
-    console.error("linkProvider was called with NULL user");
-    throw new Error("حدث خطأ: لا يوجد مستخدم نشط. يرجى تحديث الصفحة.");
+export const linkProvider = async (providerId: string): Promise<User> => {
+  if (!auth.currentUser) {
+    throw new Error("يجب تسجيل الدخول أولاً للقيام بعملية الربط.");
   }
 
-  console.log("Attempting to link. Current User:", currentUser.uid);
-
-  // 2. Setup Provider
   let provider;
   switch (providerId) {
     case 'google.com': 
@@ -143,23 +137,28 @@ export const linkProvider = async (currentUser: User, providerId: string): Promi
   }
 
   try {
-    // 3. Link explicitly to the passed user
-    const result = await linkWithPopup(currentUser, provider);
-    console.log("Link Success:", result.user);
-    return result.user;
+    // 1. Perform Real Firebase Linking
+    const result = await linkWithPopup(auth.currentUser, provider);
+    const user = result.user;
+
+    // 2. Update Firestore with Specific Flags for Badges
+    const userRef = doc(db, 'users', user.uid);
+    const updates: any = { isVerified: true }; // General verified flag
+    
+    if (providerId === 'github.com') updates.isGithubVerified = true;
+    if (providerId === 'yahoo.com') updates.isYahooVerified = true;
+    if (providerId === 'google.com') updates.isGoogleVerified = true;
+    if (providerId === 'microsoft.com') updates.isMicrosoftVerified = true;
+    
+    // Explicitly update Firestore so the profile page sees it
+    await updateDoc(userRef, updates);
+
+    return user;
   } catch (error: any) {
-    console.error("Link Failed:", error);
-    
+    console.error("Link Account Error:", error);
     if (error.code === 'auth/credential-already-in-use') {
-      throw new Error("هذا الحساب مرتبط بمستخدم آخر بالفعل.");
+      throw new Error("هذا الحساب مرتبط بالفعل بمستخدم آخر. لا يمكن ربطه بالحساب الحالي.");
     }
-    if (error.code === 'auth/invalid-user-token' || error.code === 'auth/no-current-user' || error.code === 'auth/operation-not-allowed') {
-       throw new Error("انتهت الجلسة. يرجى تحديث الصفحة والمحاولة مجدداً.");
-    }
-    if (error.code === 'auth/requires-recent-login') {
-       throw new Error("لأمانك، يرجى تسجيل الخروج والدخول مرة أخرى ثم المحاولة.");
-    }
-    
     throw error;
   }
 };
