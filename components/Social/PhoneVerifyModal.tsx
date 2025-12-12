@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Phone, CheckCircle2, Loader2, ShieldCheck } from 'lucide-react';
-import { auth, RecaptchaVerifier, doc, updateDoc, db } from '../../src/lib/firebase';
-import { verifyUserPhoneNumber, confirmPhoneCode } from '../../src/services/authService';
+import { doc, updateDoc, db } from '../../src/lib/firebase';
+import { verifyUserPhoneNumber, confirmPhoneCode, setupRecaptcha } from '../../src/services/authService';
 import { useAuth } from '../../context/AuthContext';
 import { ConfirmationResult } from 'firebase/auth';
 
@@ -28,20 +28,16 @@ export const PhoneVerifyModal: React.FC<Props> = ({ isOpen, onClose }) => {
         setOtp('');
         setError('');
         setLoading(false);
+
+        // Cleanup on unmount/close to prevent "client element has been removed"
+        return () => {
+            if ((window as any).recaptchaVerifier) {
+                try { (window as any).recaptchaVerifier.clear(); } catch(e) {}
+                (window as any).recaptchaVerifier = null;
+            }
+        };
     }
   }, [isOpen, user]);
-
-  const setupRecaptcha = () => {
-    // Avoid re-rendering recaptcha if already exists
-    if (!(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': () => {
-           // reCAPTCHA solved - allow signInWithPhoneNumber.
-        }
-      });
-    }
-  };
 
   const handleSendCode = async () => {
     if (!phone) return setError("يرجى إدخال رقم الهاتف");
@@ -49,14 +45,22 @@ export const PhoneVerifyModal: React.FC<Props> = ({ isOpen, onClose }) => {
     setError('');
     
     try {
-      setupRecaptcha();
-      const appVerifier = (window as any).recaptchaVerifier;
+      // Initialize reCAPTCHA on the specific DOM element
+      // Using a slight delay to ensure DOM is rendered if necessary, mostly for safety
+      const appVerifier = setupRecaptcha('recaptcha-container');
+      
       const result = await verifyUserPhoneNumber(phone, appVerifier);
       setConfirmationResult(result);
       setStep('otp');
     } catch (err: any) {
       console.error(err);
       setError(err.message || "فشل إرسال الرمز. تأكد من صحة الرقم.");
+      
+      // If error, clear recaptcha to allow retry
+      if ((window as any).recaptchaVerifier) {
+          (window as any).recaptchaVerifier.clear();
+          (window as any).recaptchaVerifier = null;
+      }
     } finally {
       setLoading(false);
     }
@@ -125,7 +129,10 @@ export const PhoneVerifyModal: React.FC<Props> = ({ isOpen, onClose }) => {
                             <Phone className="absolute left-3 top-3.5 w-5 h-5 text-gray-500"/>
                         </div>
                         {error && <div className="text-red-400 text-xs bg-red-500/10 p-2 rounded">{error}</div>}
+                        
+                        {/* THE RECAPTCHA CONTAINER */}
                         <div id="recaptcha-container"></div>
+                        
                         <button 
                             onClick={handleSendCode} 
                             disabled={loading}

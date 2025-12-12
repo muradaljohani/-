@@ -105,6 +105,7 @@ export const loginWithGithub = async () => {
         isVerified: true,
         isIdentityVerified: true,
         isGold: true,
+        isGithubVerified: true, // Flag as verified via GitHub
         lastLogin: serverTimestamp()
       }, { merge: true });
     } else {
@@ -126,10 +127,14 @@ export const loginWithGithub = async () => {
                 role: 'developer', // Flag as developer given it's GitHub
                 bio: 'GitHub Developer',
                 username: user.reloadUserInfo?.screenName || user.uid.slice(0, 8),
+                isGithubVerified: true, // Flag as verified via GitHub
                 lastLogin: serverTimestamp()
             });
         } else {
-            await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
+            await setDoc(userRef, { 
+                lastLogin: serverTimestamp(),
+                isGithubVerified: true // Update on login just in case
+            }, { merge: true });
         }
     }
     
@@ -153,6 +158,38 @@ export const logoutUser = async () => {
     console.error("Logout Error:", error);
     throw error;
   }
+};
+
+/**
+ * Sets up the reCAPTCHA verifier.
+ * Handles cleaning up previous instances to prevent "element has been removed" errors.
+ */
+export const setupRecaptcha = (elementId: string) => {
+  // 1. Clear existing verifier if it exists
+  if ((window as any).recaptchaVerifier) {
+    try {
+      (window as any).recaptchaVerifier.clear();
+    } catch (e) {
+      console.warn("Recaptcha clear error (harmless):", e);
+    }
+    (window as any).recaptchaVerifier = null;
+  }
+
+  // 2. Create new verifier
+  // Ensure auth is initialized from your firebase config
+  (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, elementId, {
+    'size': 'invisible',
+    'callback': () => {
+      // reCAPTCHA solved, allow signInWithPhoneNumber.
+      console.log("Recaptcha Solved");
+    },
+    'expired-callback': () => {
+      // Response expired. Ask user to solve reCAPTCHA again.
+      console.log("Recaptcha Expired");
+    }
+  });
+
+  return (window as any).recaptchaVerifier;
 };
 
 /**

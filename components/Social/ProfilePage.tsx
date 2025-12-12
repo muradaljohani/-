@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, Fingerprint, Database, Bot } from 'lucide-react';
+import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, Fingerprint, Database, Bot, Github } from 'lucide-react';
 import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
@@ -494,6 +494,21 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                             </span>
                         </div>
                     )}
+                    
+                    {/* GitHub Verification */}
+                    {profileUser.isGithubVerified && (
+                        <div className="flex items-center gap-2 text-sm">
+                            <div className="p-1.5 bg-[#24292e] rounded-full">
+                                <Github className="w-3.5 h-3.5 text-white" />
+                            </div>
+                            <span className="font-mono text-[#e7e9ea] dir-ltr">GitHub Account</span>
+                            
+                            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold border border-emerald-500/30" title="تم التحقق">
+                                <CheckCircle2 className="w-3 h-3" /> موثق
+                            </span>
+                        </div>
+                    )}
+
                     {!profileUser.phone && isOwnProfile && (
                          <div className="flex items-center gap-2 text-sm">
                             <div className="p-1.5 bg-gray-500/10 rounded-full">

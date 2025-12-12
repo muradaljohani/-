@@ -1007,6 +1007,7 @@ export interface User {
   isPhoneVerified?: boolean;
   isEmailVerified?: boolean;
   isIdentityVerified?: boolean; 
+  isGithubVerified?: boolean; // NEW: Verified via GitHub
   kycStatus?: 'none' | 'pending' | 'verified';
   isBiometricVerified?: boolean;
   kycData?: KYCData; 
