@@ -755,6 +755,7 @@ export interface Review {
   rating: number;
   comment: string;
   date: string;
+  reply?: string;
 }
 
 export interface ProductListing {
@@ -936,6 +937,16 @@ export interface KYCData {
   transactionId?: string;
 }
 
+// Added providerData definition
+export interface AuthProviderData {
+  providerId: string;
+  uid: string;
+  displayName?: string;
+  email?: string;
+  phoneNumber?: string;
+  photoURL?: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -954,6 +965,7 @@ export interface User {
   verified: boolean; 
   isGold?: boolean;
   linkedProviders: LoginProvider[]; 
+  providerData?: AuthProviderData[]; // New Field for Linked Accounts
   createdAt: string;
   lastLogin: string;
   authToken?: string;
@@ -1022,6 +1034,7 @@ export interface User {
   customFields?: CustomField[];
   isReadyToWork?: boolean;
   profileCompleteness?: number;
+  isPhoneHidden?: boolean; // New Field
   aiAnalysis?: AIAnalysisResult;
 
   walletBalance?: number;
@@ -1093,3 +1106,4 @@ export interface AuthResponse {
   user?: Partial<User>;
   error?: string;
 }
+
