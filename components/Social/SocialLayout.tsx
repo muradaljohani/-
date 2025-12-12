@@ -465,8 +465,12 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                     onClick={() => setIsAIOpen(true)}
                     className="relative -top-4 bg-black dark:bg-white text-white dark:text-black p-1 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.3)] dark:shadow-[0_0_15px_rgba(255,255,255,0.3)] border-[4px] border-white dark:border-black transition-transform active:scale-95"
                 >
-                    <div className="w-10 h-10 bg-black dark:bg-black rounded-full flex items-center justify-center">
-                        <span className="font-black text-white text-xl">M</span>
+                    <div className="w-10 h-10 bg-black dark:bg-black rounded-full flex items-center justify-center overflow-hidden">
+                        <img 
+                            src="https://ui-avatars.com/api/?name=Murad+AI&background=000000&color=ffffff&size=512&bold=true&length=1&font-size=0.6" 
+                            alt="AI" 
+                            className="w-full h-full object-cover"
+                        />
                     </div>
                 </button>
                 

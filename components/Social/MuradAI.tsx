@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Mic, Image as ImageIcon, PenTool, Sparkles, MoveUp, Paperclip, Clock } from 'lucide-react';
 import { getGeminiResponse } from '../../services/geminiService';
@@ -101,7 +100,12 @@ export const MuradAI: React.FC<Props> = ({ isOpen, onClose }) => {
                 <div className={`max-w-[85%] rounded-2xl px-5 py-3 text-lg whitespace-pre-wrap leading-relaxed ${
                   msg.sender === 'user' ? 'bg-[#1d9bf0]/20 text-white rounded-br-sm' : 'bg-transparent text-[#e7e9ea]'
                 }`}>
-                  {msg.sender === 'ai' && <span className="text-blue-400 text-xs font-bold block mb-2">Murad AI</span>}
+                  {msg.sender === 'ai' && (
+                     <div className="flex items-center gap-2 mb-2">
+                        <img src="https://ui-avatars.com/api/?name=Murad+AI&background=000000&color=ffffff&size=512&bold=true&length=1&font-size=0.6" className="w-6 h-6 rounded-full" />
+                        <span className="text-blue-400 text-xs font-bold">Murad AI</span>
+                     </div>
+                  )}
                   {msg.text}
                 </div>
               </div>

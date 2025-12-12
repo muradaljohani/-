@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, Fingerprint, Database, Bot } from 'lucide-react';
 import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
@@ -24,7 +23,8 @@ const MURAD_AI_PROFILE = {
   username: "MURAD",
   handle: "@MURAD",
   email: "ai@murad-group.com",
-  avatar: "https://cdn-icons-png.flaticon.com/512/4712/4712109.png", 
+  // Updated Avatar to "M"
+  avatar: "https://ui-avatars.com/api/?name=Murad+AI&background=000000&color=ffffff&size=512&bold=true&length=1&font-size=0.6", 
   coverImage: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=80&w=1000&auto=format&fit=crop", 
   bio: "الذكاء الاصطناعي الرسمي لمجتمع ميلاف. 🤖✨\nأساعدك في البحث، التحليل، والإجابة على استفساراتك.\n\nPowered by Murad-Group AI Core.",
   address: "Digital World 🌐",
@@ -74,6 +74,35 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
 
     const isOwnProfile = currentUser?.id === userId;
     const isFollowing = currentUser?.following?.includes(userId);
+
+    const handleBuyProduct = (product: Product) => {
+        if (!currentUser) {
+            alert("يرجى تسجيل الدخول للشراء.");
+            return;
+        }
+        setSelectedProduct(product);
+        setIsPaymentGatewayOpen(true);
+    };
+
+    const handlePaymentSuccess = (txn: any) => {
+        if (selectedProduct) {
+             // Enrich product with seller info from profileUser
+             const productWithSeller = {
+                 ...selectedProduct,
+                 sellerId: profileUser?.id,
+                 sellerName: profileUser?.name
+             };
+             
+             const res = purchaseService(productWithSeller, txn);
+             if (res.success) {
+                 setIsPaymentGatewayOpen(false);
+                 alert("تم شراء المنتج بنجاح!");
+                 setSelectedProduct(null);
+             } else {
+                 alert(res.error || "فشل عملية الشراء.");
+             }
+        }
+    };
 
     // --- ADMIN HARDCODED DATA BYPASS ---
     const ADMIN_BYPASS_IDS = ["admin-fixed-id", "admin-murad-main-id", "admin-murad-id"];
@@ -276,33 +305,6 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
             unfollowUser(userId);
         } else {
             followUser(userId);
-        }
-    };
-
-    const handleBuyProduct = (product: Product) => {
-        if (!currentUser) {
-            alert("يرجى تسجيل الدخول للشراء");
-            return;
-        }
-        setSelectedProduct(product);
-        setIsPaymentGatewayOpen(true);
-    };
-
-    const handlePaymentSuccess = (txn: any) => {
-        setIsPaymentGatewayOpen(false);
-        if (selectedProduct && profileUser) {
-             const serviceObj = {
-                 ...selectedProduct,
-                 sellerId: profileUser.id,
-                 sellerName: profileUser.name
-             };
-             const res = purchaseService(serviceObj, txn);
-             if (res.success) {
-                 alert("تم الشراء بنجاح!");
-             } else {
-                 alert("فشل الشراء: " + (res.error || "خطأ غير معروف"));
-             }
-             setSelectedProduct(null);
         }
     };
 
