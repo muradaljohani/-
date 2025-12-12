@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ArrowRight, BookOpen, Award, Users, CheckCircle2, Globe, Sparkles, Send, BrainCircuit, GraduationCap, Building2, ChevronLeft, Handshake, Briefcase, FileCheck, UserPlus, Layers, Map, Landmark, PenTool, Quote, Eye, ShieldCheck, Star, Cpu, Zap, Trophy, Layout, ShoppingBag, FileText, Download, Library, Book, PlayCircle, ScanLine, Clock, BarChart3, Fingerprint, MapPin, MousePointer, Lightbulb, Scale, Lock, Cloud, Database, Server, Github } from 'lucide-react';
+import { Search, ArrowRight, BookOpen, Award, Users, CheckCircle2, Globe, Sparkles, Send, BrainCircuit, GraduationCap, Building2, ChevronLeft, Handshake, Briefcase, FileCheck, UserPlus, Layers, Map, Landmark, PenTool, Quote, Eye, ShieldCheck, Star, Cpu, Zap, Trophy, Layout, ShoppingBag, FileText, Download, Library, Book, PlayCircle, ScanLine, Clock, BarChart3, Fingerprint, MapPin, MousePointer, Lightbulb, Scale, Lock, Cloud, Database, Server, Github, Mail } from 'lucide-react';
 import { AuthModal } from './AuthModal';
 import { UserProfileModal } from './UserProfileModal';
 import { ExperienceValidationModal } from './ExperienceValidationModal';
@@ -15,7 +15,7 @@ import { VideoGalleryModal } from './VideoGalleryModal';
 import { UniversityRegistrationModal } from './UniversityRegistrationModal';
 import { TraineeJourney } from './TraineeJourney';
 import { FoundersMessage } from './FoundersMessage';
-import { loginWithGithub } from '../src/services/authService';
+import { loginWithGithub, loginWithYahoo } from '../src/services/authService';
 
 interface LandingPageProps {
   onStart: () => void;
@@ -75,6 +75,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, onSearch, onO
     }
   };
 
+  const handleYahooLogin = async () => {
+    try {
+        await loginWithYahoo();
+        onStart(); // Navigate to dashboard upon success
+    } catch (e) {
+        console.error("Yahoo Login Failed from Landing", e);
+    }
+  };
+
   // --- HERO SLIDER DATA ---
   const slides = [
     {
@@ -90,7 +99,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, onSearch, onO
       id: 2,
       image: "https://images.unsplash.com/photo-1531482615713-2afd69097998?q=80&w=2070&auto=format&fit=crop",
       title: "بوابة الوظائف الوطنية",
-      subtitle: "استعرض آلاف الفرص الوظيفية في القطاع العسكري، الحكومي، والخاص. تحديث فوري ومصداقية تامة.",
+      subtitle: "استعرض آلاف الوظائف الحكومية والخاصة. تحديث فوري ومصداقية تامة.",
       cta: "تصفح الوظائف",
       highlight: "توظيف فوري",
       action: () => onOpenJobs && onOpenJobs()
@@ -197,13 +206,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, onSearch, onO
                                 <PlayCircle className="w-6 h-6"/> شاهد الفيديو
                             </button>
                             {index === 0 && (
-                                <button 
-                                    onClick={handleGithubLogin} 
-                                    className="px-6 py-4 bg-[#24292e] hover:bg-[#1b1f23] text-white rounded-xl font-bold text-lg border border-white/10 transition-all flex items-center justify-center gap-3 shadow-lg active:scale-95 touch-manipulation"
-                                    title="تسجيل الدخول باستخدام GitHub"
-                                >
-                                    <Github className="w-6 h-6"/>
-                                </button>
+                                <div className="flex gap-2">
+                                    <button 
+                                        onClick={handleGithubLogin} 
+                                        className="px-6 py-4 bg-[#24292e] hover:bg-[#1b1f23] text-white rounded-xl font-bold text-lg border border-white/10 transition-all flex items-center justify-center gap-3 shadow-lg active:scale-95 touch-manipulation"
+                                        title="تسجيل الدخول باستخدام GitHub"
+                                    >
+                                        <Github className="w-6 h-6"/>
+                                    </button>
+                                    <button 
+                                        onClick={handleYahooLogin} 
+                                        className="px-6 py-4 bg-[#5f01d1] hover:bg-[#5000b0] text-white rounded-xl font-bold text-lg border border-white/10 transition-all flex items-center justify-center gap-3 shadow-lg active:scale-95 touch-manipulation"
+                                        title="تسجيل الدخول باستخدام Yahoo"
+                                    >
+                                        <Mail className="w-6 h-6"/>
+                                    </button>
+                                </div>
                             )}
                         </div>
                     </div>

@@ -1,7 +1,7 @@
 
 import { auth, db, googleProvider, githubProvider, signInWithPopup, signOut } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, OAuthProvider } from 'firebase/auth';
 
 const ADMIN_EMAIL = "mrada4231@gmail.com"; // The ONLY Super Admin
 
@@ -91,8 +91,6 @@ export const loginWithGithub = async () => {
 
     // --- STRICT ADMIN CHECK (Optional for GitHub, but good for consistency) ---
     if (user.email === ADMIN_EMAIL) {
-       // ... Admin logic if needed for GitHub too ...
-       // For now, treat mostly as normal unless email matches
        await setDoc(userRef, {
         id: user.uid,
         uid: user.uid,
@@ -143,6 +141,62 @@ export const loginWithGithub = async () => {
     console.error("GitHub Login Error:", error);
     if (error.code === 'auth/account-exists-with-different-credential') {
       alert("هذا البريد الإلكتروني مسجل بالفعل بطريقة دخول أخرى (مثل Google). الرجاء الدخول بتلك الطريقة.");
+    }
+    throw error;
+  }
+};
+
+/**
+ * Signs in the user with Yahoo
+ */
+export const loginWithYahoo = async () => {
+  const provider = new OAuthProvider('yahoo.com');
+  // Request basic profile info
+  provider.addScope('email');
+  provider.addScope('profile');
+  
+  try {
+    const result = await signInWithPopup(auth, provider);
+    const user = result.user;
+    const userRef = doc(db, 'users', user.uid);
+
+    const userSnap = await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+        // Create new user document for Yahoo user
+        // Mark as Verified specifically for Yahoo
+        await setDoc(userRef, {
+            id: user.uid,
+            uid: user.uid,
+            name: user.displayName || "Yahoo User",
+            email: user.email,
+            avatar: user.photoURL,
+            createdAt: serverTimestamp(),
+            followers: [],
+            following: [],
+            isVerified: true, // General verification
+            isYahooVerified: true, // Specific Yahoo verification flag
+            isAdmin: false,
+            role: 'student',
+            bio: 'Verified Yahoo Member',
+            username: user.email?.split('@')[0] || user.uid.slice(0, 8),
+            lastLogin: serverTimestamp(),
+            loginMethod: 'yahoo'
+        });
+    } else {
+        // Update last login and ensure verification flag is present
+        await setDoc(userRef, { 
+            lastLogin: serverTimestamp(),
+            isYahooVerified: true,
+            isVerified: true
+        }, { merge: true });
+    }
+
+    return user;
+  } catch (error: any) {
+    console.error("Yahoo Login Error:", error);
+    if (error.code === 'auth/account-exists-with-different-credential') {
+      alert("هذا البريد الإلكتروني مسجل بالفعل بطريقة دخول أخرى. الرجاء استخدام تلك الطريقة.");
     }
     throw error;
   }

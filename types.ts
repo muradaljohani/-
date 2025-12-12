@@ -464,7 +464,7 @@ export interface ChatState {
   error: string | null;
 }
 
-export type LoginProvider = 'nafath' | 'otp' | 'email' | 'apple' | 'twitter' | 'facebook' | 'google' | 'microsoft' | 'instagram' | 'github';
+export type LoginProvider = 'nafath' | 'otp' | 'email' | 'apple' | 'twitter' | 'facebook' | 'google' | 'microsoft' | 'instagram' | 'github' | 'yahoo';
 
 export interface Notification {
   id: string;
@@ -1008,6 +1008,7 @@ export interface User {
   isEmailVerified?: boolean;
   isIdentityVerified?: boolean; 
   isGithubVerified?: boolean; // NEW: Verified via GitHub
+  isYahooVerified?: boolean; // NEW: Verified via Yahoo
   kycStatus?: 'none' | 'pending' | 'verified';
   isBiometricVerified?: boolean;
   kycData?: KYCData; 

@@ -508,6 +508,20 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                             </span>
                         </div>
                     )}
+                    
+                    {/* Yahoo Verification */}
+                    {profileUser.isYahooVerified && (
+                        <div className="flex items-center gap-2 text-sm">
+                            <div className="p-1.5 bg-[#5f01d1] rounded-full">
+                                <Mail className="w-3.5 h-3.5 text-white" />
+                            </div>
+                            <span className="font-mono text-[#e7e9ea] dir-ltr">Yahoo Account</span>
+                            
+                            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold border border-emerald-500/30" title="تم التحقق">
+                                <CheckCircle2 className="w-3 h-3" /> موثق
+                            </span>
+                        </div>
+                    )}
 
                     {!profileUser.phone && isOwnProfile && (
                          <div className="flex items-center gap-2 text-sm">
