@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Search, ArrowRight, BookOpen, Award, Users, CheckCircle2, Globe, Sparkles, Send, BrainCircuit, GraduationCap, Building2, ChevronLeft, Handshake, Briefcase, FileCheck, UserPlus, Layers, Map, Landmark, PenTool, Quote, Eye, ShieldCheck, Star, Cpu, Zap, Trophy, Layout, ShoppingBag, FileText, Download, Library, Book, PlayCircle, ScanLine, Clock, BarChart3, Fingerprint, MapPin, MousePointer, Lightbulb, Scale, Lock, Cloud, Database, Server } from 'lucide-react';
+import { Search, ArrowRight, BookOpen, Award, Users, CheckCircle2, Globe, Sparkles, Send, BrainCircuit, GraduationCap, Building2, ChevronLeft, Handshake, Briefcase, FileCheck, UserPlus, Layers, Map, Landmark, PenTool, Quote, Eye, ShieldCheck, Star, Cpu, Zap, Trophy, Layout, ShoppingBag, FileText, Download, Library, Book, PlayCircle, ScanLine, Clock, BarChart3, Fingerprint, MapPin, MousePointer, Lightbulb, Scale, Lock, Cloud, Database, Server, Github } from 'lucide-react';
 import { AuthModal } from './AuthModal';
 import { UserProfileModal } from './UserProfileModal';
 import { ExperienceValidationModal } from './ExperienceValidationModal';
@@ -15,6 +15,7 @@ import { VideoGalleryModal } from './VideoGalleryModal';
 import { UniversityRegistrationModal } from './UniversityRegistrationModal';
 import { TraineeJourney } from './TraineeJourney';
 import { FoundersMessage } from './FoundersMessage';
+import { loginWithGithub } from '../src/services/authService';
 
 interface LandingPageProps {
   onStart: () => void;
@@ -63,6 +64,15 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, onSearch, onO
   const handleStartJourney = () => {
       // Trigger the new University Registration Flow
       setIsUniversityRegOpen(true);
+  };
+
+  const handleGithubLogin = async () => {
+    try {
+        await loginWithGithub();
+        onStart(); // Navigate to dashboard upon success
+    } catch (e) {
+        console.error("Github Login Failed from Landing", e);
+    }
   };
 
   // --- HERO SLIDER DATA ---
@@ -179,13 +189,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, onSearch, onO
                         </div>
                         <h1 className="text-4xl md:text-7xl font-black text-white leading-tight mb-6 drop-shadow-xl tracking-tight">{slide.title}</h1>
                         <p className="text-lg md:text-xl text-gray-200 mb-10 leading-relaxed max-w-lg shadow-black drop-shadow-md border-l-4 border-amber-500 pl-4 bg-black/20 p-2 rounded-r-lg backdrop-blur-sm">{slide.subtitle}</p>
-                        <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex flex-col sm:flex-row gap-4 flex-wrap">
                             <button onClick={slide.action} className="px-10 py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-lg shadow-[0_0_30px_rgba(16,185,129,0.4)] transition-all flex items-center justify-center gap-3 group active:scale-95 touch-manipulation">
                                 {slide.cta} <ArrowRight className="w-6 h-6 rtl:rotate-180 group-hover:-translate-x-1 transition-transform"/>
                             </button>
                             <button onClick={() => setIsVideoGalleryOpen(true)} className="px-10 py-4 bg-white/10 hover:bg-white/20 text-white rounded-xl font-bold text-lg border border-white/20 transition-all flex items-center justify-center gap-3 backdrop-blur-md active:scale-95 touch-manipulation">
                                 <PlayCircle className="w-6 h-6"/> شاهد الفيديو
                             </button>
+                            {index === 0 && (
+                                <button 
+                                    onClick={handleGithubLogin} 
+                                    className="px-6 py-4 bg-[#24292e] hover:bg-[#1b1f23] text-white rounded-xl font-bold text-lg border border-white/10 transition-all flex items-center justify-center gap-3 shadow-lg active:scale-95 touch-manipulation"
+                                    title="تسجيل الدخول باستخدام GitHub"
+                                >
+                                    <Github className="w-6 h-6"/>
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

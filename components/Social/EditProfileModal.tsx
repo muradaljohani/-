@@ -1,7 +1,9 @@
+
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Camera, Save, Loader2, Link as LinkIcon, MapPin, Youtube, Phone, GraduationCap, Cpu } from 'lucide-react';
+import { X, Camera, Save, Loader2, Link as LinkIcon, MapPin, Youtube, Phone, GraduationCap, Cpu, ShieldCheck, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { uploadImage } from '../../src/services/storageService';
+import { PhoneVerifyModal } from './PhoneVerifyModal';
 
 interface Props {
   isOpen: boolean;
@@ -85,6 +87,7 @@ const COUNTRY_CODES = [
 export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const { user, updateProfile } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
+  const [isPhoneVerifyOpen, setIsPhoneVerifyOpen] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -95,8 +98,8 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
     youtube: '',
     photoURL: '',
     bannerURL: '',
-    phoneCode: '+966',
     phoneNumber: '',
+    isPhoneHidden: false,
     educationBio: '',
     skillsBio: ''
   });
@@ -108,24 +111,6 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   // Initialize with current user data
   useEffect(() => {
     if (user && isOpen) {
-      // Parse existing phone number if available
-      let pCode = '+966';
-      let pNum = '';
-      
-      if (user.phone) {
-          // Find the longest matching code to ensure accuracy (e.g. distinguishing +1 from +123)
-          // Sort codes by length descending to match the specific one first
-          const sortedCodes = [...COUNTRY_CODES].sort((a, b) => b.code.length - a.code.length);
-          const foundCode = sortedCodes.find(c => user.phone?.startsWith(c.code));
-          
-          if (foundCode) {
-              pCode = foundCode.code;
-              pNum = user.phone.replace(foundCode.code, '');
-          } else {
-              pNum = user.phone;
-          }
-      }
-
       setFormData({
         displayName: user.name || '',
         bio: user.bio || '',
@@ -134,8 +119,8 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
         youtube: user.customFormFields?.youtube || '',
         photoURL: user.avatar || '',
         bannerURL: user.coverImage || '',
-        phoneCode: pCode,
-        phoneNumber: pNum,
+        phoneNumber: user.phone || '',
+        isPhoneHidden: user.isPhoneHidden || false, // Assuming isPhoneHidden exists on User type or handled loosely
         educationBio: user.customFormFields?.educationBio || '',
         skillsBio: user.skills ? user.skills.join(', ') : ''
       });
@@ -161,7 +146,6 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
     // ----------------------------------
 
     try {
-      const fullPhone = formData.phoneNumber ? `${formData.phoneCode}${formData.phoneNumber}` : '';
       const skillsArray = formData.skillsBio.split(',').map(s => s.trim()).filter(Boolean);
 
       await updateProfile({
@@ -170,7 +154,8 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
         address: formData.location,
         avatar: formData.photoURL,
         coverImage: formData.bannerURL,
-        phone: fullPhone,
+        // Phone is updated via PhoneVerifyModal, but we persist the hidden flag here
+        isPhoneHidden: formData.isPhoneHidden, 
         skills: skillsArray,
         customFormFields: {
             ...user.customFormFields,
@@ -210,186 +195,209 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up font-sans" dir="rtl">
-      <div className="relative w-full max-w-lg bg-black border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-        
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-800">
-          <div className="flex items-center gap-4">
-            <button onClick={onClose} className="p-2 hover:bg-slate-900 rounded-full transition-colors text-slate-400 hover:text-white">
-              <X className="w-5 h-5"/>
-            </button>
-            <h2 className="text-xl font-bold text-white">تعديل الملف الشخصي</h2>
-          </div>
-          <button 
-            onClick={handleSave} 
-            disabled={isSaving}
-            className="px-6 py-1.5 bg-white text-black rounded-full font-bold text-sm hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-2"
-          >
-            {isSaving && <Loader2 className="w-4 h-4 animate-spin"/>}
-            <span>حفظ</span>
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto scrollbar-hide">
+    <>
+      <div className="fixed inset-0 z-[6000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in-up font-sans" dir="rtl">
+        <div className="relative w-full max-w-lg bg-black border border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
           
-          {/* Images Section */}
-          <div className="relative mb-16">
-            {/* Banner */}
-            <div className="h-32 w-full bg-slate-800 relative group cursor-pointer" onClick={() => bannerInputRef.current?.click()}>
-              {formData.bannerURL ? (
-                <img src={formData.bannerURL} className="w-full h-full object-cover opacity-80" alt="Banner" />
-              ) : (
-                <div className="w-full h-full bg-slate-800"></div>
-              )}
-              <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-100 transition-opacity">
-                <div className="bg-black/50 p-2 rounded-full backdrop-blur-md hover:bg-black/70">
-                    <Camera className="w-5 h-5 text-white opacity-90"/>
-                </div>
-              </div>
-              <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'banner')}/>
+          {/* Header */}
+          <div className="flex items-center justify-between p-4 border-b border-slate-800">
+            <div className="flex items-center gap-4">
+              <button onClick={onClose} className="p-2 hover:bg-slate-900 rounded-full transition-colors text-slate-400 hover:text-white">
+                <X className="w-5 h-5"/>
+              </button>
+              <h2 className="text-xl font-bold text-white">تعديل الملف الشخصي</h2>
             </div>
-
-            {/* Avatar */}
-            <div className="absolute -bottom-10 right-4 p-1 bg-black rounded-full cursor-pointer group" onClick={() => avatarInputRef.current?.click()}>
-              <div className="w-24 h-24 rounded-full bg-slate-900 relative overflow-hidden border-2 border-slate-800">
-                 <img src={formData.photoURL || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover opacity-80"/>
-                 <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-100 transition-opacity">
-                    <div className="bg-black/50 p-2 rounded-full backdrop-blur-md hover:bg-black/70">
-                        <Camera className="w-5 h-5 text-white opacity-90"/>
-                    </div>
-                 </div>
-              </div>
-              <input type="file" ref={avatarInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'avatar')}/>
-            </div>
+            <button 
+              onClick={handleSave} 
+              disabled={isSaving}
+              className="px-6 py-1.5 bg-white text-black rounded-full font-bold text-sm hover:bg-gray-200 transition-colors disabled:opacity-50 flex items-center gap-2"
+            >
+              {isSaving && <Loader2 className="w-4 h-4 animate-spin"/>}
+              <span>حفظ</span>
+            </button>
           </div>
 
-          {/* Fields */}
-          <div className="p-4 space-y-6">
+          {/* Content */}
+          <div className="flex-1 overflow-y-auto scrollbar-hide">
             
-            <div className="space-y-1">
-              <label className="text-slate-500 text-xs font-bold px-1">الاسم</label>
-              <input 
-                type="text" 
-                value={formData.displayName} 
-                onChange={e => setFormData({...formData, displayName: e.target.value})}
-                className="w-full bg-transparent border border-slate-700 rounded-md p-3 text-white focus:border-blue-500 focus:outline-none transition-colors"
-                placeholder="الاسم الظاهر"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-slate-500 text-xs font-bold px-1">النبذة التعريفية</label>
-              <textarea 
-                value={formData.bio} 
-                onChange={e => setFormData({...formData, bio: e.target.value})}
-                className="w-full bg-transparent border border-slate-700 rounded-md p-3 text-white focus:border-blue-500 focus:outline-none transition-colors h-24 resize-none"
-                placeholder="اكتب نبذة عن نفسك..."
-              />
-            </div>
-
-            {/* Phone Number Section with All Countries */}
-            <div className="space-y-1">
-                <label className="text-slate-500 text-xs font-bold px-1">رقم الجوال (يظهر في البايو)</label>
-                <div className="flex gap-2" dir="ltr">
-                    <select 
-                        value={formData.phoneCode}
-                        onChange={e => setFormData({...formData, phoneCode: e.target.value})}
-                        className="bg-[#16181c] border border-slate-700 rounded-md p-3 text-white focus:border-blue-500 outline-none w-32 text-sm text-center appearance-none"
-                    >
-                        {COUNTRY_CODES.map(c => (
-                            <option key={c.code} value={c.code}>{c.flag} {c.code} {c.country}</option>
-                        ))}
-                    </select>
-                    <input 
-                        type="tel"
-                        value={formData.phoneNumber}
-                        onChange={e => setFormData({...formData, phoneNumber: e.target.value.replace(/\D/g,'')})}
-                        className="flex-1 bg-transparent border border-slate-700 rounded-md p-3 text-white focus:border-blue-500 focus:outline-none transition-colors"
-                        placeholder="5xxxxxxxx"
-                    />
-                    <div className="absolute right-8 mt-3.5 pointer-events-none">
-                         <Phone className="w-5 h-5 text-slate-500"/>
-                    </div>
+            {/* Images Section */}
+            <div className="relative mb-16">
+              {/* Banner */}
+              <div className="h-32 w-full bg-slate-800 relative group cursor-pointer" onClick={() => bannerInputRef.current?.click()}>
+                {formData.bannerURL ? (
+                  <img src={formData.bannerURL} className="w-full h-full object-cover opacity-80" alt="Banner" />
+                ) : (
+                  <div className="w-full h-full bg-slate-800"></div>
+                )}
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-100 transition-opacity">
+                  <div className="bg-black/50 p-2 rounded-full backdrop-blur-md hover:bg-black/70">
+                      <Camera className="w-5 h-5 text-white opacity-90"/>
+                  </div>
                 </div>
-            </div>
+                <input type="file" ref={bannerInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'banner')}/>
+              </div>
 
-            {/* Education Section */}
-            <div className="space-y-1">
-                <label className="text-slate-500 text-xs font-bold px-1">التعليم (يظهر تحت رقم الهاتف)</label>
-                <div className="relative">
-                    <input 
-                        type="text" 
-                        value={formData.educationBio} 
-                        onChange={e => setFormData({...formData, educationBio: e.target.value})}
-                        className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-white focus:border-blue-500 focus:outline-none transition-colors"
-                        placeholder="مثال: بكالوريوس هندسة برمجيات - جامعة الملك سعود"
-                    />
-                    <GraduationCap className="absolute left-3 top-3.5 w-5 h-5 text-slate-500"/>
+              {/* Avatar */}
+              <div className="absolute -bottom-10 right-4 p-1 bg-black rounded-full cursor-pointer group" onClick={() => avatarInputRef.current?.click()}>
+                <div className="w-24 h-24 rounded-full bg-slate-900 relative overflow-hidden border-2 border-slate-800">
+                   <img src={formData.photoURL || "https://api.dicebear.com/7.x/initials/svg?seed=User"} className="w-full h-full object-cover opacity-80"/>
+                   <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-100 transition-opacity">
+                      <div className="bg-black/50 p-2 rounded-full backdrop-blur-md hover:bg-black/70">
+                          <Camera className="w-5 h-5 text-white opacity-90"/>
+                      </div>
+                   </div>
                 </div>
-            </div>
-
-            {/* Skills Section */}
-            <div className="space-y-1">
-                <label className="text-slate-500 text-xs font-bold px-1">المهارات (افصل بينها بفاصلة)</label>
-                <div className="relative">
-                    <input 
-                        type="text" 
-                        value={formData.skillsBio} 
-                        onChange={e => setFormData({...formData, skillsBio: e.target.value})}
-                        className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-white focus:border-blue-500 focus:outline-none transition-colors"
-                        placeholder="مثال: برمجة، تصميم، تسويق، إدارة"
-                    />
-                    <Cpu className="absolute left-3 top-3.5 w-5 h-5 text-slate-500"/>
-                </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-slate-500 text-xs font-bold px-1">الموقع الجغرافي</label>
-              <div className="relative">
-                 <input 
-                    type="text" 
-                    value={formData.location} 
-                    onChange={e => setFormData({...formData, location: e.target.value})}
-                    className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-white focus:border-blue-500 focus:outline-none transition-colors"
-                    placeholder="الرياض، المملكة العربية السعودية"
-                />
-                <MapPin className="absolute left-3 top-3.5 w-5 h-5 text-slate-500"/>
+                <input type="file" ref={avatarInputRef} className="hidden" accept="image/*" onChange={(e) => handleFileChange(e, 'avatar')}/>
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-slate-500 text-xs font-bold px-1">الموقع الإلكتروني</label>
-              <div className="relative">
+            {/* Fields */}
+            <div className="p-4 space-y-6">
+              
+              <div className="space-y-1">
+                <label className="text-slate-500 text-xs font-bold px-1">الاسم</label>
                 <input 
-                    type="text" 
-                    value={formData.website} 
-                    onChange={e => setFormData({...formData, website: e.target.value})}
-                    className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-blue-400 focus:border-blue-500 focus:outline-none transition-colors font-mono text-sm dir-ltr"
-                    placeholder="https://example.com"
+                  type="text" 
+                  value={formData.displayName} 
+                  onChange={e => setFormData({...formData, displayName: e.target.value})}
+                  className="w-full bg-transparent border border-slate-700 rounded-md p-3 text-white focus:border-blue-500 focus:outline-none transition-colors"
+                  placeholder="الاسم الظاهر"
                 />
-                <LinkIcon className="absolute left-3 top-3.5 w-5 h-5 text-slate-500"/>
               </div>
-            </div>
 
-            <div className="space-y-1">
-              <label className="text-slate-500 text-xs font-bold px-1">قناة يوتيوب</label>
-              <div className="relative">
-                <input 
-                    type="text" 
-                    value={formData.youtube} 
-                    onChange={e => setFormData({...formData, youtube: e.target.value})}
-                    className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-white focus:border-red-500 focus:outline-none transition-colors font-mono text-sm dir-ltr"
-                    placeholder="https://youtube.com/@channel"
+              <div className="space-y-1">
+                <label className="text-slate-500 text-xs font-bold px-1">النبذة التعريفية</label>
+                <textarea 
+                  value={formData.bio} 
+                  onChange={e => setFormData({...formData, bio: e.target.value})}
+                  className="w-full bg-transparent border border-slate-700 rounded-md p-3 text-white focus:border-blue-500 focus:outline-none transition-colors h-24 resize-none"
+                  placeholder="اكتب نبذة عن نفسك..."
                 />
-                <Youtube className="absolute left-3 top-3.5 w-5 h-5 text-red-500 opacity-70"/>
               </div>
-            </div>
 
+              {/* Phone Number Section (STRICT SMS VERIFICATION) */}
+              <div className="space-y-1">
+                  <label className="text-slate-500 text-xs font-bold px-1 flex items-center gap-2">
+                    <Phone className="w-3 h-3"/> رقم الجوال الموثق
+                  </label>
+                  <div className="flex gap-2 items-center">
+                      <div className="flex-1 relative">
+                          <input 
+                              type="text"
+                              value={formData.phoneNumber || 'غير مرتبط'}
+                              disabled
+                              className="w-full bg-[#16181c] border border-slate-700 rounded-md p-3 pl-10 text-white font-mono opacity-70 cursor-not-allowed"
+                              dir="ltr"
+                          />
+                          {formData.phoneNumber && (
+                              <div className="absolute left-3 top-3.5 flex items-center gap-1 text-emerald-500">
+                                  <ShieldCheck className="w-4 h-4"/>
+                              </div>
+                          )}
+                      </div>
+                      <button 
+                          type="button"
+                          onClick={() => setIsPhoneVerifyOpen(true)}
+                          className="px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-md font-bold text-xs transition-colors whitespace-nowrap"
+                      >
+                          {formData.phoneNumber ? 'تغيير الرقم' : 'ربط رقم'}
+                      </button>
+                  </div>
+                  
+                  {/* Privacy Toggle */}
+                  <div className="flex items-center gap-2 mt-2 px-1">
+                      <button 
+                          type="button" 
+                          onClick={() => setFormData(prev => ({ ...prev, isPhoneHidden: !prev.isPhoneHidden }))}
+                          className={`w-10 h-5 rounded-full relative transition-colors ${formData.isPhoneHidden ? 'bg-blue-600' : 'bg-slate-700'}`}
+                      >
+                          <div className={`w-3 h-3 bg-white rounded-full absolute top-1 transition-all ${formData.isPhoneHidden ? 'left-1' : 'right-1'}`}></div>
+                      </button>
+                      <span className="text-xs text-slate-400 flex items-center gap-1">
+                          {formData.isPhoneHidden ? <EyeOff className="w-3 h-3"/> : <Eye className="w-3 h-3"/>}
+                          إخفاء الرقم في الملف الشخصي
+                      </span>
+                  </div>
+              </div>
+
+              {/* Education Section */}
+              <div className="space-y-1">
+                  <label className="text-slate-500 text-xs font-bold px-1">التعليم (يظهر تحت رقم الهاتف)</label>
+                  <div className="relative">
+                      <input 
+                          type="text" 
+                          value={formData.educationBio} 
+                          onChange={e => setFormData({...formData, educationBio: e.target.value})}
+                          className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-white focus:border-blue-500 focus:outline-none transition-colors"
+                          placeholder="مثال: بكالوريوس هندسة برمجيات - جامعة الملك سعود"
+                      />
+                      <GraduationCap className="absolute left-3 top-3.5 w-5 h-5 text-slate-500"/>
+                  </div>
+              </div>
+
+              {/* Skills Section */}
+              <div className="space-y-1">
+                  <label className="text-slate-500 text-xs font-bold px-1">المهارات (افصل بينها بفاصلة)</label>
+                  <div className="relative">
+                      <input 
+                          type="text" 
+                          value={formData.skillsBio} 
+                          onChange={e => setFormData({...formData, skillsBio: e.target.value})}
+                          className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-white focus:border-blue-500 focus:outline-none transition-colors"
+                          placeholder="مثال: برمجة، تصميم، تسويق، إدارة"
+                      />
+                      <Cpu className="absolute left-3 top-3.5 w-5 h-5 text-slate-500"/>
+                  </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-500 text-xs font-bold px-1">الموقع الجغرافي</label>
+                <div className="relative">
+                   <input 
+                      type="text" 
+                      value={formData.location} 
+                      onChange={e => setFormData({...formData, location: e.target.value})}
+                      className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-white focus:border-blue-500 focus:outline-none transition-colors"
+                      placeholder="الرياض، المملكة العربية السعودية"
+                  />
+                  <MapPin className="absolute left-3 top-3.5 w-5 h-5 text-slate-500"/>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-500 text-xs font-bold px-1">الموقع الإلكتروني</label>
+                <div className="relative">
+                  <input 
+                      type="text" 
+                      value={formData.website} 
+                      onChange={e => setFormData({...formData, website: e.target.value})}
+                      className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-blue-400 focus:border-blue-500 focus:outline-none transition-colors font-mono text-sm dir-ltr"
+                      placeholder="https://example.com"
+                  />
+                  <LinkIcon className="absolute left-3 top-3.5 w-5 h-5 text-slate-500"/>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-500 text-xs font-bold px-1">قناة يوتيوب</label>
+                <div className="relative">
+                  <input 
+                      type="text" 
+                      value={formData.youtube} 
+                      onChange={e => setFormData({...formData, youtube: e.target.value})}
+                      className="w-full bg-transparent border border-slate-700 rounded-md p-3 pl-10 text-white focus:border-red-500 focus:outline-none transition-colors font-mono text-sm dir-ltr"
+                      placeholder="https://youtube.com/@channel"
+                  />
+                  <Youtube className="absolute left-3 top-3.5 w-5 h-5 text-red-500 opacity-70"/>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      <PhoneVerifyModal isOpen={isPhoneVerifyOpen} onClose={() => setIsPhoneVerifyOpen(false)} />
+    </>
   );
 };

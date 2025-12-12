@@ -1,5 +1,5 @@
 
-import { auth, db, googleProvider, signInWithPopup, signOut } from '../lib/firebase';
+import { auth, db, googleProvider, githubProvider, signInWithPopup, signOut } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 
@@ -73,6 +73,72 @@ export const loginWithGoogle = async () => {
     return user;
   } catch (error) {
     console.error("Google Sign-In Error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Signs in the user with GitHub
+ */
+export const loginWithGithub = async () => {
+  // Scope to access basic profile info
+  githubProvider.addScope('read:user');
+  
+  try {
+    const result = await signInWithPopup(auth, githubProvider);
+    const user = result.user;
+    const userRef = doc(db, 'users', user.uid);
+
+    // --- STRICT ADMIN CHECK (Optional for GitHub, but good for consistency) ---
+    if (user.email === ADMIN_EMAIL) {
+       // ... Admin logic if needed for GitHub too ...
+       // For now, treat mostly as normal unless email matches
+       await setDoc(userRef, {
+        id: user.uid,
+        uid: user.uid,
+        name: user.displayName || "Murad Admin (GitHub)",
+        email: user.email,
+        username: "IpMurad_GH",
+        avatar: user.photoURL,
+        isAdmin: true,
+        role: 'admin',
+        isVerified: true,
+        isIdentityVerified: true,
+        isGold: true,
+        lastLogin: serverTimestamp()
+      }, { merge: true });
+    } else {
+        // --- NORMAL USER LOGIC ---
+        const userSnap = await getDoc(userRef);
+
+        if (!userSnap.exists()) {
+            await setDoc(userRef, {
+                id: user.uid,
+                uid: user.uid,
+                name: user.displayName || user.reloadUserInfo?.screenName || "GitHub User",
+                email: user.email,
+                avatar: user.photoURL,
+                createdAt: serverTimestamp(),
+                followers: [],
+                following: [],
+                isVerified: false,
+                isAdmin: false,
+                role: 'developer', // Flag as developer given it's GitHub
+                bio: 'GitHub Developer',
+                username: user.reloadUserInfo?.screenName || user.uid.slice(0, 8),
+                lastLogin: serverTimestamp()
+            });
+        } else {
+            await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
+        }
+    }
+    
+    return user;
+  } catch (error: any) {
+    console.error("GitHub Login Error:", error);
+    if (error.code === 'auth/account-exists-with-different-credential') {
+      alert("هذا البريد الإلكتروني مسجل بالفعل بطريقة دخول أخرى (مثل Google). الرجاء الدخول بتلك الطريقة.");
+    }
     throw error;
   }
 };

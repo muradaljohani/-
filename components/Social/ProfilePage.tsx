@@ -352,6 +352,9 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
     const isAdminUser = profileUser.role === 'admin' || ADMIN_BYPASS_IDS.includes(profileUser.id);
     const isBot = profileUser.id === 'murad-ai-bot-id';
 
+    // Privacy Logic: Show phone if not hidden OR if user is owner/admin
+    const shouldShowPhone = profileUser.phone && (!profileUser.isPhoneHidden || isOwnProfile || isAdminUser);
+
     return (
         <div className="min-h-screen bg-black text-[#e7e9ea] font-sans pb-20" dir="rtl">
             
@@ -478,28 +481,31 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                 {/* --- New Bio Additions: Phone, Education, Skills --- */}
                 <div className="mt-3 space-y-2">
                     {/* Phone Number (Verified) */}
-                    {profileUser.phone && (
+                    {shouldShowPhone && (
                         <div className="flex items-center gap-2 text-sm">
                             <div className="p-1.5 bg-emerald-500/10 rounded-full">
                                 <Phone className="w-3.5 h-3.5 text-emerald-500" />
                             </div>
                             <span className="font-mono text-[#e7e9ea] dir-ltr">{profileUser.phone}</span>
                             
-                            {profileUser.isPhoneVerified ? (
-                                 <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold border border-emerald-500/30" title="تم التحقق">
-                                    <CheckCircle2 className="w-3 h-3" /> موثق
-                                </span>
-                            ) : isOwnProfile ? (
-                                <button 
-                                    onClick={() => setIsPhoneVerifyOpen(true)}
-                                    className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold border border-amber-500/30 hover:bg-amber-500/30 transition-colors"
-                                >
-                                    تحقق الآن
-                                </button>
-                            ) : (
-                                <span className="text-[10px] text-gray-500">(غير موثق)</span>
-                            )}
+                            {/* Always show Verified Badge for existing phone numbers as requested */}
+                            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold border border-emerald-500/30" title="تم التحقق">
+                                <CheckCircle2 className="w-3 h-3" /> موثق
+                            </span>
                         </div>
+                    )}
+                    {!profileUser.phone && isOwnProfile && (
+                         <div className="flex items-center gap-2 text-sm">
+                            <div className="p-1.5 bg-gray-500/10 rounded-full">
+                                <Phone className="w-3.5 h-3.5 text-gray-500" />
+                            </div>
+                            <button 
+                                onClick={() => setIsPhoneVerifyOpen(true)}
+                                className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold border border-amber-500/30 hover:bg-amber-500/30 transition-colors"
+                            >
+                                ربط رقم الهاتف
+                            </button>
+                         </div>
                     )}
 
                     {/* Education */}
