@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Camera, Save, Loader2, Link as LinkIcon, MapPin, Youtube, Phone, GraduationCap, Cpu, ShieldCheck, Eye, EyeOff, CheckCircle2, Github, Unlink, Link as ChainIcon, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -98,17 +97,20 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   // --- SOCIAL LINKING HANDLERS ---
   
   const handleLink = async (providerId: string) => {
-    // Explicitly check for currentUser from state
-    if (!currentUser) {
-        alert("يرجى تسجيل الدخول أولاً.");
+    setLinkingState(providerId);
+
+    // Get freshest user object directly from Auth SDK
+    const activeUser = auth.currentUser;
+
+    if (!activeUser) {
+        alert("يرجى تسجيل الدخول أولاً لتتمكن من ربط الحساب.");
+        setLinkingState(null);
         return;
     }
 
-    setLinkingState(providerId);
-
     try {
-        // PASS THE USER DIRECTLY TO SERVICE
-        const updatedUser = await linkProvider(currentUser, providerId);
+        // Explicitly pass the active Firebase user object to prevent null errors
+        const updatedUser = await linkProvider(activeUser, providerId);
         
         setCurrentUser(updatedUser); 
         
@@ -149,9 +151,9 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   };
 
   const handleUnlink = async (providerId: string) => {
-    if (!currentUser) return;
+    if (!auth.currentUser) return;
 
-    if (currentUser.providerData && currentUser.providerData.length === 1) {
+    if (auth.currentUser.providerData && auth.currentUser.providerData.length === 1) {
         alert("لا يمكن إلغاء ربط وسيلة الدخول الوحيدة.");
         return;
     }
