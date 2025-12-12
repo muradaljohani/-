@@ -105,30 +105,17 @@ export const loginWithYahoo = async () => {
   }
 };
 
-// Helper: Wait for the user to be ready (Resolves the Race Condition)
-const waitForCurrentUser = () => {
-  return new Promise<User>((resolve, reject) => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      unsubscribe();
-      if (user) {
-        resolve(user);
-      } else {
-        reject(new Error("No active session found. Please refresh or login again."));
-      }
-    });
-  });
-};
-
 /**
- * Link a new auth provider to the CURRENTLY logged-in user.
- * Includes Session Waiter to prevent null errors on refresh.
+ * Link a new auth provider to the specified user.
+ * Accepts user object explicitly to avoid session race conditions.
  */
-export const linkProvider = async (providerId: string): Promise<User> => {
+export const linkProvider = async (user: User, providerId: string): Promise<User> => {
   
-  // 1. Ensure we have a user (Wait for it if necessary)
-  const user = auth.currentUser || (await waitForCurrentUser());
+  if (!user) {
+      throw new Error("User object is missing. Cannot link account.");
+  }
 
-  // 2. Setup Provider
+  // Setup Provider
   let provider;
   switch (providerId) {
     case 'google.com': 
@@ -153,11 +140,11 @@ export const linkProvider = async (providerId: string): Promise<User> => {
   }
 
   try {
-    // 3. Link
+    // Direct Link
     const result = await linkWithPopup(user, provider);
     const linkedUser = result.user;
 
-    // 4. Update Firestore with Specific Flags for Badges
+    // Update Firestore with Specific Flags for Badges
     const userRef = doc(db, 'users', linkedUser.uid);
     const updates: any = { isVerified: true }; // General verified flag
     
@@ -173,7 +160,7 @@ export const linkProvider = async (providerId: string): Promise<User> => {
   } catch (error: any) {
     console.error("Link Account Error:", error);
     if (error.code === 'auth/credential-already-in-use') {
-      throw new Error("هذا الحساب مرتبط بالفعل بمستخدم آخر. لا يمكن ربطه بالحساب الحالي.");
+      throw new Error("هذا الحساب مرتبط بالفعل بمستخدم آخر. قم بفك ارتباطه من الحساب القديم أولاً.");
     }
     if (error.code === 'auth/requires-recent-login') {
        throw new Error("لأمانك، يرجى تسجيل الخروج والدخول مرة أخرى ثم المحاولة.");

@@ -98,14 +98,18 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   // --- SOCIAL LINKING HANDLERS ---
   
   const handleLink = async (providerId: string) => {
+    // Explicitly check for currentUser from state
+    if (!currentUser) {
+        alert("يرجى تسجيل الدخول أولاً.");
+        return;
+    }
+
     setLinkingState(providerId);
 
-    // REMOVED Redundant Auth Check here.
-    // We trust that to be in this modal, the user is already authenticated.
-    // The service handles the null currentUser edge case by throwing.
-
     try {
-        const updatedUser = await linkProvider(providerId);
+        // PASS THE USER DIRECTLY TO SERVICE
+        const updatedUser = await linkProvider(currentUser, providerId);
+        
         setCurrentUser(updatedUser); 
         
         // --- REAL FIRESTORE UPDATE ---
@@ -145,9 +149,9 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   };
 
   const handleUnlink = async (providerId: string) => {
-    if (!auth.currentUser) return;
+    if (!currentUser) return;
 
-    if (currentUser?.providerData && currentUser.providerData.length === 1) {
+    if (currentUser.providerData && currentUser.providerData.length === 1) {
         alert("لا يمكن إلغاء ربط وسيلة الدخول الوحيدة.");
         return;
     }
