@@ -1,4 +1,3 @@
-
 import { auth, db, googleProvider, githubProvider, signInWithPopup, signOut } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
 import { 
@@ -106,13 +105,10 @@ export const loginWithYahoo = async () => {
 
 /**
  * Link a new auth provider to the CURRENTLY logged-in user.
- * REAL IMPLEMENTATION: Updates Firestore Flags.
+ * REAL IMPLEMENTATION: Direct link without redundant checks.
  */
 export const linkProvider = async (providerId: string): Promise<User> => {
-  if (!auth.currentUser) {
-    throw new Error("يجب تسجيل الدخول أولاً للقيام بعملية الربط.");
-  }
-
+  // Direct Provider Setup
   let provider;
   switch (providerId) {
     case 'google.com': 
@@ -137,7 +133,10 @@ export const linkProvider = async (providerId: string): Promise<User> => {
   }
 
   try {
-    // 1. Perform Real Firebase Linking
+    // FORCE the link. The SDK handles null currentUser by throwing an error, which we want.
+    // We assume the UI context ensures the user is logged in.
+    if (!auth.currentUser) throw new Error("No active session found.");
+    
     const result = await linkWithPopup(auth.currentUser, provider);
     const user = result.user;
 
@@ -158,6 +157,9 @@ export const linkProvider = async (providerId: string): Promise<User> => {
     console.error("Link Account Error:", error);
     if (error.code === 'auth/credential-already-in-use') {
       throw new Error("هذا الحساب مرتبط بالفعل بمستخدم آخر. لا يمكن ربطه بالحساب الحالي.");
+    }
+    if (error.code === 'auth/requires-recent-login') {
+       throw new Error("لأمانك، يرجى تسجيل الخروج والدخول مرة أخرى ثم المحاولة.");
     }
     throw error;
   }

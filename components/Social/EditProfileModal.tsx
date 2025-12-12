@@ -100,12 +100,9 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const handleLink = async (providerId: string) => {
     setLinkingState(providerId);
 
-    // REAL CHECK: Must have an auth user
-    if (!auth.currentUser) {
-        alert("يرجى تسجيل الدخول أولاً للقيام بعملية الربط.");
-        setLinkingState(null);
-        return;
-    }
+    // REMOVED Redundant Auth Check here.
+    // We trust that to be in this modal, the user is already authenticated.
+    // The service handles the null currentUser edge case by throwing.
 
     try {
         const updatedUser = await linkProvider(providerId);
