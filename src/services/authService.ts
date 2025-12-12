@@ -1,6 +1,7 @@
 
 import { auth, db, googleProvider, signInWithPopup, signOut } from '../lib/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 
 const ADMIN_EMAIL = "mrada4231@gmail.com"; // The ONLY Super Admin
 
@@ -84,6 +85,32 @@ export const logoutUser = async () => {
     await signOut(auth);
   } catch (error) {
     console.error("Logout Error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Initiates Phone Verification via SMS
+ */
+export const verifyUserPhoneNumber = async (phoneNumber: string, recaptchaVerifier: RecaptchaVerifier): Promise<ConfirmationResult> => {
+  try {
+    const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
+    return confirmationResult;
+  } catch (error) {
+    console.error("Phone Verification Error:", error);
+    throw error;
+  }
+};
+
+/**
+ * Confirms the OTP Code
+ */
+export const confirmPhoneCode = async (confirmationResult: ConfirmationResult, code: string): Promise<any> => {
+  try {
+    const result = await confirmationResult.confirm(code);
+    return result.user;
+  } catch (error) {
+    console.error("OTP Confirmation Error:", error);
     throw error;
   }
 };

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, Fingerprint, Database, Bot } from 'lucide-react';
 import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
@@ -9,6 +10,7 @@ import { UserListModal } from './UserListModal';
 import { User } from '../../types';
 import { ProductCard, Product } from './ProductCard';
 import { PaymentGateway } from '../PaymentGateway';
+import { PhoneVerifyModal } from './PhoneVerifyModal';
 
 interface Props {
     userId: string;
@@ -71,6 +73,9 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
     // Purchase State
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isPaymentGatewayOpen, setIsPaymentGatewayOpen] = useState(false);
+    
+    // Phone Verification Modal
+    const [isPhoneVerifyOpen, setIsPhoneVerifyOpen] = useState(false);
 
     const isOwnProfile = currentUser?.id === userId;
     const isFollowing = currentUser?.following?.includes(userId);
@@ -479,9 +484,21 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                                 <Phone className="w-3.5 h-3.5 text-emerald-500" />
                             </div>
                             <span className="font-mono text-[#e7e9ea] dir-ltr">{profileUser.phone}</span>
-                            <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold border border-emerald-500/30">
-                                <CheckCircle2 className="w-3 h-3" /> رقم هاتف موثق
-                            </span>
+                            
+                            {profileUser.isPhoneVerified ? (
+                                 <span className="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold border border-emerald-500/30" title="تم التحقق">
+                                    <CheckCircle2 className="w-3 h-3" /> موثق
+                                </span>
+                            ) : isOwnProfile ? (
+                                <button 
+                                    onClick={() => setIsPhoneVerifyOpen(true)}
+                                    className="text-[10px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full flex items-center gap-1 font-bold border border-amber-500/30 hover:bg-amber-500/30 transition-colors"
+                                >
+                                    تحقق الآن
+                                </button>
+                            ) : (
+                                <span className="text-[10px] text-gray-500">(غير موثق)</span>
+                            )}
                         </div>
                     )}
 
@@ -720,6 +737,9 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack }) => {
                     onSuccess={handlePaymentSuccess}
                 />
             )}
+            
+            {/* Phone Verification Modal */}
+            <PhoneVerifyModal isOpen={isPhoneVerifyOpen} onClose={() => setIsPhoneVerifyOpen(false)} />
         </div>
     );
 };
