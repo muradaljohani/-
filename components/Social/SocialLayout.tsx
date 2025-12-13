@@ -508,12 +508,55 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
             {/* Mobile Floating Buttons (Shorts & Compose) */}
             {view === 'feed' && (
                 <>
-                    {/* Shorts FAB */}
+                    {/* Premium Shorts FAB (Golden Heart M) */}
                     <button
                         onClick={() => handleNavigation('shorts')}
-                        className="md:hidden fixed bottom-40 left-4 z-[90] bg-black text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center border border-white/20 hover:scale-110 active:scale-90 transition-transform"
+                        className="md:hidden fixed bottom-40 left-4 z-[90] w-16 h-16 hover:scale-110 active:scale-95 transition-transform duration-300 drop-shadow-2xl group"
+                        title="Melaf Shorts"
                     >
-                        <Play className="w-5 h-5 fill-white" />
+                        <svg viewBox="0 0 100 100" className="w-full h-full overflow-visible">
+                            <defs>
+                                <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                    <stop offset="0%" stopColor="#BF953F" />
+                                    <stop offset="25%" stopColor="#FCF6BA" />
+                                    <stop offset="50%" stopColor="#BF953F" />
+                                    <stop offset="75%" stopColor="#FBF5B7" />
+                                    <stop offset="100%" stopColor="#AA771C" />
+                                </linearGradient>
+                                <filter id="goldGlow" x="-20%" y="-20%" width="140%" height="140%">
+                                    <feGaussianBlur stdDeviation="2" result="blur" />
+                                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                </filter>
+                                <filter id="dropShadow" x="-50%" y="-50%" width="200%" height="200%">
+                                    <feDropShadow dx="0" dy="4" stdDeviation="4" floodColor="rgba(0,0,0,0.4)"/>
+                                </filter>
+                            </defs>
+                            <g filter="url(#dropShadow)">
+                                {/* Heart Shape */}
+                                <path 
+                                    d="M50 88.5 C50 88.5 12 58 12 35 C12 20 24 12 37 12 C44 12 50 18 50 18 C50 18 56 12 63 12 C76 12 88 20 88 35 C88 58 50 88.5 50 88.5 Z" 
+                                    fill="url(#goldGradient)" 
+                                    stroke="white" 
+                                    strokeWidth="1.5"
+                                    className="animate-pulse-slow"
+                                />
+                                {/* Letter M */}
+                                <text 
+                                    x="50" 
+                                    y="52" 
+                                    textAnchor="middle" 
+                                    dominantBaseline="middle" 
+                                    fontSize="38" 
+                                    fontWeight="900" 
+                                    fill="url(#goldGradient)"
+                                    stroke="white"
+                                    strokeWidth="0.5"
+                                    style={{ fontFamily: 'Arial, sans-serif', filter: 'drop-shadow(0px 1px 2px rgba(0,0,0,0.3))' }}
+                                >
+                                    M
+                                </text>
+                            </g>
+                        </svg>
                     </button>
 
                     {/* Compose FAB */}

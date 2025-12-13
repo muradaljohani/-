@@ -3,6 +3,8 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Music, Play } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ShortsSidebar } from './ShortsSidebar';
+import { FloatingHeart } from './FloatingHeart';
+import { doc, updateDoc, increment, arrayUnion, arrayRemove, db } from '../../src/lib/firebase';
 
 interface ShortsPlayerProps {
     post: any;
@@ -14,16 +16,17 @@ interface ShortsPlayerProps {
 
 export const ShortsPlayer: React.FC<ShortsPlayerProps> = ({ post, isActive, onOpenComments, onUserClick, activeFilter = 'none' }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
-    const { user } = useAuth();
+    const { user, followUser } = useAuth();
     
     // --- STATE ---
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isLiked, setIsLiked] = useState(false);
+    const [likeCount, setLikeCount] = useState(0);
+    const [floatingHearts, setFloatingHearts] = useState<{id: number, x: number, y: number}[]>([]);
     
     // --- DATA EXTRACTION ---
-    // Handle Priority: post.username > post.user.username > post.user.handle > 'user'
     const rawHandle = post.username || post.user?.username || post.user?.handle || 'user';
     const displayHandle = rawHandle.replace(/^@/, '');
-    
     const creatorName = post.user?.name || displayHandle; 
     const creatorId = post.user?.uid || post.userId || post.user?.id;
     const caption = post.content || post.caption || '';
@@ -32,12 +35,24 @@ export const ShortsPlayer: React.FC<ShortsPlayerProps> = ({ post, isActive, onOp
     const isVideo = post.type === 'video' || (post.images && post.images.some((url: string) => url.includes('.mp4') || url.includes('.webm'))) || post.videoUrl;
     const mediaUrl = post.videoUrl || (post.images && post.images.length > 0 ? post.images[0] : post.image);
 
+    // Initialize states
+    const isFollowing = user?.following?.includes(creatorId);
+
+    useEffect(() => {
+        setIsLiked(post.likedBy?.includes(user?.id) || false);
+        setLikeCount(post.likes || 0);
+    }, [post.id, user?.id]);
+
     // --- VIDEO CONTROL ---
     useEffect(() => {
         if (!isVideo) return; 
 
         if (isActive) {
-            videoRef.current?.play().then(() => setIsPlaying(true)).catch(e => console.log("Autoplay blocked", e));
+            // Check if user has interacted with document, otherwise mute or handle promise
+            videoRef.current?.play().then(() => setIsPlaying(true)).catch(e => {
+                console.log("Autoplay blocked, waiting for interaction", e);
+                setIsPlaying(false);
+            });
         } else {
             videoRef.current?.pause();
             setIsPlaying(false);
@@ -57,9 +72,81 @@ export const ShortsPlayer: React.FC<ShortsPlayerProps> = ({ post, isActive, onOp
         }
     };
 
-    // --- CRITICAL: NAVIGATION LOGIC ---
+    // --- LIKE LOGIC ---
+    const handleLike = async (forceLike: boolean = false) => {
+        if (!user) return alert("يرجى تسجيل الدخول للإعجاب");
+
+        // If forceLike is true, we only action if not already liked
+        if (forceLike && isLiked) return;
+
+        const newStatus = forceLike ? true : !isLiked;
+        
+        // Optimistic Update
+        setIsLiked(newStatus);
+        setLikeCount(prev => newStatus ? prev + 1 : prev - 1);
+
+        const postRef = doc(db, 'posts', post.id);
+        try {
+            if (newStatus) {
+                await updateDoc(postRef, { likes: increment(1), likedBy: arrayUnion(user.id) });
+            } else {
+                await updateDoc(postRef, { likes: increment(-1), likedBy: arrayRemove(user.id) });
+            }
+        } catch (error) {
+            console.error("Like failed", error);
+            // Revert
+            setIsLiked(!newStatus);
+            setLikeCount(prev => newStatus ? prev - 1 : prev + 1);
+        }
+    };
+
+    // --- FOLLOW LOGIC ---
+    const handleFollow = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!user) return alert("سجل دخول للمتابعة");
+        try {
+            await followUser(creatorId);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    // --- DOUBLE TAP LOGIC ---
+    const lastClickTime = useRef<number>(0);
+    const clickTimeout = useRef<any>(null);
+
+    const handleContainerClick = (e: React.MouseEvent) => {
+        const now = Date.now();
+        const timeDiff = now - lastClickTime.current;
+        
+        if (timeDiff < 300) {
+            // --- DOUBLE TAP DETECTED ---
+            if (clickTimeout.current) clearTimeout(clickTimeout.current);
+            
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            setFloatingHearts(prev => [...prev, { id: now, x, y }]);
+            handleLike(true);
+            
+        } else {
+            // --- SINGLE TAP (WAIT) ---
+            clickTimeout.current = setTimeout(() => {
+                if (isVideo) togglePlay();
+            }, 300);
+        }
+
+        lastClickTime.current = now;
+    };
+
+    const removeFloatingHeart = (id: number) => {
+        setFloatingHearts(prev => prev.filter(h => h.id !== id));
+    };
+
+    // --- NAVIGATION LOGIC ---
     const handleProfileClick = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Prevent video pause
+        e.stopPropagation(); 
         if (onUserClick && creatorId) {
             onUserClick(creatorId);
         }
@@ -85,7 +172,6 @@ export const ShortsPlayer: React.FC<ShortsPlayerProps> = ({ post, isActive, onOp
         }
     };
 
-    // --- FILTER STYLES ---
     const getFilterStyle = (): React.CSSProperties => {
         switch(activeFilter) {
             case 'pale': return { filter: 'sepia(20%) contrast(85%) brightness(110%)' };
@@ -95,28 +181,37 @@ export const ShortsPlayer: React.FC<ShortsPlayerProps> = ({ post, isActive, onOp
         }
     };
 
-    // --- RENDER ---
     if (!mediaUrl) return <div className="h-full w-full bg-black flex items-center justify-center text-white">No Media</div>;
 
     return (
-        <div className="relative h-full w-full snap-start shrink-0 bg-black overflow-hidden select-none">
+        <div 
+            className="relative h-full w-full snap-start shrink-0 bg-black overflow-hidden select-none touch-manipulation"
+            onClick={handleContainerClick}
+        >
             
+            {/* FLOATING HEARTS LAYER */}
+            {floatingHearts.map(heart => (
+                <FloatingHeart 
+                    key={heart.id} 
+                    x={heart.x} 
+                    y={heart.y} 
+                    onComplete={() => removeFloatingHeart(heart.id)} 
+                />
+            ))}
+
             {/* 1. Media Layer */}
             {isVideo ? (
                 <video
                     ref={videoRef}
                     src={mediaUrl}
-                    className="h-full w-full object-cover cursor-pointer"
+                    className="h-full w-full object-cover pointer-events-none" 
                     style={getFilterStyle()}
                     loop
                     playsInline
                     preload="metadata"
-                    onClick={togglePlay}
-                    onDoubleClick={(e) => e.stopPropagation()} // Could implement double tap like here later
                 />
             ) : (
-                <div className="relative w-full h-full cursor-pointer">
-                    {/* Blurred Background */}
+                <div className="relative w-full h-full pointer-events-none">
                     <div 
                         className="absolute inset-0 bg-cover bg-center blur-xl opacity-50 scale-110"
                         style={{ 
@@ -124,7 +219,6 @@ export const ShortsPlayer: React.FC<ShortsPlayerProps> = ({ post, isActive, onOp
                             ...getFilterStyle() 
                         }}
                     ></div>
-                    {/* Main Image */}
                     <img 
                         src={mediaUrl} 
                         className="absolute inset-0 w-full h-full object-contain z-10"
@@ -152,21 +246,32 @@ export const ShortsPlayer: React.FC<ShortsPlayerProps> = ({ post, isActive, onOp
                 onOpenComments={onOpenComments}
                 onUserClick={onUserClick}
                 handleShare={handleShare}
+                isLiked={isLiked}
+                likeCount={likeCount}
+                onLike={(e) => handleLike(false)}
             />
 
             {/* 4. CREATOR INFO OVERLAY (Bottom Left) */}
             <div className="absolute bottom-0 left-0 w-full p-4 pb-6 z-30 text-white pointer-events-none">
                 <div className="flex flex-col items-start max-w-[75%] pointer-events-auto text-right" dir="rtl">
                     
-                    {/* Row 1: Identity */}
-                    <div 
-                        onClick={handleProfileClick} 
-                        className="cursor-pointer mb-3 flex items-center gap-2 group"
-                    >
-                        <h3 className="text-white font-bold text-sm drop-shadow-md break-words whitespace-normal leading-tight group-hover:underline">
-                            @{displayHandle}
-                        </h3>
-                        {post.user?.verified && <div className="bg-blue-500 rounded-full p-0.5"><div className="w-1.5 h-1.5 bg-white rounded-full"></div></div>}
+                    {/* Row 1: Identity & Follow */}
+                    <div className="mb-3 flex items-center gap-3">
+                        <div onClick={handleProfileClick} className="flex items-center gap-2 cursor-pointer group">
+                             <h3 className="text-white font-bold text-sm drop-shadow-md break-words whitespace-normal leading-tight group-hover:underline">
+                                @{displayHandle}
+                             </h3>
+                             {post.user?.verified && <div className="bg-blue-500 rounded-full p-0.5"><div className="w-1.5 h-1.5 bg-white rounded-full"></div></div>}
+                        </div>
+                        
+                        {!isFollowing && user?.id !== creatorId && (
+                            <button 
+                                onClick={handleFollow}
+                                className="mr-2 bg-white text-black text-[10px] font-bold px-3 py-1 rounded-full hover:bg-gray-200 transition-all opacity-90 hover:opacity-100"
+                            >
+                                متابعة
+                            </button>
+                        )}
                     </div>
                     
                     {/* Row 2: Caption */}

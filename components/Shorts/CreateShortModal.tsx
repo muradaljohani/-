@@ -119,7 +119,7 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
     };
 
     return (
-        <>
+        <div className="fixed inset-0 w-full h-[100dvh] z-[9999] bg-black font-sans">
             {/* Hidden Input for Gallery */}
             <input 
                 ref={galleryInputRef} 
@@ -130,31 +130,33 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
             />
 
             {step === 'camera' && (
-                <CameraStudio 
-                    onCapture={handleCameraCapture}
-                    onClose={onClose}
-                    onGalleryClick={() => galleryInputRef.current?.click()}
-                />
+                <div className="relative w-full h-full">
+                    <CameraStudio 
+                        onCapture={handleCameraCapture}
+                        onClose={onClose}
+                        onGalleryClick={() => galleryInputRef.current?.click()}
+                    />
+                </div>
             )}
 
             {step === 'preview' && mediaPreview && (
-                <div className="fixed inset-0 z-[150] bg-black flex flex-col font-sans animate-in slide-in-from-right duration-300">
+                <div className="absolute inset-0 w-full h-full bg-black flex flex-col animate-in slide-in-from-right duration-300">
                     
                     {/* Top Bar */}
-                    <div className="absolute top-0 left-0 right-0 z-20 p-4 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
-                        <button onClick={() => setStep('camera')} className="p-2 bg-black/20 rounded-full text-white hover:bg-black/40">
+                    <div className="absolute top-0 left-0 right-0 z-20 p-4 pt-10 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
+                        <button onClick={() => setStep('camera')} className="p-2 bg-black/20 rounded-full text-white hover:bg-black/40 backdrop-blur-md">
                             <X className="w-6 h-6"/>
                         </button>
-                        <div className="bg-black/40 px-4 py-1.5 rounded-full text-xs font-bold text-white backdrop-blur-md">
+                        <div className="bg-black/40 px-4 py-1.5 rounded-full text-xs font-bold text-white backdrop-blur-md border border-white/10">
                             معاينة
                         </div>
-                        <button className="p-2 bg-black/20 rounded-full text-white hover:bg-black/40">
+                        <button className="p-2 bg-black/20 rounded-full text-white hover:bg-black/40 backdrop-blur-md">
                             <Music className="w-6 h-6"/>
                         </button>
                     </div>
 
                     {/* Media Display */}
-                    <div className="flex-1 relative bg-[#111] flex items-center justify-center">
+                    <div className="flex-1 relative bg-[#111] flex items-center justify-center overflow-hidden">
                         {mediaType === 'video' ? (
                             <video 
                                 src={mediaPreview} 
@@ -188,14 +190,14 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
                         </div>
 
                         {/* Side Tools (Edit Mode) */}
-                        <div className="absolute top-20 right-4 flex flex-col gap-4 z-20">
-                            <button className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white"><Type className="w-6 h-6"/></button>
-                            <button className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white"><Sparkles className="w-6 h-6"/></button>
+                        <div className="absolute top-24 right-4 flex flex-col gap-4 z-20">
+                            <button className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white border border-white/10"><Type className="w-6 h-6"/></button>
+                            <button className="p-3 bg-black/30 backdrop-blur-md rounded-full text-white border border-white/10"><Sparkles className="w-6 h-6"/></button>
                         </div>
                     </div>
 
                     {/* Bottom Bar */}
-                    <div className="p-6 bg-black flex justify-between items-center border-t border-white/10">
+                    <div className="p-6 pb-8 bg-black flex justify-between items-center border-t border-white/10">
                         <div className="text-white text-xs font-bold">
                             سيتم النشر في: <span className="text-blue-400">قصتي (عام)</span>
                         </div>
@@ -210,6 +212,6 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 };

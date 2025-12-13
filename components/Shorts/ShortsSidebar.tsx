@@ -2,21 +2,29 @@
 import React, { useState } from 'react';
 import { Plus, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { doc, updateDoc, arrayUnion, arrayRemove, increment, db } from '../../src/lib/firebase';
 
 interface ShortsSidebarProps {
     post: any;
     onOpenComments?: (postId: string) => void;
     onUserClick?: (userId: string) => void;
     handleShare: (e: React.MouseEvent) => void;
+    isLiked: boolean;
+    likeCount: number;
+    onLike: (e?: React.MouseEvent) => void;
 }
 
-export const ShortsSidebar: React.FC<ShortsSidebarProps> = ({ post, onOpenComments, onUserClick, handleShare }) => {
+export const ShortsSidebar: React.FC<ShortsSidebarProps> = ({ 
+    post, 
+    onOpenComments, 
+    onUserClick, 
+    handleShare,
+    isLiked,
+    likeCount,
+    onLike
+}) => {
     const { user, followUser, unfollowUser } = useAuth();
     
     // --- STATE ---
-    const [isLiked, setIsLiked] = useState(post.likedBy?.includes(user?.id) || false);
-    const [likeCount, setLikeCount] = useState(post.likes || 0);
     const [isFollowing, setIsFollowing] = useState(false);
     const [isAnimatingLike, setIsAnimatingLike] = useState(false);
 
@@ -25,30 +33,11 @@ export const ShortsSidebar: React.FC<ShortsSidebarProps> = ({ post, onOpenCommen
     const creatorId = post.user?.uid || post.userId;
 
     // --- HANDLERS ---
-    const handleLike = async (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!user) return alert("يرجى تسجيل الدخول للإعجاب");
-
-        const newStatus = !isLiked;
-        setIsLiked(newStatus);
-        setLikeCount((prev: number) => newStatus ? prev + 1 : prev - 1);
-        
-        // Trigger Bounce Animation
+    const handleLikeClick = (e: React.MouseEvent) => {
+        onLike(e);
+        // Trigger local bounce animation
         setIsAnimatingLike(true);
         setTimeout(() => setIsAnimatingLike(false), 600);
-
-        const postRef = doc(db, 'posts', post.id);
-        try {
-            if (newStatus) {
-                await updateDoc(postRef, { likes: increment(1), likedBy: arrayUnion(user.id) });
-            } else {
-                await updateDoc(postRef, { likes: increment(-1), likedBy: arrayRemove(user.id) });
-            }
-        } catch (error) {
-            console.error("Like failed", error);
-            setIsLiked(!newStatus);
-            setLikeCount((prev: number) => newStatus ? prev - 1 : prev + 1);
-        }
     };
 
     const handleFollow = async (e: React.MouseEvent) => {
@@ -89,7 +78,7 @@ export const ShortsSidebar: React.FC<ShortsSidebarProps> = ({ post, onOpenCommen
             </div>
 
             {/* 2. THE 'M-HEART' (Melaf Branded Like) */}
-            <div className="flex flex-col items-center gap-1 cursor-pointer group" onClick={handleLike}>
+            <div className="flex flex-col items-center gap-1 cursor-pointer group" onClick={handleLikeClick}>
                 <div className={`transition-transform duration-300 ${isAnimatingLike ? 'scale-125' : 'group-hover:scale-110'}`}>
                     <svg 
                         width="36" 
