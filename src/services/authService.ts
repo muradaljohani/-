@@ -104,15 +104,13 @@ export const loginWithYahoo = async () => {
 };
 
 /**
- * Link a new auth provider to the PASSED logged-in user.
- * Performs the handshake and returns the updated User object.
+ * NUCLEAR FIX: Directly link the passed user object. 
+ * No internal checks for auth.currentUser to avoid race conditions.
  */
 export const linkProvider = async (user: User, providerId: string): Promise<User> => {
-  if (!user) {
-    throw new Error("No active session to link.");
-  }
-
   let provider;
+  
+  // 1. Configure Provider
   switch (providerId) {
     case 'google.com': 
       provider = new GoogleAuthProvider(); 
@@ -136,7 +134,7 @@ export const linkProvider = async (user: User, providerId: string): Promise<User
   }
 
   try {
-    // Perform Real Firebase Linking using the passed User instance
+    // 2. EXECUTE LINKING ON THE PASSED OBJECT
     const result = await linkWithPopup(user, provider);
     return result.user;
   } catch (error: any) {
@@ -149,13 +147,9 @@ export const linkProvider = async (user: User, providerId: string): Promise<User
 };
 
 /**
- * Unlink an auth provider from the account
+ * NUCLEAR FIX: Directly unlink the passed user object.
  */
 export const unlinkProvider = async (user: User, providerId: string): Promise<User> => {
-  if (!user) {
-      throw new Error("No active session.");
-  }
-  
   try {
     const result = await unlink(user, providerId);
     return result;

@@ -99,7 +99,7 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const handleLink = async (providerId: string) => {
     setLinkingState(providerId);
 
-    // CRITICAL: Get fresh user object from auth
+    // CRITICAL: Get fresh user object from auth SDK directly
     const activeAuthUser = auth.currentUser;
     if (!activeAuthUser) {
         alert("يرجى تسجيل الدخول أولاً للقيام بعملية الربط.");
@@ -108,14 +108,18 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
     }
 
     try {
-        // 1. Perform Linking
+        // 1. Perform Linking using the Explicit User Object
         const updatedUser = await linkProvider(activeAuthUser, providerId);
-        setCurrentUser(updatedUser); 
         
-        // 2. Prepare Firestore Updates
+        // 2. FORCE RELOAD to update providerData
+        await updatedUser.reload();
+        
+        // 3. Update Local State
+        setCurrentUser(auth.currentUser); 
+        
+        // 4. Prepare Firestore Updates (Flags for Profile Page)
         const updates: any = {};
         const linkedProviders = updatedUser.providerData.map(p => p.providerId);
-        
         updates['linkedProviders'] = linkedProviders;
         
         // Set Public Flags for Profile Display
@@ -124,11 +128,11 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
         if (providerId === 'google.com') updates.isGoogleVerified = true;
         if (providerId === 'microsoft.com') updates.isMicrosoftVerified = true;
         
-        // 3. Update Firestore
+        // 5. Update Firestore
         const userRef = doc(db, 'users', user.id);
         await updateDoc(userRef, updates);
         
-        // 4. Update Local Context to Reflect Changes Immediately
+        // 6. Update Context
         updateProfile(updates);
 
         alert(`تم ربط ${providerId} بنجاح ✅`);
@@ -155,9 +159,12 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
     try {
         // 1. Unlink
         const updatedUser = await unlinkProvider(activeAuthUser, providerId);
-        setCurrentUser(updatedUser);
+        
+        // 2. Reload & Update State
+        await updatedUser.reload();
+        setCurrentUser(auth.currentUser);
 
-        // 2. Update Firestore
+        // 3. Update Firestore
         const userRef = doc(db, 'users', user.id);
         const updates: any = {};
         
