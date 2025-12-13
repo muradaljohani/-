@@ -491,13 +491,13 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                 <NavButton icon={Home} active={view === 'feed'} onClick={() => handleNavigation('feed')} />
                 <NavButton icon={Search} active={view === 'explore'} onClick={() => handleNavigation('explore')} />
                 
-                {/* Center Action Button (Murad AI) */}
+                {/* Center Action Button (Murad AI) - Grok Style Redesign */}
                 <button 
                     onClick={() => setIsAIOpen(true)}
-                    className="relative -top-6 p-1 rounded-full border-4 border-white dark:border-black bg-black dark:bg-white shadow-lg active:scale-95 transition-transform"
+                    className="relative -top-6 p-0.5 rounded-2xl bg-white dark:bg-black shadow-[0_0_10px_rgba(0,0,0,0.1)] dark:shadow-[0_0_10px_rgba(255,255,255,0.1)] active:scale-95 transition-transform"
                 >
-                    <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
-                         <span className="font-black text-white text-2xl font-serif">M</span>
+                    <div className="w-14 h-14 bg-black dark:bg-white rounded-xl flex items-center justify-center border-2 border-white dark:border-black shadow-lg">
+                         <span className="font-black text-white dark:text-black text-2xl font-sans tracking-tight">M</span>
                     </div>
                 </button>
                 
