@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-    Home, Search, Bell, Mail, Image as ImageIcon, Video, X, User, PlusCircle, MessageSquare, Plus, Feather, AlertTriangle, Play
+    Home, Search, Bell, Mail, Image as ImageIcon, Video, X, User, PlusCircle, MessageSquare, Plus, Feather, AlertTriangle, Play, Sparkles
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -491,13 +491,13 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                 <NavButton icon={Home} active={view === 'feed'} onClick={() => handleNavigation('feed')} />
                 <NavButton icon={Search} active={view === 'explore'} onClick={() => handleNavigation('explore')} />
                 
-                {/* Center Action Button (Now Shorts) */}
+                {/* Center Action Button (Murad AI) */}
                 <button 
-                    onClick={() => handleNavigation('shorts')}
-                    className="relative -top-4 bg-black dark:bg-white text-white dark:text-black p-1 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.3)] dark:shadow-[0_0_15px_rgba(255,255,255,0.3)] border-[4px] border-white dark:border-black transition-transform active:scale-95"
+                    onClick={() => setIsAIOpen(true)}
+                    className="relative -top-6 p-1 rounded-full border-4 border-white dark:border-black bg-black dark:bg-white shadow-lg active:scale-95 transition-transform"
                 >
-                    <div className="w-10 h-10 bg-black dark:bg-black rounded-full flex items-center justify-center overflow-hidden">
-                         <Play className="w-5 h-5 text-white ml-0.5 fill-white" />
+                    <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-full flex items-center justify-center overflow-hidden">
+                         <span className="font-black text-white text-2xl font-serif">M</span>
                     </div>
                 </button>
                 
@@ -505,14 +505,25 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                 <NavButton icon={Mail} active={view === 'messages'} onClick={() => handleNavigation('messages')} />
             </div>
 
-            {/* Mobile Floating Post Button */}
+            {/* Mobile Floating Buttons (Shorts & Compose) */}
             {view === 'feed' && (
-                <button
-                    onClick={() => setIsComposeOpen(true)}
-                    className="md:hidden fixed bottom-20 left-4 z-[90] bg-[#1d9bf0] text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:bg-[#1a8cd8] active:scale-90 transition-transform"
-                >
-                    <Feather className="w-7 h-7" />
-                </button>
+                <>
+                    {/* Shorts FAB */}
+                    <button
+                        onClick={() => handleNavigation('shorts')}
+                        className="md:hidden fixed bottom-40 left-4 z-[90] bg-black text-white w-12 h-12 rounded-full shadow-2xl flex items-center justify-center border border-white/20 hover:scale-110 active:scale-90 transition-transform"
+                    >
+                        <Play className="w-5 h-5 fill-white" />
+                    </button>
+
+                    {/* Compose FAB */}
+                    <button
+                        onClick={() => setIsComposeOpen(true)}
+                        className="md:hidden fixed bottom-20 left-4 z-[90] bg-[#1d9bf0] text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:bg-[#1a8cd8] active:scale-90 transition-transform"
+                    >
+                        <Feather className="w-7 h-7" />
+                    </button>
+                </>
             )}
 
             {/* Compose Modal */}
