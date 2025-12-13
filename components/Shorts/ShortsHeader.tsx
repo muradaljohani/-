@@ -90,6 +90,46 @@ export const ShortsHeader: React.FC<Props> = ({ onOpenSettings, isEditing, onTog
         }
     };
 
+    // --- CUSTOM ICON: Golden M Heart ---
+    const GoldenMHeart = ({ className }: { className?: string }) => (
+        <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+            <defs>
+                <linearGradient id="goldGrad" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="#FFF7CC" />
+                    <stop offset="40%" stopColor="#FFD700" />
+                    <stop offset="100%" stopColor="#B8860B" />
+                </linearGradient>
+                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="0.5" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+            </defs>
+            <g filter="url(#glow)">
+                {/* Heart Shape */}
+                <path
+                    d="M18 33.5C18 33.5 3 24.5 3 14.2C3 9.58 6.63 5.95 11.25 5.95C13.86 5.95 16.365 7.165 18 9.085C19.635 7.165 22.14 5.95 24.75 5.95C29.37 5.95 33 9.58 33 14.2C33 24.5 18 33.5 18 33.5Z"
+                    fill="rgba(0,0,0,0.8)"
+                    stroke="url(#goldGrad)"
+                    strokeWidth="1.5"
+                />
+                {/* Letter M */}
+                <text
+                    x="50%"
+                    y="50%"
+                    dominantBaseline="middle"
+                    textAnchor="middle"
+                    fontSize="16"
+                    fontWeight="900"
+                    fill="url(#goldGrad)"
+                    style={{ fontFamily: 'Arial, sans-serif' }}
+                    dy="1"
+                >
+                    M
+                </text>
+            </g>
+        </svg>
+    );
+
     return (
         <div className="absolute top-0 left-0 w-full z-50 flex justify-between items-start p-4 pt-6 bg-gradient-to-b from-black/60 to-transparent pointer-events-none select-none">
             
@@ -114,13 +154,13 @@ export const ShortsHeader: React.FC<Props> = ({ onOpenSettings, isEditing, onTog
             {/* 2. RIGHT: CONTROLS & AVATAR */}
             <div className="flex items-center gap-3 pointer-events-auto">
                 
-                {/* NEW: CREATE BUTTON (Highlighted) */}
+                {/* NEW: CREATE BUTTON (Golden Heart M) */}
                 <button 
                     onClick={onOpenCreate}
-                    className="w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-red-600 text-white shadow-lg shadow-red-900/40 hover:scale-110 transition-transform group border border-white/20"
+                    className="w-12 h-12 flex items-center justify-center transition-transform hover:scale-110 active:scale-95 group"
                     title="إنشاء Short"
                 >
-                    <Plus className="w-6 h-6 stroke-[3]"/>
+                    <GoldenMHeart className="w-full h-full drop-shadow-[0_0_10px_rgba(255,215,0,0.5)]" />
                 </button>
 
                 <div className="w-px h-6 bg-white/20 mx-1"></div>
