@@ -1,11 +1,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-    X, Send, Type, Loader2, Music, Sparkles
+    X, Send, Type, Loader2, Music, Sparkles, AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { storage, db, ref, uploadBytes, getDownloadURL, addDoc, collection, serverTimestamp } from '../../src/lib/firebase';
 import { CameraStudio } from './CameraStudio';
+import { MusicPicker } from './MusicPicker';
 
 interface Props {
     isOpen: boolean;
@@ -24,6 +25,11 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
     const [isUploading, setIsUploading] = useState(false);
     const [metaData, setMetaData] = useState<any>({});
     
+    // --- MUSIC STATE ---
+    const [musicPickerOpen, setMusicPickerOpen] = useState(false);
+    const [selectedMusic, setSelectedMusic] = useState<{title: string, artist: string, previewUrl: string, cover: string} | null>(null);
+    const bgAudioRef = useRef<HTMLAudioElement | null>(null);
+
     // Hidden input for gallery upload
     const galleryInputRef = useRef<HTMLInputElement>(null);
 
@@ -31,6 +37,11 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
     useEffect(() => {
         return () => {
             if (mediaPreview) URL.revokeObjectURL(mediaPreview);
+            // Cleanup music
+            if (bgAudioRef.current) {
+                bgAudioRef.current.pause();
+                bgAudioRef.current = null;
+            }
         };
     }, [mediaPreview]);
 
@@ -41,8 +52,27 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
             setMediaFile(null);
             setMediaPreview(null);
             setCaption('');
+            setSelectedMusic(null);
+            setMusicPickerOpen(false);
         }
     }, [isOpen]);
+
+    // Handle background music playback during preview
+    useEffect(() => {
+        if (step === 'preview' && selectedMusic?.previewUrl) {
+            // Stop previous
+            if (bgAudioRef.current) bgAudioRef.current.pause();
+            
+            // Start new
+            const audio = new Audio(selectedMusic.previewUrl);
+            audio.loop = true;
+            audio.volume = 0.5;
+            bgAudioRef.current = audio;
+            audio.play().catch(e => console.log("Auto-play blocked"));
+        } else {
+            if (bgAudioRef.current) bgAudioRef.current.pause();
+        }
+    }, [step, selectedMusic]);
 
     if (!isOpen) return null;
 
@@ -74,6 +104,7 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
     const handlePublish = async () => {
         if (!user || !mediaFile) return;
         setIsUploading(true);
+        if (bgAudioRef.current) bgAudioRef.current.pause();
 
         try {
             const ext = mediaFile.name.split('.').pop() || (mediaType === 'video' ? 'webm' : 'png');
@@ -82,7 +113,8 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
             await uploadBytes(storageRef, mediaFile);
             const downloadUrl = await getDownloadURL(storageRef);
 
-            await addDoc(collection(db, 'posts'), {
+            // Construct Final Post Data
+            const postPayload: any = {
                 user: {
                     uid: user.id,
                     name: user.name,
@@ -96,7 +128,7 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
                 image: mediaType === 'image' ? downloadUrl : null,
                 images: mediaType === 'image' ? [downloadUrl] : [],
                 isShort: true,
-                duration: mediaType === 'video' ? 0 : 5, // Should calculate real duration if possible
+                duration: mediaType === 'video' ? 0 : 5, 
                 createdAt: serverTimestamp(),
                 likes: 0,
                 views: 0,
@@ -105,7 +137,19 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
                     ...metaData,
                     filter: 'normal'
                 }
-            });
+            };
+
+            // Inject Music Metadata if selected
+            if (selectedMusic) {
+                postPayload.music = {
+                    title: selectedMusic.title,
+                    artist: selectedMusic.artist,
+                    cover: selectedMusic.cover,
+                    previewUrl: selectedMusic.previewUrl
+                };
+            }
+
+            await addDoc(collection(db, 'posts'), postPayload);
 
             setIsUploading(false);
             onClose();
@@ -147,11 +191,26 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
                         <button onClick={() => setStep('camera')} className="p-2 bg-black/20 rounded-full text-white hover:bg-black/40 backdrop-blur-md">
                             <X className="w-6 h-6"/>
                         </button>
-                        <div className="bg-black/40 px-4 py-1.5 rounded-full text-xs font-bold text-white backdrop-blur-md border border-white/10">
-                            معاينة
-                        </div>
-                        <button className="p-2 bg-black/20 rounded-full text-white hover:bg-black/40 backdrop-blur-md">
+                        
+                        {/* Music Info Indicator */}
+                        {selectedMusic ? (
+                             <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full border border-white/10 animate-pulse">
+                                <Music className="w-3 h-3 text-white"/>
+                                <span className="text-xs font-bold text-white max-w-[150px] truncate">{selectedMusic.title}</span>
+                             </div>
+                        ) : (
+                            <div className="bg-black/40 px-4 py-1.5 rounded-full text-xs font-bold text-white backdrop-blur-md border border-white/10">
+                                معاينة
+                            </div>
+                        )}
+                        
+                        {/* Music Picker Trigger */}
+                        <button 
+                            onClick={() => setMusicPickerOpen(true)}
+                            className="p-2 bg-black/20 rounded-full text-white hover:bg-black/40 backdrop-blur-md relative"
+                        >
                             <Music className="w-6 h-6"/>
+                            {selectedMusic && <div className="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full"></div>}
                         </button>
                     </div>
 
@@ -210,6 +269,13 @@ export const CreateShortModal: React.FC<Props> = ({ isOpen, onClose }) => {
                             نشر
                         </button>
                     </div>
+
+                    {/* --- MUSIC PICKER OVERLAY --- */}
+                    <MusicPicker 
+                        isOpen={musicPickerOpen}
+                        onClose={() => setMusicPickerOpen(false)}
+                        onSelect={(song) => setSelectedMusic(song)}
+                    />
                 </div>
             )}
         </div>
