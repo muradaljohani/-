@@ -17,7 +17,6 @@ import {
 
 const ADMIN_EMAIL = "mrada4231@gmail.com";
 
-// ... (Existing login functions remain the same) ...
 /**
  * Signs in the user with Google and enforces Admin privileges for specific email.
  */
@@ -105,12 +104,12 @@ export const loginWithYahoo = async () => {
 };
 
 /**
- * Link a new auth provider to the CURRENTLY logged-in user.
- * REAL IMPLEMENTATION: Updates Firestore Flags.
+ * Link a new auth provider to the PASSED logged-in user.
+ * Performs the handshake and returns the updated User object.
  */
-export const linkProvider = async (providerId: string): Promise<User> => {
-  if (!auth.currentUser) {
-    throw new Error("يجب تسجيل الدخول أولاً للقيام بعملية الربط.");
+export const linkProvider = async (user: User, providerId: string): Promise<User> => {
+  if (!user) {
+    throw new Error("No active session to link.");
   }
 
   let provider;
@@ -137,23 +136,9 @@ export const linkProvider = async (providerId: string): Promise<User> => {
   }
 
   try {
-    // 1. Perform Real Firebase Linking
-    const result = await linkWithPopup(auth.currentUser, provider);
-    const user = result.user;
-
-    // 2. Update Firestore with Specific Flags for Badges
-    const userRef = doc(db, 'users', user.uid);
-    const updates: any = { isVerified: true }; // General verified flag
-    
-    if (providerId === 'github.com') updates.isGithubVerified = true;
-    if (providerId === 'yahoo.com') updates.isYahooVerified = true;
-    if (providerId === 'google.com') updates.isGoogleVerified = true;
-    if (providerId === 'microsoft.com') updates.isMicrosoftVerified = true;
-    
-    // Explicitly update Firestore so the profile page sees it
-    await updateDoc(userRef, updates);
-
-    return user;
+    // Perform Real Firebase Linking using the passed User instance
+    const result = await linkWithPopup(user, provider);
+    return result.user;
   } catch (error: any) {
     console.error("Link Account Error:", error);
     if (error.code === 'auth/credential-already-in-use') {
@@ -166,27 +151,13 @@ export const linkProvider = async (providerId: string): Promise<User> => {
 /**
  * Unlink an auth provider from the account
  */
-export const unlinkProvider = async (providerId: string): Promise<User> => {
-  if (!auth.currentUser) {
+export const unlinkProvider = async (user: User, providerId: string): Promise<User> => {
+  if (!user) {
       throw new Error("No active session.");
   }
   
   try {
-    const result = await unlink(auth.currentUser, providerId);
-    
-    // Update Firestore to remove verification flags
-    const userRef = doc(db, 'users', result.uid);
-    const updates: any = {};
-    
-    if (providerId === 'github.com') updates.isGithubVerified = false;
-    if (providerId === 'yahoo.com') updates.isYahooVerified = false;
-    if (providerId === 'google.com') updates.isGoogleVerified = false;
-    if (providerId === 'microsoft.com') updates.isMicrosoftVerified = false;
-
-    if (Object.keys(updates).length > 0) {
-        await updateDoc(userRef, updates);
-    }
-
+    const result = await unlink(user, providerId);
     return result;
   } catch (error: any) {
     console.error("Unlink Error:", error);

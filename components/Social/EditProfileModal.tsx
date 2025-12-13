@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect, useRef } from 'react';
 import { X, Camera, Save, Loader2, Link as LinkIcon, MapPin, Youtube, Phone, GraduationCap, Cpu, ShieldCheck, Eye, EyeOff, CheckCircle2, Github, Unlink, Link as ChainIcon, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -20,7 +19,7 @@ const GoogleIcon = () => (
 );
 
 const YahooIcon = () => (
-    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#fff"><path d="M12 12.5L8.5 4H5.5l5 9.5V20h3v-6.5l5-9.5h-3L12 12.5z"/></svg>
+    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#6001d2"><path d="M12 12.5L8.5 4H5.5l5 9.5V20h3v-6.5l5-9.5h-3L12 12.5z" fill="white"/></svg>
 );
 
 const MicrosoftIcon = () => (
@@ -100,45 +99,39 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   const handleLink = async (providerId: string) => {
     setLinkingState(providerId);
 
-    // REAL CHECK: Must have an auth user
-    if (!auth.currentUser) {
+    // CRITICAL: Get fresh user object from auth
+    const activeAuthUser = auth.currentUser;
+    if (!activeAuthUser) {
         alert("يرجى تسجيل الدخول أولاً للقيام بعملية الربط.");
         setLinkingState(null);
         return;
     }
 
     try {
-        const updatedUser = await linkProvider(providerId);
+        // 1. Perform Linking
+        const updatedUser = await linkProvider(activeAuthUser, providerId);
         setCurrentUser(updatedUser); 
         
-        // --- REAL FIRESTORE UPDATE ---
-        const userRef = doc(db, 'users', user.id);
-        const providerData = updatedUser.providerData.find(p => p.providerId === providerId);
-        
-        // Prepare updates
+        // 2. Prepare Firestore Updates
         const updates: any = {};
         const linkedProviders = updatedUser.providerData.map(p => p.providerId);
         
         updates['linkedProviders'] = linkedProviders;
         
-        // Also verify the specific flag for compatibility
+        // Set Public Flags for Profile Display
         if (providerId === 'github.com') updates.isGithubVerified = true;
         if (providerId === 'yahoo.com') updates.isYahooVerified = true;
         if (providerId === 'google.com') updates.isGoogleVerified = true;
         if (providerId === 'microsoft.com') updates.isMicrosoftVerified = true;
         
-        // Store email if available (for privacy display)
-        if (providerData?.email) {
-            updates[`providerEmails.${providerId}`] = providerData.email;
-        }
-
-        // Update Firestore
+        // 3. Update Firestore
+        const userRef = doc(db, 'users', user.id);
         await updateDoc(userRef, updates);
         
-        // Update Local Context
+        // 4. Update Local Context to Reflect Changes Immediately
         updateProfile(updates);
 
-        alert("تم ربط الحساب بنجاح ✅");
+        alert(`تم ربط ${providerId} بنجاح ✅`);
     } catch (e: any) {
         console.error(e);
         alert(e.message || "فشل الربط");
@@ -148,9 +141,10 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
   };
 
   const handleUnlink = async (providerId: string) => {
-    if (!auth.currentUser) return;
+    const activeAuthUser = auth.currentUser;
+    if (!activeAuthUser) return;
 
-    if (currentUser?.providerData && currentUser.providerData.length === 1) {
+    if (activeAuthUser.providerData.length === 1) {
         alert("لا يمكن إلغاء ربط وسيلة الدخول الوحيدة.");
         return;
     }
@@ -159,19 +153,20 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
     setLinkingState(providerId);
     try {
-        const updatedUser = await unlinkProvider(providerId);
+        // 1. Unlink
+        const updatedUser = await unlinkProvider(activeAuthUser, providerId);
         setCurrentUser(updatedUser);
 
+        // 2. Update Firestore
         const userRef = doc(db, 'users', user.id);
         const updates: any = {};
         
-        // Update flags
+        // Unset Flags
         if (providerId === 'github.com') updates.isGithubVerified = false;
         if (providerId === 'yahoo.com') updates.isYahooVerified = false;
         if (providerId === 'google.com') updates.isGoogleVerified = false;
         if (providerId === 'microsoft.com') updates.isMicrosoftVerified = false;
 
-        // Update list
         const linkedProviders = updatedUser.providerData.map(p => p.providerId);
         updates['linkedProviders'] = linkedProviders;
         
@@ -197,8 +192,13 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
       { id: 'yahoo.com', name: 'Yahoo', icon: <YahooIcon />, color: 'bg-purple-500/20', privacyKey: 'showYahoo' },
   ];
 
-  const getProviderInfo = (pId: string) => {
-      return currentUser?.providerData.find(pd => pd.providerId === pId);
+  // Helper to check if linked in CURRENT AUTH state (Real-time check)
+  const isProviderLinked = (pId: string) => {
+      return currentUser?.providerData.some(pd => pd.providerId === pId);
+  };
+
+  const getProviderEmail = (pId: string) => {
+      return currentUser?.providerData.find(pd => pd.providerId === pId)?.email;
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -215,8 +215,8 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
         address: formData.location,
         avatar: formData.photoURL,
         coverImage: formData.bannerURL,
-        isPhoneHidden: !privacy.showPhone, // Map privacy setting to legacy flag if needed
-        privacy: privacy, // Save full privacy object
+        isPhoneHidden: !privacy.showPhone,
+        privacy: privacy, 
         skills: skillsArray,
         customFormFields: {
             ...user.customFormFields,
@@ -226,12 +226,10 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
         }
       };
 
-      // Update Firestore
       const userRef = doc(db, 'users', user.id);
       await updateDoc(userRef, updates);
-
-      // Update Context
       await updateProfile(updates);
+      
       onClose();
     } catch (error) {
       console.error("Failed to save profile:", error);
@@ -369,10 +367,10 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
 
                   <div className="grid grid-cols-1 gap-3">
                       {providers.map(p => {
-                          const providerInfo = getProviderInfo(p.id);
-                          const linked = !!providerInfo;
+                          const linked = isProviderLinked(p.id);
                           const isProcessing = linkingState === p.id;
                           const isVisible = privacy[p.privacyKey as keyof typeof privacy];
+                          const email = getProviderEmail(p.id);
 
                           return (
                             <div key={p.id} className={`flex items-center justify-between p-4 rounded-xl border transition-all ${linked ? 'bg-[#161b22] border-emerald-500/30' : 'bg-[#1e293b] border-slate-700'}`}>
@@ -386,7 +384,7 @@ export const EditProfileModal: React.FC<Props> = ({ isOpen, onClose }) => {
                                             {linked && <CheckCircle2 className="w-3 h-3 text-emerald-500 fill-current"/>}
                                         </span>
                                         <span className="text-[11px] text-gray-500 font-mono">
-                                            {linked ? (providerInfo?.email || 'Linked') : 'Not Linked'}
+                                            {linked ? (email || 'Linked') : 'Not Linked'}
                                         </span>
                                     </div>
                                 </div>
