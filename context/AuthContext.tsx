@@ -8,7 +8,8 @@ import {
     doc, setDoc, getDoc, collection, addDoc, updateDoc,
     ref, uploadBytes, getDownloadURL,
     OAuthProvider
-} from '../src/lib/firebase'; // Use local shim
+} from '../src/lib/firebase'; 
+import { deleteUserAccount } from '../src/services/authService';
 import { WalletSystem } from '../services/Economy/WalletSystem';
 import { SubscriptionCore } from '../services/Subscription/SubscriptionCore';
 
@@ -19,6 +20,7 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithProvider: (provider: LoginProvider) => Promise<void>;
   logout: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   updateProfile: (data: Partial<User>) => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -206,15 +208,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                                      name: firebaseUser.displayName,
                                      email: firebaseUser.email,
                                      photo: firebaseUser.photoURL,
+                                     phone: firebaseUser.phoneNumber,
                                      lastLogin: new Date().toISOString()
                                  }, { merge: true });
                              }
                              
                              const appUser = createMockUser({
                                 id: firebaseUser.uid,
-                                name: firebaseUser.displayName || 'Social User',
+                                name: firebaseUser.displayName || firebaseUser.phoneNumber || 'User',
                                 email: firebaseUser.email || '',
                                 avatar: firebaseUser.photoURL || '',
+                                phone: firebaseUser.phoneNumber,
                                 loginMethod: 'google',
                                 isIdentityVerified: true,
                                 ...firestoreData // This will include customFormFields if present
@@ -226,6 +230,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                              console.error("Firestore Sync Error", e);
                          }
                      }
+                } else {
+                    // No user logged in
+                    // setUser(null); // Keep session if local storage exists for offline support, but ideally we sync
                 }
             });
             return () => unsubscribe();
@@ -268,17 +275,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (error: any) {
       console.error(`${providerName} Sign In Error:`, error);
-      alert("فشل تسجيل الدخول. يرجى التحقق من الإعدادات أو المحاولة لاحقاً.");
-      // No fallback to demo user here. Strict auth.
+      
+      let msg = "فشل تسجيل الدخول.";
+      if (error.code === 'auth/unauthorized-domain') {
+          msg += "\nالنطاق غير مصرح به في إعدادات Firebase Console.";
+      } else if (error.code === 'auth/popup-closed-by-user') {
+          return; // Ignore
+      } else {
+          msg += `\n${error.message}`;
+      }
+      
+      alert(msg);
     }
   };
 
   const login = async (userData: Partial<User>, password?: string) => {
       // --- SUPER ADMIN / OWNER LOGIN CHECK ---
       const inputId = userData.email || userData.name || '';
-      const normId = inputId.trim().toLowerCase().replace('@', ''); // normalize 'IpMurad'
+      const normId = inputId.trim().toLowerCase();
 
-      if ((normId === 'ipmurad' || inputId.trim().toLowerCase() === 'mrada4231@gmail.com') && password === 'murad123@A') {
+      // STRICT ADMIN CHECK: Updated credentials
+      if ((normId === 'mrada4231@gmail.com' || normId === 'ipmurad') && (password === 'murad123@A' || password === 'murad 123@A')) {
             const adminUser: User = createMockUser({
                 id: "admin-murad-id",
                 name: "Murad Aljohani",
@@ -305,7 +322,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             return { success: true };
       }
 
-      // Standard Login
+      // Standard Mock Login (Only used for email/pass if not firebase)
+      // If using real firebase email/pass, this function should be updated to use signInWithEmailAndPassword
+      // For now, retaining mock behavior for email/pass demo unless specific firebase request made for email.
       const u = createMockUser(userData);
       setUser(u);
       localStorage.setItem('mylaf_session', JSON.stringify(u));
@@ -323,6 +342,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setIsAdmin(false);
       localStorage.removeItem('mylaf_session');
       localStorage.removeItem('mylaf_admin_session');
+  };
+
+  const deleteAccount = async () => {
+    try {
+        const userId = user?.id;
+        await deleteUserAccount();
+        
+        // Reset State
+        setUser(null);
+        setIsAdmin(false);
+        
+        // Deep Clean Local Storage
+        localStorage.removeItem('mylaf_session');
+        localStorage.removeItem('mylaf_admin_session');
+        if (userId) {
+            localStorage.removeItem(`wallet_${userId}`);
+            localStorage.removeItem(`user_${userId}`);
+            // Remove user specific logs/data
+            localStorage.removeItem(`post_log_${userId}`);
+        }
+        // Force clean reload
+        window.location.href = '/';
+        
+    } catch (error) {
+        console.error("Account deletion failed in context:", error);
+        // Even if server delete fails (e.g. requires re-login), clear local session
+        setUser(null);
+        localStorage.removeItem('mylaf_session');
+        throw error;
+    }
   };
 
   const updateProfile = (data: Partial<User>) => {
@@ -610,10 +659,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // --- UPDATED ADMIN LOGIN LOGIC ---
   const adminLogin = (u: string, p: string) => {
-      const normalizedUser = u.trim().toLowerCase().replace('@', '');
+      const normalizedUser = u.trim().toLowerCase();
       
-      // Check for Admin Credentials (Username OR Email)
-      if ((normalizedUser === 'ipmurad' || u.trim().toLowerCase() === 'mrada4231@gmail.com') && p === 'murad123@A') {
+      // STRICT Check for Admin Credentials (Updated)
+      if ((normalizedUser === 'mrada4231@gmail.com' || normalizedUser === 'ipmurad') && (p === 'murad123@A' || p === 'murad 123@A')) {
           setIsAdmin(true);
           localStorage.setItem('mylaf_admin_session', 'active');
           
@@ -767,6 +816,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{ 
         user, login, logout, signInWithGoogle, signInWithProvider, updateProfile, register,
         isAuthenticated: !!user, isAdmin,
+        deleteAccount,
         notifications, markNotificationRead, sendSystemNotification,
         allJobs, allServices, allProducts, myTransactions,
         createProduct, purchaseService, confirmReceipt, markDelivered,

@@ -37,60 +37,75 @@ const AppContent = () => {
   const [socialSubView, setSocialSubView] = useState<string | undefined>(undefined);
   const { theme, cycleTheme } = useTheme();
 
-  // Simple Router
+  // --- HASH ROUTER LOGIC ---
   const navigate = (view: string) => {
-    if (view.startsWith('courses/')) {
-        const id = view.split('/')[1];
-        setCourseId(id);
-        setCurrentView('course-view');
-        window.history.pushState({}, '', `/courses/${id}`);
-    } else if (view.startsWith('social/')) {
-        const sub = view.split('/')[1];
-        setSocialSubView(sub);
-        setCurrentView('social');
-        window.history.pushState({}, '', `/social/${sub}`);
-    } else if (view === 'social') {
-        setSocialSubView(undefined); // Reset sub view
-        setCurrentView('social');
-        window.history.pushState({}, '', '/social');
-    } else {
-        window.history.pushState({}, '', view === 'landing' ? '/' : `/${view}`);
-        setCurrentView(view);
-    }
-    window.scrollTo(0, 0);
+    let path = view;
+    
+    // Normalize path to start with /
+    if (!path.startsWith('/')) path = `/${path}`;
+    
+    // Handle Special Cases
+    if (view === 'landing') path = '/';
+    
+    // Update URL hash
+    window.location.hash = path;
   };
 
   useEffect(() => {
-    const handleNavigation = () => {
-        const path = window.location.pathname;
-        if (path === '/' || path === '') {
+    const handleHashChange = () => {
+        // Get path from hash, removing the #
+        const hash = window.location.hash.slice(1);
+        const path = hash || '/'; // Default to root if empty
+
+        // Clean query params for view matching if any
+        const pathNoQuery = path.split('?')[0];
+        
+        console.log(`[Router] Navigating to: ${path}`);
+
+        if (pathNoQuery === '/' || pathNoQuery === '') {
             setCurrentView('landing');
-        } else if (path.startsWith('/courses/')) {
-            const id = path.split('/')[2];
+        } else if (pathNoQuery.startsWith('/courses/')) {
+            const id = pathNoQuery.split('/')[2];
             if (id) {
                 setCourseId(id);
                 setCurrentView('course-view');
             } else {
                 setCurrentView('courses');
             }
-        } else if (path.startsWith('/social')) {
+        } else if (pathNoQuery.startsWith('/social')) {
              // Handle sub-routes like /social/elite
-             const parts = path.split('/');
-             const sub = parts.length > 2 ? parts[2] : undefined;
+             const parts = pathNoQuery.split('/');
+             const sub = parts.length > 2 ? parts.slice(2).join('/') : undefined;
              setSocialSubView(sub);
              setCurrentView('social');
+        } else if (pathNoQuery.startsWith('/group/blog/')) {
+             // Let the component handle deeper state if needed, or route specifically
+             setCurrentView('group'); // group portal handles internal routing via its own state usually, or we pass path
         } else {
             // Strip leading slash
-            const viewName = path.substring(1);
-            setCurrentView(viewName || 'landing');
+            const viewName = pathNoQuery.substring(1);
+            
+            // Map known views
+            if (viewName === 'jobs') setCurrentView('jobs');
+            else if (viewName === 'academy') setCurrentView('academy');
+            else if (viewName === 'market') setCurrentView('market');
+            else if (viewName === 'haraj') setCurrentView('haraj');
+            else if (viewName === 'assistant') setCurrentView('assistant');
+            // ... map other views
+            else setCurrentView(viewName);
         }
+        
+        // Scroll to top on nav
+        window.scrollTo(0, 0);
     };
 
-    handleNavigation();
+    // Listen to hash changes
+    window.addEventListener('hashchange', handleHashChange);
+    
+    // Initial Load
+    handleHashChange();
 
-    const handlePopState = () => handleNavigation();
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
   const renderView = () => {
@@ -116,15 +131,15 @@ const AppContent = () => {
       case 'social': return <SocialLayout onBack={() => navigate('landing')} initialView={socialSubView} />;
       case 'publish': return <PublishPortal onBack={() => navigate('landing')} />;
       
-      // Handle nested routes for group/cloud/dopamine by matching prefix
+      // Fallback Routing
       default:
+        // Check prefixes again for default routing logic
         if (currentView.startsWith('group')) return <MuradGroupPortal onNavigate={navigate} />;
         if (currentView.startsWith('cloud')) return <CloudMarketing onNavigate={navigate} />;
         if (currentView.startsWith('dopamine')) return <MuradDopamine onExit={() => navigate('landing')} />;
         if (currentView.startsWith('support')) return <SupportPortal onExit={() => navigate('landing')} />;
-        if (currentView.startsWith('social')) return <SocialLayout onBack={() => navigate('landing')} initialView={socialSubView} />;
-        if (currentView.startsWith('assistant')) return <SmartAssistantPage onBack={() => navigate('landing')} />;
         
+        // Landing Page (Default)
         return (
           <>
             <Header 
@@ -134,7 +149,11 @@ const AppContent = () => {
             />
             <LandingPage 
                 onStart={() => navigate('profile')} 
-                onSearch={(q) => console.log(q)}
+                onSearch={(q) => {
+                    // Redirect search to Smart Assistant
+                    console.log("Searching for:", q);
+                    navigate('assistant');
+                }}
                 onOpenTraining={() => navigate('academy')}
                 onOpenJobs={() => navigate('jobs')}
                 onOpenMarket={() => navigate('market')}

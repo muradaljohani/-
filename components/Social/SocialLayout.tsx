@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-    Home, Search, Bell, Mail, Image as ImageIcon, Video, X, User, PlusCircle, MessageSquare, Plus, Feather
+    Home, Search, Bell, Mail, Image as ImageIcon, Video, X, User, PlusCircle, MessageSquare, Plus, Feather, AlertTriangle
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -20,6 +20,7 @@ import { MuradAI } from './MuradAI';
 import { ProfilePage } from './ProfilePage';
 import { SettingsLayout } from './SettingsLayout';
 import { NewChatModal } from './NewChatModal';
+import { isContentSafe } from '../../utils/contentSafety';
 
 // IMPORT NEW SECONDARY PAGES
 import { ElitePage, CreatorStudioPage, CirclesPage, LiveRoomsPage, CollectionsPage, SavedPage } from './SecondaryPages';
@@ -49,6 +50,8 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
     const [isNewChatOpen, setIsNewChatOpen] = useState(false); // For NewChatModal
 
     const [composeText, setComposeText] = useState('');
+    const [safetyError, setSafetyError] = useState<string | null>(null);
+    
     const [toastMsg, setToastMsg] = useState<{msg: string, type: 'success'|'error'} | null>(null);
     const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -56,6 +59,11 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
     // --- REAL-TIME DATA ---
     const [unreadCount, setUnreadCount] = useState(0);
     const [chats, setChats] = useState<any[]>([]); // List of active chats
+
+    // Sync view with props from parent App.tsx
+    useEffect(() => {
+        if (initialView) setView(initialView);
+    }, [initialView]);
 
     // 1. Notifications Listener
     useEffect(() => {
@@ -108,20 +116,9 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
         setTimeout(() => setToastMsg(null), 3000);
     };
 
-    // --- NAVIGATION HANDLERS ---
+    // --- NAVIGATION HANDLERS (HASH ROUTING) ---
     const handleNavigation = (route: string) => {
-        if (route.startsWith('settings')) {
-            window.history.pushState({}, '', `/social/${route}`);
-            setView(route);
-        } else {
-            window.history.pushState({}, '', `/social/${route}`);
-            if (route === 'profile' && user) {
-                setVisitedUserId(user.id);
-                setView('user-profile');
-            } else {
-                setView(route as ViewState);
-            }
-        }
+        window.location.hash = `/social/${route}`;
         setIsSidebarOpen(false); 
     };
 
@@ -193,6 +190,18 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
         }
     };
 
+    const handleComposeChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const text = e.target.value;
+        setComposeText(text);
+        
+        if (text.trim()) {
+            const check = isContentSafe(text);
+            setSafetyError(check.isSafe ? null : (check.reason || 'محتوى غير آمن'));
+        } else {
+            setSafetyError(null);
+        }
+    };
+
     // Handle Post
     const handlePostSubmit = async () => {
         if (!composeText.trim()) return;
@@ -201,12 +210,20 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
             alert("يرجى تسجيل الدخول لنشر منشور.");
             return;
         }
+
+        // Safety Check
+        const check = isContentSafe(composeText);
+        if (!check.isSafe) {
+            setSafetyError(check.reason || 'المحتوى يخالف معايير المجتمع');
+            return;
+        }
         
         const success = await SocialService.createPost(user, composeText);
         if (success) {
             showToast('تم النشر بنجاح!', 'success');
             setComposeText('');
             setIsComposeOpen(false);
+            setSafetyError(null);
         } else {
             showToast('فشل النشر، حاول مرة أخرى', 'error');
         }
@@ -492,10 +509,10 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
             {isComposeOpen && (
                 <div className="fixed inset-0 z-[100] bg-white dark:bg-black flex flex-col p-4 animate-in slide-in-from-bottom-10 duration-200">
                     <div className="flex justify-between items-center mb-6">
-                        <button onClick={() => setIsComposeOpen(false)} className="text-black dark:text-white font-bold">إلغاء</button>
+                        <button onClick={() => { setIsComposeOpen(false); setSafetyError(null); }} className="text-black dark:text-white font-bold">إلغاء</button>
                         <button 
                             onClick={handlePostSubmit}
-                            disabled={!composeText.trim()}
+                            disabled={!composeText.trim() || !!safetyError}
                             className="bg-[#1d9bf0] text-white px-6 py-1.5 rounded-full font-bold text-sm disabled:opacity-50 flex items-center gap-2"
                         >
                             نشر
@@ -505,13 +522,20 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                         <div className="w-10 h-10 rounded-full overflow-hidden shrink-0 bg-slate-200 dark:bg-slate-800">
                             <img src={user?.avatar} className="w-full h-full object-cover"/>
                         </div>
-                        <textarea 
-                            className="flex-1 bg-transparent text-black dark:text-white text-lg placeholder-gray-500 dark:placeholder-[#71767b] outline-none resize-none h-[40vh]"
-                            placeholder="ماذا تريد ان تنشر يا بطل المجتمع؟"
-                            value={composeText}
-                            onChange={(e) => setComposeText(e.target.value)}
-                            autoFocus
-                        />
+                        <div className="flex-1 flex flex-col">
+                            <textarea 
+                                className={`flex-1 bg-transparent text-black dark:text-white text-lg placeholder-gray-500 dark:placeholder-[#71767b] outline-none resize-none h-[30vh] ${safetyError ? 'border-b-2 border-red-500' : ''}`}
+                                placeholder="ماذا تريد ان تنشر يا بطل المجتمع؟"
+                                value={composeText}
+                                onChange={handleComposeChange}
+                                autoFocus
+                            />
+                            {safetyError && (
+                                <div className="mt-2 text-red-500 text-sm font-bold flex items-center gap-2 bg-red-500/10 p-2 rounded-lg">
+                                    <AlertTriangle className="w-4 h-4"/> {safetyError}
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="mt-auto border-t border-gray-200 dark:border-[#2f3336] pt-4 flex gap-6 text-[#1d9bf0]">
                         <ImageIcon className="w-6 h-6"/>

@@ -1,12 +1,12 @@
 
-import React, { useState } from 'react';
-import { X, Fingerprint, Loader2, AlertCircle, Eye, EyeOff, UserPlus, User, Mail, Smartphone, Building2, Lock, FileText, ArrowRight, Github, Phone } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Fingerprint, Loader2, AlertCircle, Eye, EyeOff, UserPlus, User, Mail, Smartphone, Building2, Lock, FileText, ArrowRight, Github, Phone, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { LoginProvider } from '../types';
 import { RealAuthService } from '../services/realAuthService';
-import { PhoneVerifyModal } from './Social/PhoneVerifyModal';
-import { auth, db, doc, getDoc } from '../src/lib/firebase';
-import { logoutUser } from '../src/services/authService';
+import { verifyUserPhoneNumber, confirmPhoneCode, setupRecaptcha, registerWithEmail, loginWithEmail, resetPassword } from '../src/services/authService';
+import { ConfirmationResult } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp, db } from '../src/lib/firebase';
 
 // --- SOCIAL ICONS ---
 const Icons = {
@@ -29,15 +29,21 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSuccess }) => {
-  const { login, signInWithProvider } = useAuth();
+  const { signInWithProvider } = useAuth(); // We'll use local logic for Email/Pass
   
   // Tab State
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [activeTab, setActiveTab] = useState<'login' | 'register' | 'phone_login' | 'reset'>('login');
   
   // Login State
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPass, setLoginPass] = useState('');
   const [showPass, setShowPass] = useState(false);
+
+  // Phone Auth State
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [phoneStep, setPhoneStep] = useState<'input' | 'otp'>('input');
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   // Register State
   const [regData, setRegData] = useState({
@@ -49,46 +55,63 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
       confirmPassword: ''
   });
 
+  // Reset Password State
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetStatus, setResetStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+
   // Status
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+        // Reset states when modal opens
+        setPhoneStep('input');
+        setPhone('');
+        setOtp('');
+        setError(null);
+        setSuccessMsg(null);
+        if ((window as any).recaptchaVerifier) {
+            try { (window as any).recaptchaVerifier.clear(); } catch(e) {}
+            (window as any).recaptchaVerifier = null;
+        }
+    }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
   // --- Handlers ---
   
-  const handleLogin = async (provider?: LoginProvider) => {
+  const handleSocialLogin = async (provider: LoginProvider) => {
       setError(null);
-      setIsLoading(true);
-      
       try {
-          if (provider && ['google', 'facebook', 'twitter', 'github', 'yahoo', 'microsoft'].includes(provider)) {
-              await signInWithProvider(provider);
-              onLoginSuccess?.();
-          } else if (provider === 'nafath') {
-              // Legacy/Mock providers
-              const res = await RealAuthService.requestNafathLogin('1010101010');
-              if (res.status === 'WAITING') {
-                   setTimeout(async () => {
-                       await login({ name: 'مواطن (نفاذ)', isIdentityVerified: true });
-                       onLoginSuccess?.();
-                   }, 2000);
-              }
-          } else if (provider === 'apple') {
-             await login({ name: 'Apple User', loginMethod: 'apple' });
-             onLoginSuccess?.();
-          } else {
-              // Email Login
-              const res = await login({ email: loginEmail }, loginPass);
-              if (res.success) {
-                  onLoginSuccess?.();
-              } else {
-                  setError(res.error || 'فشل تسجيل الدخول');
-              }
-          }
+          await signInWithProvider(provider);
+          onLoginSuccess?.();
+      } catch (e: any) {
+          setError(e.message || 'فشل تسجيل الدخول بواسطة المزود الاجتماعي');
+      }
+  };
+
+  const handleEmailLogin = async () => {
+      setError(null);
+      if (!loginEmail || !loginPass) return setError('يرجى إدخال البريد الإلكتروني وكلمة المرور');
+      
+      setIsLoading(true);
+      try {
+          // Use real service instead of context mock
+          await loginWithEmail(loginEmail, loginPass);
+          onLoginSuccess?.();
       } catch (e: any) {
           console.error("Login Error:", e);
-          setError(e.message || 'حدث خطأ أثناء تسجيل الدخول');
+          let msg = "فشل تسجيل الدخول. تأكد من البيانات.";
+          if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+              msg = "البريد الإلكتروني أو كلمة المرور غير صحيحة.";
+          }
+          if (e.code === 'auth/too-many-requests') {
+              msg = "تم حظر الدخول مؤقتاً بسبب تكرار المحاولات الفاشلة. حاول لاحقاً.";
+          }
+          setError(msg);
       } finally {
           setIsLoading(false);
       }
@@ -96,6 +119,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
 
   const handleRegister = async () => {
       setError(null);
+      setSuccessMsg(null);
+
+      // Validation
       if (!regData.fullName || !regData.nationalId || !regData.phone || !regData.email || !regData.password) {
           setError('جميع الحقول مطلوبة');
           return;
@@ -104,29 +130,118 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
           setError('كلمة المرور غير متطابقة');
           return;
       }
+      if (regData.password.length < 6) {
+          setError('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+          return;
+      }
 
       setIsLoading(true);
       try {
-          // Simulate registration API call
-          setTimeout(async () => {
-              // On success, auto-login
-              await login({
-                  name: regData.fullName,
-                  email: regData.email,
-                  phone: regData.phone,
-                  nationalId: regData.nationalId,
-                  role: 'student',
-                  isIdentityVerified: false, 
-                  isPhoneVerified: false // Ensure new users are not verified by default
-              }, regData.password);
-              
-              onLoginSuccess?.();
-              setIsLoading(false);
-          }, 1500);
-      } catch (e) {
-          setError('فشل إنشاء الحساب');
+          // Call Real Registration Service
+          await registerWithEmail(
+              regData.email, 
+              regData.password, 
+              regData.fullName, 
+              regData.phone, 
+              regData.nationalId
+          );
+          
+          setSuccessMsg("تم إنشاء الحساب بنجاح! تم إرسال رابط تفعيل إلى بريدك الإلكتروني. يرجى التحقق منه ثم تسجيل الدخول.");
+          // Switch to login tab after brief delay
+          setTimeout(() => {
+              setActiveTab('login');
+              setLoginEmail(regData.email);
+              setSuccessMsg(null); // Clear message or keep it on login screen? keeping it might be better
+              setError(null);
+          }, 5000);
+
+      } catch (e: any) {
+          console.error("Registration Error:", e);
+          let msg = "فشل إنشاء الحساب";
+          if (e.code === 'auth/email-already-in-use') msg = "البريد الإلكتروني مسجل مسبقاً.";
+          if (e.code === 'auth/invalid-email') msg = "البريد الإلكتروني غير صالح.";
+          if (e.code === 'auth/weak-password') msg = "كلمة المرور ضعيفة جداً.";
+          setError(msg);
+      } finally {
           setIsLoading(false);
       }
+  };
+
+  const handlePasswordReset = async () => {
+      if (!resetEmail) return setError('يرجى إدخال البريد الإلكتروني');
+      setResetStatus('sending');
+      setError(null);
+      try {
+          await resetPassword(resetEmail);
+          setResetStatus('sent');
+      } catch (e: any) {
+          setResetStatus('idle');
+          if (e.code === 'auth/user-not-found') setError('لم يتم العثور على حساب بهذا البريد.');
+          else setError('فشل إرسال الرابط. حاول مرة أخرى.');
+      }
+  };
+
+  const handlePhoneLoginStart = async () => {
+    if (!phone) return setError('يرجى إدخال رقم الهاتف');
+    if (!phone.startsWith('+')) return setError('يرجى إدخال الرمز الدولي (مثال: +966)');
+    
+    setIsLoading(true);
+    setError(null);
+
+    try {
+        const verifier = setupRecaptcha('login-recaptcha');
+        const result = await verifyUserPhoneNumber(phone, verifier);
+        setConfirmationResult(result);
+        setPhoneStep('otp');
+    } catch (e: any) {
+        console.error(e);
+        setError('فشل إرسال الرمز. تأكد من الرقم وحاول مجدداً.');
+        if ((window as any).recaptchaVerifier) {
+            (window as any).recaptchaVerifier.clear();
+            (window as any).recaptchaVerifier = null;
+        }
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otp || !confirmationResult) return;
+    setIsLoading(true);
+    setError(null);
+
+    try {
+        const result = await confirmPhoneCode(confirmationResult, otp);
+        const user = result;
+        
+        // Sync with Firestore
+        if (db && user) {
+            const userRef = doc(db, "users", user.uid);
+            const userSnap = await getDoc(userRef);
+            if (!userSnap.exists()) {
+                await setDoc(userRef, {
+                    uid: user.uid,
+                    phone: user.phoneNumber,
+                    isPhoneVerified: true,
+                    verified: true,
+                    name: 'مستخدم الجوال', // Default name
+                    createdAt: serverTimestamp(),
+                    lastLogin: serverTimestamp(),
+                    role: 'student'
+                });
+            } else {
+                await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
+            }
+        }
+        
+        onLoginSuccess?.();
+
+    } catch (e: any) {
+        console.error(e);
+        setError('رمز التحقق غير صحيح أو منتهي الصلاحية');
+    } finally {
+        setIsLoading(false);
+    }
   };
 
   return (
@@ -146,7 +261,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                 onClick={() => { setActiveTab('register'); setError(null); }}
                 className={`flex-1 py-4 text-sm font-bold transition-all ${activeTab === 'register' ? 'bg-white text-blue-600 border-b-2 border-blue-600' : 'bg-gray-50 text-gray-500 hover:bg-gray-100'}`}
               >
-                  تسجيل جديد (النموذج المعتمد)
+                  تسجيل جديد
               </button>
           </div>
           
@@ -162,70 +277,70 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                     <div className="mb-6">
                         <h2 className="text-2xl font-black text-gray-900 mb-1">مرحباً بعودتك</h2>
                         <p className="text-sm text-gray-500">اختر طريقة الدخول المفضلة لديك</p>
+                        {successMsg && (
+                            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl text-green-600 text-xs font-bold flex items-start gap-2">
+                                <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5"/>
+                                <span>{successMsg}</span>
+                            </div>
+                        )}
                     </div>
 
-                    {/* Vertical Stack: Google, Phone, GitHub, Microsoft, Facebook, Yahoo */}
+                    {/* Vertical Stack: Google, Phone, Yahoo */}
                     <div className="flex flex-col gap-3 mb-6">
-                        
-                        {/* 1. Google */}
                         <button 
                             disabled={isLoading}
-                            onClick={() => handleLogin('google')}
+                            onClick={() => handleSocialLogin('google')}
                             className="flex items-center justify-center gap-3 bg-white text-gray-700 border border-gray-200 py-3.5 rounded-xl hover:bg-gray-50 transition-all shadow-sm active:scale-95 disabled:opacity-50 font-bold text-sm relative"
                         >
                             <div className="absolute right-4"><Icons.Google /></div>
                             تسجيل الدخول بـ Google
                         </button>
 
-                        {/* 2. Phone Number (Nafath/Phone) */}
                         <button 
                             disabled={isLoading}
-                            onClick={() => handleLogin('nafath')}
+                            onClick={() => setActiveTab('phone_login')}
                             className="flex items-center justify-center gap-3 bg-[#10b981] hover:bg-[#059669] text-white py-3.5 rounded-xl font-bold text-sm transition-all shadow-md active:scale-95 disabled:opacity-50 relative"
                         >
                             <div className="absolute right-4"><Phone className="w-5 h-5" /></div>
-                            رقم الجوال
+                            رقم الجوال (موثق)
                         </button>
 
-                        {/* 3. GitHub */}
                         <button 
                             disabled={isLoading} 
-                            onClick={() => handleLogin('github')} 
-                            className="flex items-center justify-center gap-3 bg-[#24292f] text-white py-3.5 rounded-xl hover:bg-[#1b1f23] transition-all shadow-sm active:scale-95 disabled:opacity-50 font-bold text-sm relative"
+                            onClick={() => handleSocialLogin('yahoo')} 
+                            className="flex items-center justify-center gap-3 bg-[#6001d2] hover:bg-[#5000b0] text-white py-3.5 rounded-xl font-bold text-sm transition-all shadow-sm active:scale-95 disabled:opacity-50 relative"
                         >
-                            <div className="absolute right-4"><Github className="w-5 h-5" /></div>
-                            GitHub
+                            <div className="absolute right-4"><Icons.Yahoo /></div>
+                            Yahoo
                         </button>
 
-                        {/* 4. Microsoft */}
-                        <button 
-                            disabled={isLoading} 
-                            onClick={() => handleLogin('microsoft')} 
-                            className="flex items-center justify-center gap-3 bg-[#2f2f2f] text-white py-3.5 rounded-xl hover:bg-[#1f1f1f] transition-all shadow-sm active:scale-95 disabled:opacity-50 font-bold text-sm relative"
-                        >
-                            <div className="absolute right-4"><Icons.Microsoft /></div>
-                            Microsoft
-                        </button>
-
-                        {/* 5. Facebook */}
-                        <button 
-                            disabled={isLoading} 
-                            onClick={() => handleLogin('facebook')} 
-                            className="flex items-center justify-center gap-3 bg-[#1877f2] text-white py-3.5 rounded-xl hover:bg-[#156ad8] transition-all shadow-sm active:scale-95 disabled:opacity-50 font-bold text-sm relative"
-                        >
-                             <div className="absolute right-4"><Icons.Facebook /></div>
-                             Facebook
-                        </button>
-                        
-                        {/* 6. Yahoo */}
-                        <button 
-                            disabled={isLoading} 
-                            onClick={() => handleLogin('yahoo')} 
-                            className="flex items-center justify-center gap-3 bg-[#6001d2] text-white py-3.5 rounded-xl hover:bg-[#5000b0] transition-all shadow-sm active:scale-95 disabled:opacity-50 font-bold text-sm relative"
-                        >
-                             <div className="absolute right-4"><Icons.Yahoo /></div>
-                             تسجيل الدخول بـ Yahoo
-                        </button>
+                        {/* Other Options Grid */}
+                        <div className="grid grid-cols-3 gap-2 mt-2">
+                             <button 
+                                disabled={isLoading} 
+                                onClick={() => handleSocialLogin('microsoft')} 
+                                className="flex items-center justify-center gap-2 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl font-bold text-xs hover:bg-gray-50"
+                                title="Microsoft"
+                             >
+                                <Icons.Microsoft /> <span className="hidden sm:inline">Microsoft</span>
+                             </button>
+                             <button 
+                                disabled={isLoading} 
+                                onClick={() => handleSocialLogin('facebook')} 
+                                className="flex items-center justify-center gap-2 bg-[#1877F2] text-white py-2.5 rounded-xl font-bold text-xs hover:bg-[#1565C0]"
+                                title="Facebook"
+                             >
+                                <Icons.Facebook /> <span className="hidden sm:inline">Facebook</span>
+                             </button>
+                             <button 
+                                disabled={isLoading} 
+                                onClick={() => handleSocialLogin('github')} 
+                                className="flex items-center justify-center gap-2 bg-[#24292f] text-white py-2.5 rounded-xl font-bold text-xs hover:bg-[#1b1f23]"
+                                title="GitHub"
+                             >
+                                <Github className="w-4 h-4" /> <span className="hidden sm:inline">GitHub</span>
+                             </button>
+                        </div>
                     </div>
 
                     <div className="relative text-center my-6">
@@ -233,7 +348,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                         <span className="relative bg-white px-4 text-xs text-gray-400 font-bold uppercase tracking-wider">أو بالبريد الإلكتروني</span>
                     </div>
 
-                    <form onSubmit={(e) => { e.preventDefault(); handleLogin(); }} className="space-y-4">
+                    <form onSubmit={(e) => { e.preventDefault(); handleEmailLogin(); }} className="space-y-4">
                         <div>
                             <label className="text-xs font-bold text-gray-500 block mb-1">البريد الإلكتروني</label>
                             <input type="email" value={loginEmail} onChange={e=>setLoginEmail(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 focus:bg-white transition-all text-sm font-medium" placeholder="name@example.com" />
@@ -246,6 +361,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                                     {showPass ? <EyeOff className="w-4 h-4"/> : <Eye className="w-4 h-4"/>}
                                 </button>
                             </div>
+                            <div className="text-left mt-1">
+                                <button type="button" onClick={() => setActiveTab('reset')} className="text-[10px] text-blue-500 font-bold hover:underline">نسيت كلمة المرور؟</button>
+                            </div>
                         </div>
                         
                         {error && <div className="p-3 bg-red-50 text-red-500 text-xs font-bold rounded-xl border border-red-100 flex items-center gap-2"><AlertCircle className="w-4 h-4"/> {error}</div>}
@@ -254,13 +372,62 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                             {isLoading ? <Loader2 className="w-5 h-5 animate-spin"/> : 'دخول'}
                         </button>
                     </form>
-
-                    <div className="mt-6 flex justify-center gap-4 pt-6 border-t border-gray-100">
-                         <button onClick={() => handleLogin('apple')} className="text-gray-400 hover:text-black transition-colors text-xs font-bold flex items-center gap-1">
-                             <Icons.Apple /> تسجيل دخول Apple
-                         </button>
-                    </div>
                   </>
+              )}
+
+              {/* --- PHONE LOGIN VIEW --- */}
+              {activeTab === 'phone_login' && (
+                  <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                      <div className="mb-6 flex items-center gap-2">
+                          <button onClick={() => setActiveTab('login')} className="p-2 -mr-2 hover:bg-gray-100 rounded-full"><ArrowRight className="w-5 h-5 rtl:rotate-180"/></button>
+                          <h2 className="text-xl font-black text-gray-900">تسجيل دخول بالجوال</h2>
+                      </div>
+
+                      {phoneStep === 'input' ? (
+                          <div className="space-y-4">
+                              <p className="text-sm text-gray-500">سيصلك رمز تحقق (OTP) عبر رسالة نصية.</p>
+                              <div className="relative" dir="ltr">
+                                  <input 
+                                    type="tel" 
+                                    value={phone} 
+                                    onChange={e => setPhone(e.target.value)} 
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 pl-10 text-lg font-mono outline-none focus:border-emerald-500 transition-all"
+                                    placeholder="+9665xxxxxxxx"
+                                  />
+                                  <Phone className="absolute left-3 top-3.5 w-5 h-5 text-gray-400"/>
+                              </div>
+                              <div id="login-recaptcha" className="my-2"></div>
+                              {error && <div className="text-red-500 text-xs font-bold">{error}</div>}
+                              <button onClick={handlePhoneLoginStart} disabled={isLoading} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all">
+                                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin"/> : 'إرسال الرمز'}
+                              </button>
+                          </div>
+                      ) : (
+                          <div className="space-y-4 text-center">
+                              <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                  <Smartphone className="w-8 h-8 text-emerald-600"/>
+                              </div>
+                              <p className="text-sm text-gray-600">تم إرسال الرمز إلى <b dir="ltr">{phone}</b></p>
+                              
+                              <input 
+                                type="text" 
+                                value={otp} 
+                                onChange={e => setOtp(e.target.value)} 
+                                className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-center text-2xl font-mono tracking-widest outline-none focus:border-emerald-500"
+                                placeholder="------"
+                                maxLength={6}
+                              />
+                              
+                              {error && <div className="text-red-500 text-xs font-bold">{error}</div>}
+                              
+                              <button onClick={handleVerifyOtp} disabled={isLoading} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all">
+                                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin"/> : 'تأكيد الدخول'}
+                              </button>
+                              
+                              <button onClick={() => setPhoneStep('input')} className="text-xs text-gray-500 underline hover:text-black">تغيير الرقم</button>
+                          </div>
+                      )}
+                  </div>
               )}
 
               {/* --- REGISTER VIEW --- */}
@@ -324,6 +491,41 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, onLoginSu
                           بإنشاء حساب، أنت توافق على <span className="text-blue-500 cursor-pointer">شروط الاستخدام</span> و <span className="text-blue-500 cursor-pointer">سياسة الخصوصية</span>.
                       </p>
                   </form>
+              )}
+
+              {/* --- PASSWORD RESET VIEW --- */}
+              {activeTab === 'reset' && (
+                  <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                      <div className="mb-6 flex items-center gap-2">
+                          <button onClick={() => setActiveTab('login')} className="p-2 -mr-2 hover:bg-gray-100 rounded-full"><ArrowRight className="w-5 h-5 rtl:rotate-180"/></button>
+                          <h2 className="text-xl font-black text-gray-900">استعادة كلمة المرور</h2>
+                      </div>
+                      
+                      {resetStatus === 'sent' ? (
+                          <div className="text-center py-6">
+                              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                  <CheckCircle2 className="w-8 h-8"/>
+                              </div>
+                              <h3 className="font-bold text-lg mb-2">تم الإرسال</h3>
+                              <p className="text-sm text-gray-500 mb-6">يرجى تفقد بريدك الإلكتروني لإنشاء كلمة مرور جديدة.</p>
+                              <button onClick={() => setActiveTab('login')} className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold">العودة لتسجيل الدخول</button>
+                          </div>
+                      ) : (
+                          <div className="space-y-4">
+                              <p className="text-sm text-gray-500">أدخل بريدك الإلكتروني وسنرسل لك رابطاً لإعادة تعيين كلمة المرور.</p>
+                              <div>
+                                  <label className="text-xs font-bold text-gray-500 block mb-1">البريد الإلكتروني</label>
+                                  <input type="email" value={resetEmail} onChange={e=>setResetEmail(e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 outline-none focus:border-blue-500 focus:bg-white transition-all text-sm font-medium" />
+                              </div>
+                              
+                              {error && <div className="text-red-500 text-xs font-bold">{error}</div>}
+
+                              <button onClick={handlePasswordReset} disabled={resetStatus === 'sending'} className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 transition-all">
+                                  {resetStatus === 'sending' ? <Loader2 className="w-5 h-5 animate-spin"/> : 'إرسال الرابط'}
+                              </button>
+                          </div>
+                      )}
+                  </div>
               )}
           </div>
       </div>

@@ -4,9 +4,10 @@ import {
   ArrowRight, Calendar, MapPin, Link as LinkIcon, Mail, 
   CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, 
   ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, 
-  Fingerprint, Database, Bot, Github, Facebook, AtSign, Users 
+  Fingerprint, Database, Bot, Github, Facebook, AtSign, Users, Info,
+  ThumbsUp, ThumbsDown, MessageCircle, Clock, Flag, AlertTriangle, Loader2
 } from 'lucide-react';
-import { doc, getDoc, collection, query, where, getDocs, db } from '../../src/lib/firebase';
+import { doc, getDoc, collection, query, where, getDocs, db, addDoc, serverTimestamp } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
 import { EditProfileModal } from './EditProfileModal';
@@ -34,6 +35,13 @@ const YahooIcon = () => (
     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="#6001d2"><path d="M12 12.5L8.5 4H5.5l5 9.5V20h3v-6.5l5-9.5h-3L12 12.5z" fill="white"/></svg>
 );
 
+// --- Custom Verified Badge (Rosette Shape) ---
+const VerifiedBadge = ({ className }: { className?: string }) => (
+    <svg viewBox="0 0 24 24" aria-label="Verified Account" className={className} fill="currentColor">
+        <g><path d="M22.5 12.5c0-1.58-.875-2.95-2.148-3.6.154-.435.238-.905.238-1.4 0-2.21-1.71-3.998-3.818-3.998-.47 0-.92.084-1.336.25C14.818 2.415 13.51 1.5 12 1.5s-2.816.917-3.437 2.25c-.415-.165-.866-.25-1.336-.25-2.11 0-3.818 1.79-3.818 4 0 .495.083.965.238 1.4-1.272.65-2.147 2.018-2.147 3.6 0 1.495.782 2.798 1.942 3.486-.02.17-.032.34-.032.514 0 2.21 1.708 4 3.818 4 .47 0 .92-.086 1.335-.25.62 1.334 1.926 2.25 3.437 2.25 1.512 0 2.818-.916 3.437-2.25.415.163.865.248 1.336.248 2.11 0 3.818-1.79 3.818-4 0-.174-.012-.344-.033-.513 1.158-.687 1.943-1.99 1.943-3.484zm-6.616-3.334l-4.334 6.5c-.145.217-.382.334-.625.334-.143 0-.288-.04-.416-.126l-.115-.094-2.415-2.415c-.293-.293-.293-.768 0-1.06s.768-.294 1.06 0l1.77 1.767 3.825-5.74c.23-.345.696-.436 1.04-.207.346.23.44.696.21 1.04z" /></g>
+    </svg>
+);
+
 // --- MURAD AI IDENTITY CONSTANT ---
 const MURAD_AI_PROFILE = {
   uid: "murad-ai-bot-id",
@@ -52,7 +60,7 @@ const MURAD_AI_PROFILE = {
   isIdentityVerified: true,
   isGold: true,
   createdAt: new Date(2025, 0, 1).toISOString(),
-  lastLogin: new Date().toISOString(),
+  lastLogin: new Date().toISOString(), // Always online
   loginMethod: 'system',
   linkedProviders: [],
   xp: 1000000,
@@ -69,6 +77,15 @@ const MURAD_AI_PROFILE = {
   skills: ["Artificial Intelligence", "Deep Learning", "Data Analysis", "System Optimization"]
 };
 
+// Map Tabs to Arabic
+const TAB_LABELS: Record<string, string> = {
+    'posts': 'المنشورات',
+    'store': 'المتجر',
+    'replies': 'الردود',
+    'media': 'الوسائط',
+    'likes': 'الإعجابات'
+};
+
 export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) => {
     const { user: currentUser, followUser, unfollowUser, purchaseService } = useAuth(); 
     const [profileUser, setProfileUser] = useState<User | null>(null);
@@ -83,6 +100,15 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
     const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
     const [isPaymentGatewayOpen, setIsPaymentGatewayOpen] = useState(false);
     const [isPhoneVerifyOpen, setIsPhoneVerifyOpen] = useState(false);
+    
+    // --- Report System State ---
+    const [isReportOpen, setIsReportOpen] = useState(false);
+    const [reportReason, setReportReason] = useState('');
+    const [isReporting, setIsReporting] = useState(false);
+
+    // --- Credibility System State ---
+    const [credibility, setCredibility] = useState({ likes: 0, dislikes: 0 });
+    const [myVote, setMyVote] = useState<'like'|'dislike'|null>(null);
 
     const isOwnProfile = currentUser?.id === userId;
     const isFollowing = currentUser?.following?.includes(userId);
@@ -91,7 +117,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
     const displayUser = isOwnProfile ? currentUser : profileUser;
     
     // --- ADMIN HARDCODED DATA BYPASS ---
-    const ADMIN_BYPASS_IDS = ["admin-fixed-id", "admin-murad-main-id", "admin-murad-id"];
+    const ADMIN_BYPASS_IDS = ["admin-murad-id"];
     
     useEffect(() => {
         const fetchData = async () => {
@@ -101,10 +127,12 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
 
             if (userId === "murad-ai-bot-id" || userId.toLowerCase() === "murad") {
                 userData = MURAD_AI_PROFILE as unknown as User;
+                // Bot always online logic
+                userData.lastLogin = new Date().toISOString();
                 setProfileUser(userData);
             } else if (ADMIN_BYPASS_IDS.includes(userId)) {
                  // Mock admin data logic
-                 setProfileUser({
+                 const adminMock = {
                     id: userId,
                     name: "Murad Aljohani",
                     username: "IpMurad",
@@ -121,7 +149,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                     skills: ["Leadership", "Innovation", "Development", "AI Architecture"],
                     address: "Riyadh, Saudi Arabia",
                     createdAt: new Date(2025, 0, 1).toISOString(),
-                    lastLogin: new Date().toISOString(),
+                    lastLogin: new Date().toISOString(), // Admin always appears online
                     loginMethod: 'email',
                     linkedProviders: ['google.com', 'github.com'],
                     xp: 999999,
@@ -138,17 +166,22 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                     },
                     isPhoneVerified: true,
                     isGithubVerified: true,
-                    isGoogleVerified: true
-                 } as any);
+                    isGoogleVerified: true,
+                    credibilityLikes: 99999,
+                    credibilityDislikes: 0
+                 } as any;
+                 setProfileUser(adminMock);
+                 setCredibility({ likes: adminMock.credibilityLikes || 0, dislikes: adminMock.credibilityDislikes || 0 });
             } else if (isOwnProfile && currentUser) {
-                // If own profile, we already have data in context
                 setProfileUser(currentUser);
+                setCredibility({ likes: currentUser.credibilityLikes || 0, dislikes: currentUser.credibilityDislikes || 0 });
             } else if (db) {
                 try {
                     const userDoc = await getDoc(doc(db, 'users', userId));
                     if (userDoc.exists()) {
                         userData = { id: userDoc.id, ...userDoc.data() } as User;
                         setProfileUser(userData);
+                        setCredibility({ likes: userData.credibilityLikes || 0, dislikes: userData.credibilityDislikes || 0 });
                     }
                 } catch (error) {
                     console.error("Error fetching user doc:", error);
@@ -159,7 +192,6 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
             if (db) {
                 try {
                     const postsRef = collection(db, 'posts');
-                    // Query needs index, fallback to basic if fails or empty
                     const q = query(postsRef, where("user.uid", "==", userId));
                     const snapshot = await getDocs(q);
                     const userPosts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -217,6 +249,69 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
             followUser(userId);
         }
     };
+    
+    // --- CREDIBILITY VOTE HANDLER ---
+    const handleCredibilityVote = (type: 'like' | 'dislike') => {
+        if (!currentUser) return alert("يرجى تسجيل الدخول للتقييم.");
+        if (isOwnProfile) return alert("لا يمكنك تقييم نفسك.");
+
+        // Play Sound
+        const audioUrl = type === 'like' 
+            ? 'https://assets.mixkit.co/active_storage/sfx/2568/2568-preview.mp3' 
+            : 'https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3'; 
+        
+        try {
+            const audio = new Audio(audioUrl);
+            audio.play().catch(e => console.log("Audio play failed", e));
+        } catch(e) {}
+
+        // Logic Update
+        setCredibility(prev => {
+            const newState = { ...prev };
+            if (myVote === type) {
+                newState[type === 'like' ? 'likes' : 'dislikes'] -= 1;
+                setMyVote(null);
+            } else if (myVote) {
+                const oldType = myVote === 'like' ? 'likes' : 'dislikes';
+                const newType = type === 'like' ? 'likes' : 'dislikes';
+                newState[oldType] -= 1;
+                newState[newType] += 1;
+                setMyVote(type);
+            } else {
+                newState[type === 'like' ? 'likes' : 'dislikes'] += 1;
+                setMyVote(type);
+            }
+            return newState;
+        });
+    };
+
+    const handleReportSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!reportReason.trim()) return;
+        
+        setIsReporting(true);
+        try {
+            // Save to secure reports collection - Admin system will pick this up
+            await addDoc(collection(db, 'reports'), {
+                targetUserId: userId,
+                reporterId: currentUser?.id || 'guest',
+                reporterName: currentUser?.name || 'Guest',
+                reason: reportReason,
+                timestamp: serverTimestamp(),
+                type: 'profile_report',
+                status: 'pending'
+            });
+            
+            alert("تم إرسال البلاغ إلى الإدارة للمراجعة بسرية تامة.");
+            setIsReportOpen(false);
+            setReportReason('');
+        } catch (error) {
+            console.error("Report failed:", error);
+            alert("فشل إرسال البلاغ. حاول مرة أخرى.");
+        } finally {
+            setIsReporting(false);
+        }
+    };
 
     const openUserList = (type: 'followers' | 'following') => {
         if (profileUser) {
@@ -230,23 +325,39 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
         if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
         return num.toString();
     };
+    
+    // --- LAST SEEN LOGIC ---
+    const getLastSeenLabel = (dateString?: string) => {
+        if (!dateString) return 'غير معروف';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now.getTime() - date.getTime();
+        const diffMin = Math.floor(diffMs / 60000);
+        const diffHours = Math.floor(diffMin / 60);
+        const diffDays = Math.floor(diffHours / 24);
 
-    // --- TRUST LOGIC (Robust) ---
-    // Checks for specific verification flags in user object
+        if (diffMin < 10) return 'متصل الآن';
+        if (diffMin < 60) return `آخر تواجد قبل ${diffMin} دقيقة`;
+        if (diffHours < 24) return `آخر تواجد قبل ${diffHours} ساعة`;
+        if (diffDays === 1) return 'آخر تواجد الأمس';
+        if (diffDays === 2) return 'آخر تواجد قبل يومين';
+        if (diffDays < 7) return `آخر تواجد قبل ${diffDays} أيام`;
+        
+        return `آخر تواجد ${date.toLocaleDateString('ar-SA')}`;
+    };
+
     const isGoogleLinked = displayUser?.isGoogleVerified || displayUser?.linkedProviders?.includes('google.com');
     const isGithubLinked = displayUser?.isGithubVerified || displayUser?.linkedProviders?.includes('github.com');
     const isYahooLinked = displayUser?.isYahooVerified || displayUser?.linkedProviders?.includes('yahoo.com');
     const isMicrosoftLinked = displayUser?.isMicrosoftVerified || displayUser?.linkedProviders?.includes('microsoft.com');
 
     // --- RENDER ---
-    
     if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white">جاري التحميل...</div>;
     
     if (!displayUser) {
-        return <div className="min-h-screen bg-black text-white p-4 font-sans" dir="rtl">...</div>; // Not found view
+        return <div className="min-h-screen bg-black text-white p-4 font-sans" dir="rtl">...</div>;
     }
 
-    // Determine derived properties
     const isAdminUser = displayUser.role === 'admin' || ADMIN_BYPASS_IDS.includes(displayUser.id);
     const isBot = displayUser.id === 'murad-ai-bot-id';
     const websiteUrl = displayUser.customFormFields?.website || displayUser.businessProfile?.website;
@@ -254,12 +365,12 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
     const skillsBio = displayUser.skills;
     const displayFollowers = displayUser.followersCount !== undefined ? displayUser.followersCount : (displayUser.followers?.length || 0);
     const displayFollowing = displayUser.followingCount !== undefined ? displayUser.followingCount : (displayUser.following?.length || 0);
-    
-    // Calculate join date
     const joinDate = displayUser.createdAt ? new Date(displayUser.createdAt).toLocaleDateString('ar-SA', { month: 'long', year: 'numeric' }) : 'يناير 2025';
-
-    // Simulate colleagues count for demo (or use real if available)
     const colleaguesCount = 20; 
+    
+    // Last Seen
+    const lastSeenText = getLastSeenLabel(displayUser.lastLogin);
+    const isOnline = lastSeenText === 'متصل الآن';
 
     return (
         <div className="min-h-screen bg-black text-[#e7e9ea] font-sans pb-20" dir="rtl">
@@ -271,7 +382,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                 <div className="flex flex-col">
                     <h2 className="font-bold text-lg text-white leading-tight flex items-center gap-1">
                         {displayUser.name}
-                        {isAdminUser && <Crown className="w-4 h-4 text-amber-500 fill-amber-500" />}
+                        {isAdminUser && <VerifiedBadge className="w-4 h-4 text-amber-500" />}
                         {isBot && <Bot className="w-4 h-4 text-purple-500 fill-purple-500" />}
                     </h2>
                     <p className="text-xs text-[#71767b]">{posts.length} منشور</p>
@@ -312,9 +423,33 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                                 تعديل الملف الشخصي
                             </button>
                         ) : (
-                            <div className="flex gap-3">
-                                <button onClick={() => onStartChat && onStartChat(displayUser)} className="px-4 py-2 border border-[#536471] rounded-lg hover:bg-[#18191c] text-white font-bold text-sm">رسالة خاصة</button>
-                                <button onClick={handleFollowToggle} className={`px-6 py-2 rounded-full font-bold text-sm transition-colors ${isFollowing ? 'border border-[#536471] text-white' : 'bg-white text-black'}`}>{isFollowing ? 'أنت تتابع' : 'متابعة'}</button>
+                            <div className="flex flex-col gap-3">
+                                <div className="flex gap-3">
+                                    {/* Updated: Direct Private Message Action */}
+                                    <button 
+                                        onClick={() => onStartChat && onStartChat(displayUser)} 
+                                        className="px-4 py-2 border border-[#536471] rounded-full hover:bg-[#18191c] text-white font-bold text-sm flex items-center gap-2"
+                                    >
+                                        <MessageCircle className="w-4 h-4" />
+                                        رسالة خاصة
+                                    </button>
+                                    <button 
+                                        onClick={handleFollowToggle} 
+                                        className={`px-6 py-2 rounded-full font-bold text-sm transition-colors ${isFollowing ? 'border border-[#536471] text-white' : 'bg-white text-black'}`}
+                                    >
+                                        {isFollowing ? 'أنت تتابع' : 'متابعة'}
+                                    </button>
+                                </div>
+                                
+                                {displayUser.phone && (
+                                    <a 
+                                        href={`tel:${displayUser.phone}`}
+                                        className="w-full py-2 rounded-lg border border-[#536471] text-emerald-400 font-bold text-sm hover:bg-[#18191c] transition-colors flex items-center justify-center gap-2"
+                                    >
+                                        <Phone className="w-4 h-4" />
+                                        اتصال
+                                    </a>
+                                )}
                             </div>
                         )}
                     </div>
@@ -324,49 +459,118 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                 <div className="mt-1">
                     <h1 className="font-black text-xl text-white flex items-center gap-1 flex-wrap">
                         {displayUser.name}
-                        {displayUser.isVerified && <CheckCircle2 className="w-5 h-5 text-[#1d9bf0] fill-[#1d9bf0] text-white" />}
+                        {displayUser.isVerified && <VerifiedBadge className="w-5 h-5 text-[#1d9bf0]" />}
                         {/* Admin/Bot Tags */}
                         {isBot && <span className="flex items-center gap-1 bg-purple-500/20 text-purple-400 text-[10px] px-2 py-0.5 rounded-full border border-purple-500/30 ml-2">BOT</span>}
-                        {isAdminUser && <span onClick={() => setShowAdminTooltip(!showAdminTooltip)} className="flex items-center gap-1 bg-amber-500/20 text-amber-500 text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30 ml-2 cursor-pointer hover:bg-amber-500/30 transition-colors select-none"><Crown className="w-3 h-3 fill-current"/> مسؤول (Admin)</span>}
+                        
+                        {isAdminUser && (
+                            <div className="relative inline-flex items-center">
+                                <span 
+                                    onClick={(e) => { e.stopPropagation(); setShowAdminTooltip(!showAdminTooltip); }} 
+                                    className="flex items-center gap-1 bg-amber-500/20 text-amber-500 text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30 ml-2 cursor-pointer hover:bg-amber-500/30 transition-colors select-none"
+                                >
+                                    <Crown className="w-3 h-3 fill-current"/> مسؤول (Admin)
+                                </span>
+                                {/* UPDATED TOOLTIP POSITION: Bottom to Top arrow, text above */}
+                                {showAdminTooltip && (
+                                    <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 w-64 bg-black border border-[#2f3336] rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.1)] p-4 z-50 text-right animate-in fade-in zoom-in duration-200" onClick={(e) => e.stopPropagation()}>
+                                        <div className="absolute -bottom-1.5 left-1/2 transform -translate-x-1/2 w-3 h-3 bg-black border-b border-l border-[#2f3336] -rotate-45"></div>
+                                        <div className="relative z-10 flex flex-col gap-2">
+                                            <div className="flex items-center gap-2">
+                                                <h3 className="font-bold text-white text-sm">حساب موثق</h3>
+                                                {/* UPDATED ICON: Filled Blue Badge */}
+                                                <VerifiedBadge className="w-4 h-4 text-blue-500" />
+                                            </div>
+                                            <p className="text-[#e7e9ea] text-[11px] leading-relaxed font-medium">
+                                                تم توثيق هذا الحساب لكونه الحساب الرسمي لمؤسس ومالك مجتمع ميلاف.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </h1>
-                    <p className="text-[#71767b] text-sm font-mono text-right" dir="ltr">@{displayUser.username?.replace('@','') || displayUser.id.slice(0,8)}</p>
+                    <p className="text-[#71767b] text-xl font-bold font-mono text-right mt-1" dir="ltr">@{displayUser.username?.replace('@','') || displayUser.id.slice(0,8)}</p>
                 </div>
 
                 {/* Bio */}
                 {displayUser.bio && <p className="mt-3 text-[15px] text-[#e7e9ea] leading-relaxed whitespace-pre-wrap">{displayUser.bio}</p>}
 
-                {/* --- 4. TRUST STRIP (Linked Accounts) --- */}
-                <div className="flex flex-wrap items-center gap-3 mt-3 mb-4">
-                  {displayUser.isPhoneVerified && (
-                    <div className="bg-emerald-900/20 p-1.5 rounded-full border border-emerald-900/50" title="رقم هاتف موثق">
-                      <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                    </div>
-                  )}
-                  {isGithubLinked && (
-                    <div className="bg-[#24292e]/40 p-1.5 rounded-full border border-gray-600" title="GitHub Verified">
-                      <Github className="w-5 h-5 text-white" />
-                    </div>
-                  )}
-                  {isGoogleLinked && (
-                    <div className="bg-white/10 p-1.5 rounded-full border border-white/20" title="Google Verified">
-                      <GoogleIcon />
-                    </div>
-                  )}
-                  {isYahooLinked && (
-                    <div className="bg-[#6001d2]/20 p-1.5 rounded-full border border-[#6001d2]/40" title="Yahoo Verified">
-                      <YahooIcon />
-                    </div>
-                  )}
-                  {isMicrosoftLinked && (
-                     <div className="bg-blue-900/20 p-1.5 rounded-full border border-blue-900/40" title="Microsoft Verified">
-                      <MicrosoftIcon />
-                    </div>
-                  )}
+                {/* --- 4. CREDIBILITY & TRUST STRIP --- */}
+                <div className="flex flex-wrap items-center gap-4 mt-4 mb-4 border-b border-[#2f3336] pb-3">
+                  
+                  {/* CREDIBILITY SECTION */}
+                  <div className="flex items-center gap-3 pl-4 border-l border-[#2f3336] ml-4">
+                      <span className="text-xs font-bold text-[#71767b]">المصدقات:</span>
+                      
+                      <button 
+                        onClick={() => handleCredibilityVote('like')} 
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition-all active:scale-95 ${myVote === 'like' ? 'bg-emerald-900/40 border-emerald-500 text-emerald-400' : 'bg-transparent border-[#2f3336] text-gray-500 hover:border-emerald-500/50 hover:text-emerald-500'}`}
+                      >
+                          <ThumbsUp className={`w-3.5 h-3.5 ${myVote === 'like' ? 'fill-current' : ''}`}/>
+                          <span>{formatCount(credibility.likes)}</span>
+                      </button>
+
+                      <button 
+                        onClick={() => handleCredibilityVote('dislike')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition-all active:scale-95 ${myVote === 'dislike' ? 'bg-red-900/40 border-red-500 text-red-400' : 'bg-transparent border-[#2f3336] text-gray-500 hover:border-red-500/50 hover:text-red-500'}`}
+                      >
+                          <ThumbsDown className={`w-3.5 h-3.5 ${myVote === 'dislike' ? 'fill-current' : ''}`}/>
+                          <span>{formatCount(credibility.dislikes)}</span>
+                      </button>
+                  </div>
+
+                  {/* VERIFICATIONS SECTION */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs font-bold text-[#71767b] ml-1">التوثيقات:</span>
+                    
+                    {displayUser.isPhoneVerified && (
+                        <div className="bg-emerald-900/20 p-1.5 rounded-full border border-emerald-900/50 flex items-center gap-1.5 px-3" title="رقم هاتف موثق">
+                        <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                        <span className="text-[10px] text-emerald-400 font-bold">جوال</span>
+                        </div>
+                    )}
+                    {isGithubLinked && (
+                        <div className="bg-[#24292e]/40 p-1.5 rounded-full border border-gray-600 flex items-center gap-1.5 px-3" title="GitHub Verified">
+                        <Github className="w-4 h-4 text-white" />
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        </div>
+                    )}
+                    {isGoogleLinked && (
+                        <div className="bg-white/10 p-1.5 rounded-full border border-white/20 flex items-center gap-1.5 px-3" title="Google Verified">
+                        <GoogleIcon />
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        </div>
+                    )}
+                    {isYahooLinked && (
+                        <div className="bg-[#6001d2]/20 p-1.5 rounded-full border border-[#6001d2]/40 flex items-center gap-1.5 px-3" title="Yahoo Verified">
+                        <YahooIcon />
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        </div>
+                    )}
+                    {isMicrosoftLinked && (
+                        <div className="bg-blue-900/20 p-1.5 rounded-full border border-blue-900/40 flex items-center gap-1.5 px-3" title="Microsoft Verified">
+                        <MicrosoftIcon />
+                        <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                        </div>
+                    )}
+                    
+                    {!displayUser.isPhoneVerified && !isGithubLinked && !isGoogleLinked && !isYahooLinked && !isMicrosoftLinked && (
+                        <span className="text-[10px] text-gray-500 bg-gray-900 px-3 py-1 rounded-full border border-gray-800">حساب غير موثق</span>
+                    )}
+                  </div>
                 </div>
 
-                {/* --- 5. METADATA ROW (Education + Location + Link + Join Date) --- */}
+                {/* Metadata Row */}
                 <div className="flex flex-wrap gap-x-4 gap-y-2 text-[#71767b] text-[14px] items-center">
-                    {/* Education */}
+                    {/* LAST SEEN INDICATOR (Requested Feature) */}
+                    <div className="flex items-center gap-1.5 bg-[#16181c] px-2 py-0.5 rounded-full border border-[#2f3336]" title={`آخر نشاط: ${new Date(displayUser.lastLogin).toLocaleString()}`}>
+                        <Clock className={`w-3.5 h-3.5 ${isOnline ? 'text-emerald-500' : 'text-gray-500'}`}/>
+                        <span className={`text-xs ${isOnline ? 'text-emerald-400 font-bold' : 'text-gray-500'}`}>
+                            {lastSeenText}
+                        </span>
+                    </div>
+
                     {educationBio && (
                         <div className="flex items-center gap-1">
                             <GraduationCap className="w-4 h-4"/>
@@ -386,10 +590,28 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                     <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4"/>
                         <span>انضم في {joinDate}</span>
+                        
+                        <div className="relative ml-2 group">
+                            <div className="w-5 h-5 bg-[#0f172a] border border-blue-500/50 text-blue-500 rounded-md flex items-center justify-center text-[10px] font-black cursor-help select-none shadow-[0_0_10px_rgba(59,130,246,0.2)]">
+                                M
+                            </div>
+                        </div>
+
+                         {/* REPORT BUTTON (UPDATED: White & Clear) */}
+                        {!isOwnProfile && (
+                            <button 
+                                onClick={() => setIsReportOpen(true)} 
+                                className="flex items-center gap-1 text-[10px] text-white bg-white/10 hover:bg-red-500/20 transition-colors ml-3 px-3 py-1.5 rounded-full border border-white/10" 
+                                title="إبلاغ عن هذا الملف"
+                            >
+                                <Flag className="w-3 h-3" />
+                                <span>إبلاغ</span>
+                            </button>
+                        )}
                     </div>
                 </div>
 
-                {/* --- 6. SKILLS BADGES --- */}
+                {/* Skills */}
                 {skillsBio && skillsBio.length > 0 && (
                     <div className="flex flex-wrap gap-2 mt-4 mb-2">
                       {skillsBio.map((skill, index) => (
@@ -401,7 +623,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                     </div>
                 )}
 
-                {/* --- 7. STATS ROW (With Colleagues) --- */}
+                {/* Stats */}
                 <div className="flex gap-5 text-[14px] mt-4 text-[#71767b] border-b border-[#2f3336] pb-4">
                     <div className="hover:underline cursor-pointer flex gap-1 transition-colors hover:text-white" onClick={() => openUserList('following')}>
                         <span className="font-bold text-[#e7e9ea]">{formatCount(displayFollowing)}</span> <span>متابعة</span>
@@ -409,7 +631,6 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                     <div className="hover:underline cursor-pointer flex gap-1 transition-colors hover:text-white" onClick={() => openUserList('followers')}>
                         <span className="font-bold text-[#e7e9ea]">{formatCount(displayFollowers)}</span> <span>متابِع</span>
                     </div>
-                    {/* Colleagues */}
                     <div className="hover:underline cursor-pointer flex items-center gap-1 hover:text-white">
                         <span className="font-bold text-amber-500">{colleaguesCount}</span> 
                         <span className="text-[#71767b]">زميل</span>
@@ -418,17 +639,19 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                 </div>
             </div>
 
-            {/* 4. TABS */}
+            {/* Tabs */}
             <div className="flex border-b border-[#2f3336] mt-2 sticky top-[53px] bg-black/95 z-30 backdrop-blur-sm overflow-x-auto no-scrollbar">
                 {['posts', 'store', 'replies', 'media', 'likes'].map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab as any)} className="flex-1 min-w-[80px] hover:bg-[#18191c] transition-colors relative h-[53px] flex items-center justify-center">
-                        <span className={`font-bold text-[15px] capitalize whitespace-nowrap ${activeTab === tab ? 'text-white' : 'text-[#71767b]'}`}>{tab}</span>
+                        <span className={`font-bold text-[15px] capitalize whitespace-nowrap ${activeTab === tab ? 'text-white' : 'text-[#71767b]'}`}>
+                            {TAB_LABELS[tab]}
+                        </span>
                         {activeTab === tab && <div className="absolute bottom-0 w-12 h-1 bg-[#1d9bf0] rounded-full"></div>}
                     </button>
                 ))}
             </div>
 
-            {/* 5. CONTENT */}
+            {/* Content */}
             <div className="min-h-[200px]">
                 {loading ? <div className="p-8 text-center text-[#71767b]">جاري التحميل...</div> : activeTab === 'store' ? (
                      <div className="p-4">
@@ -475,6 +698,35 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
             <UserListModal isOpen={!!userListType} onClose={() => setUserListType(null)} title={userListType === 'followers' ? 'المتابِعون' : 'يتابِع'} userIds={userListType === 'followers' ? (displayUser.followers || []) : (displayUser.following || [])} />
             {selectedProduct && <PaymentGateway isOpen={isPaymentGatewayOpen} onClose={() => setIsPaymentGatewayOpen(false)} amount={selectedProduct.price} title={`شراء ${selectedProduct.title}`} onSuccess={handlePaymentSuccess} />}
             <PhoneVerifyModal isOpen={isPhoneVerifyOpen} onClose={() => setIsPhoneVerifyOpen(false)} />
+            
+            {/* Report Modal */}
+            {isReportOpen && (
+                <div className="fixed inset-0 z-[8000] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+                    <div className="bg-[#1e293b] border border-red-500/30 w-full max-w-sm rounded-2xl p-6 shadow-2xl animate-fade-in-up">
+                        <div className="flex items-center gap-3 mb-4 text-red-500">
+                            <AlertTriangle className="w-6 h-6"/>
+                            <h3 className="font-bold text-lg text-white">إبلاغ عن هذا الملف</h3>
+                        </div>
+                        <p className="text-gray-400 text-sm mb-4">يرجى كتابة سبب الإبلاغ. سيتم إرسال هذا التقرير مباشرة إلى الإدارة للمراجعة.</p>
+                        <textarea 
+                            value={reportReason}
+                            onChange={(e) => setReportReason(e.target.value)}
+                            className="w-full bg-[#0f172a] border border-white/10 rounded-xl p-3 text-white text-sm outline-none mb-4 min-h-[80px]"
+                            placeholder="مثال: انتحال شخصية، محتوى مسيء، احتيال..."
+                        />
+                        <div className="flex gap-3">
+                            <button onClick={() => setIsReportOpen(false)} className="flex-1 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg font-bold text-sm">إلغاء</button>
+                            <button 
+                                onClick={handleReportSubmit} 
+                                disabled={!reportReason.trim() || isReporting} 
+                                className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold text-sm flex justify-center gap-2 items-center"
+                            >
+                                {isReporting && <Loader2 className="w-4 h-4 animate-spin"/>} إرسال
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

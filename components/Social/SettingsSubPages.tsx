@@ -16,7 +16,7 @@ const SettingsHeader = ({ title, onBack }: { title: string; onBack: () => void }
 
 // --- 1. ACCOUNT SETTINGS (Full Control) ---
 export const AccountSettings: React.FC<{ onBack: () => void }> = ({ onBack }) => {
-    const { user, updateProfile } = useAuth();
+    const { user, updateProfile, deleteAccount } = useAuth();
     const [username, setUsername] = useState(user?.username || '');
     const [email, setEmail] = useState(user?.email || '');
     const [phone, setPhone] = useState(user?.phone || '');
@@ -67,6 +67,24 @@ export const AccountSettings: React.FC<{ onBack: () => void }> = ({ onBack }) =>
             // In a real app, call backend deactivation API
             alert("تم رفع طلب تعطيل الحساب. سيتم تسجيل الخروج الآن.");
             window.location.reload(); // Simulate logout
+        }
+    };
+
+    const handleDeleteAccount = async () => {
+        // Immediate simple confirmation as requested
+        if (window.confirm("تحذير نهائي: هل أنت متأكد من حذف حسابك بشكل دائم؟\n\nسيتم مسح جميع بياناتك، منشوراتك، ومحفظتك فوراً ولا يمكن استرجاعها.")) {
+            try {
+                setLoading(true);
+                await deleteAccount();
+                // deleteAccount in AuthContext handles cleanup and redirect
+            } catch (error: any) {
+                console.error("Delete failed:", error);
+                // Even if server fails, we've cleared local state in context, but show alert just in case
+                alert("حدث خطأ أثناء الحذف من الخادم، ولكن تم تسجيل الخروج من الجهاز.");
+                window.location.href = '/';
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -173,11 +191,13 @@ export const AccountSettings: React.FC<{ onBack: () => void }> = ({ onBack }) =>
 
                 <div className="space-y-4 border-t border-[#2f3336] pt-6">
                     <h3 className="text-red-500 font-bold mb-2">منطقة الخطر</h3>
+                    
                     <button 
-                        onClick={handleDeactivate}
-                        className="text-red-500 hover:bg-red-900/10 px-4 py-3 w-full text-right rounded-lg transition-colors flex justify-between items-center border border-red-900/30"
+                        onClick={handleDeleteAccount}
+                        disabled={loading}
+                        className="text-red-500 hover:bg-red-900/10 px-4 py-3 w-full text-right rounded-lg transition-colors flex justify-between items-center border border-red-900/30 font-bold bg-red-900/5"
                     >
-                        <span>تعطيل الحساب نهائياً</span>
+                        <span>حذف الحساب نهائياً</span>
                         <Trash2 className="w-5 h-5"/>
                     </button>
                 </div>

@@ -56,6 +56,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, onSearch, onO
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (chatQuery.trim()) {
+      // Direct the search to the main App handler which will route to Assistant
       onSearch(chatQuery);
     }
   };
@@ -193,22 +194,22 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, onSearch, onO
         ))}
       </div>
 
-      {/* 2. SMART ASSISTANT */}
+      {/* 2. SMART ASSISTANT (Chat GPT Like Engine) */}
       <div className="w-full px-4 py-16 bg-gradient-to-b from-[#0f172a] to-blue-900/10">
           <div className="max-w-4xl mx-auto">
               <div className="flex flex-col items-center text-center mb-6">
                   <div className="bg-blue-600/20 p-3 rounded-2xl mb-4 border border-blue-500/20 shadow-[0_0_30px_rgba(59,130,246,0.2)]">
                       <BrainCircuit className="w-8 h-8 text-blue-400" />
                   </div>
-                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">محرك البحث الذكي</h2>
-                  <p className="text-gray-400">مساعدك الذكي للبحث عن الوظائف، تحليل المسار المهني، واقتراح الدورات.</p>
+                  <h2 className="text-2xl md:text-3xl font-bold text-white mb-2">مساعد مراد الجهني الذكي</h2>
+                  <p className="text-gray-400">محرك بحث ذكي شامل (شبيه بـ ChatGPT). اسأل عن الوظائف، الدورات، أو أي معلومة عامة.</p>
               </div>
 
               <form onSubmit={handleChatSubmit} className="relative group max-w-2xl mx-auto">
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-500"></div>
                   <div className="relative flex items-center bg-[#1e293b]/90 border border-white/10 rounded-2xl p-2 shadow-2xl transition-all focus-within:ring-2 focus-within:ring-blue-500/50">
                       <textarea
-                          placeholder="اكتب ما تبحث عنه... مثال: أريد خطة لتعلم البرمجة، أو ابحث لي عن وظائف إدارية"
+                          placeholder="اسألني عن أي شيء... (مثال: ابحث لي عن وظيفة، اشرح لي الكود، من هو مراد؟)"
                           className="w-full bg-transparent text-white placeholder-gray-400 text-lg px-4 py-3 outline-none resize-none h-[60px] md:h-[60px] scrollbar-hide flex items-center pt-4"
                           value={chatQuery}
                           onChange={(e) => setChatQuery(e.target.value)}
@@ -871,7 +872,6 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStart, onSearch, onO
         isOpen={isInternationalProgramsOpen}
         onClose={() => setIsInternationalProgramsOpen(false)}
       />
-    </div>
     </>
   );
 };

@@ -147,11 +147,13 @@ export const TrainingCenter: React.FC<{ onClose: () => void }> = ({ onClose }) =
     // --- MODULE 1: COURSE ARCHITECT (ADMIN) ---
     const handleAdminLogin = (e: React.FormEvent) => {
         e.preventDefault();
-        if (adminUser === 'MURAD' && adminPass === 'MURAD123@A') {
+        // Updated check against correct admin credentials
+        if ((adminUser.trim().toLowerCase() === 'mrada4231@gmail.com' || adminUser.trim().toLowerCase() === 'ipmurad') && 
+            (adminPass === 'murad123@A' || adminPass === 'murad 123@A')) {
             setAdminMode(true);
             setShowAdminLogin(false);
         } else {
-            alert('Invalid Credentials');
+            alert('بيانات الدخول غير صحيحة');
         }
     };
 

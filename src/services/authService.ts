@@ -1,6 +1,18 @@
 
-import { auth, db, googleProvider, githubProvider, signInWithPopup, signOut } from '../lib/firebase';
-import { doc, getDoc, setDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+import { 
+  auth, 
+  db, 
+  googleProvider, 
+  githubProvider, 
+  signInWithPopup, 
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendEmailVerification,
+  updateProfile,
+  sendPasswordResetEmail
+} from '../lib/firebase';
+import { doc, getDoc, setDoc, serverTimestamp, updateDoc, deleteDoc } from 'firebase/firestore';
 import { 
   RecaptchaVerifier, 
   signInWithPhoneNumber, 
@@ -12,10 +24,86 @@ import {
   GoogleAuthProvider, 
   GithubAuthProvider, 
   FacebookAuthProvider,
-  User
+  User,
+  deleteUser
 } from 'firebase/auth';
 
 const ADMIN_EMAIL = "mrada4231@gmail.com";
+
+// --- EMAIL & PASSWORD AUTH ---
+
+export const registerWithEmail = async (email: string, pass: string, fullName: string, phone: string, nationalId: string) => {
+    try {
+        // 1. Create Auth User
+        const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+        const user = userCredential.user;
+
+        // 2. Update Display Name
+        await updateProfile(user, { displayName: fullName });
+
+        // 3. Send Verification Email
+        await sendEmailVerification(user);
+
+        // 4. Create Firestore Document
+        await setDoc(doc(db, "users", user.uid), {
+            uid: user.uid,
+            name: fullName,
+            email: email,
+            phone: phone,
+            nationalId: nationalId,
+            role: 'student',
+            avatar: `https://api.dicebear.com/7.x/initials/svg?seed=${fullName}`,
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp(),
+            isVerified: false, // Email not verified yet
+            isIdentityVerified: false,
+            followers: [],
+            following: []
+        });
+
+        return { success: true, user };
+    } catch (error: any) {
+        console.error("Registration Error:", error);
+        throw error;
+    }
+};
+
+export const loginWithEmail = async (email: string, pass: string) => {
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+        const user = userCredential.user;
+
+        // Sync Last Login
+        const userRef = doc(db, 'users', user.uid);
+        await setDoc(userRef, { lastLogin: serverTimestamp() }, { merge: true });
+
+        // Check Admin
+        if (user.email === ADMIN_EMAIL) {
+             await setDoc(userRef, { 
+                 role: 'admin', 
+                 isAdmin: true,
+                 isGold: true 
+             }, { merge: true });
+        }
+
+        return { success: true, user };
+    } catch (error: any) {
+        console.error("Login Error:", error);
+        throw error;
+    }
+};
+
+export const resetPassword = async (email: string) => {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        return { success: true };
+    } catch (error: any) {
+        console.error("Reset Password Error:", error);
+        throw error;
+    }
+};
+
+// --- EXISTING SOCIAL AUTH ---
 
 /**
  * Signs in the user with Google and enforces Admin privileges for specific email.
@@ -104,13 +192,11 @@ export const loginWithYahoo = async () => {
 };
 
 /**
- * NUCLEAR FIX: Directly link the passed user object. 
- * No internal checks for auth.currentUser to avoid race conditions.
+ * Link a new auth provider to the PASSED logged-in user.
+ * Performs the handshake and returns the updated User object.
  */
 export const linkProvider = async (user: User, providerId: string): Promise<User> => {
   let provider;
-  
-  // 1. Configure Provider
   switch (providerId) {
     case 'google.com': 
       provider = new GoogleAuthProvider(); 
@@ -134,7 +220,6 @@ export const linkProvider = async (user: User, providerId: string): Promise<User
   }
 
   try {
-    // 2. EXECUTE LINKING ON THE PASSED OBJECT
     const result = await linkWithPopup(user, provider);
     return result.user;
   } catch (error: any) {
@@ -146,9 +231,6 @@ export const linkProvider = async (user: User, providerId: string): Promise<User
   }
 };
 
-/**
- * NUCLEAR FIX: Directly unlink the passed user object.
- */
 export const unlinkProvider = async (user: User, providerId: string): Promise<User> => {
   try {
     const result = await unlink(user, providerId);
@@ -166,6 +248,23 @@ export const logoutUser = async () => {
     console.error("Logout Error:", error);
     throw error;
   }
+};
+
+export const deleteUserAccount = async () => {
+    const user = auth.currentUser;
+    if (user) {
+        try {
+            // Delete Firestore doc first
+            await deleteDoc(doc(db, "users", user.uid));
+            // Then delete Auth user
+            await deleteUser(user);
+        } catch (error) {
+            console.error("Delete Account Error:", error);
+            throw error;
+        }
+    } else {
+        throw new Error("No user logged in");
+    }
 };
 
 export const setupRecaptcha = (elementId: string): RecaptchaVerifier => {

@@ -42,11 +42,12 @@ const CLOUD_TOPICS = [
 export const SEODirectory: React.FC = () => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Navigation Handler (SPA Aware)
+  // Navigation Handler (Hash SPA Aware)
   const handleNav = (e: React.MouseEvent, path: string) => {
       e.preventDefault();
-      window.history.pushState({}, '', path);
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      // Ensure path starts with /#/ if not already
+      const hashPath = path.startsWith('/#') ? path : `/#${path}`;
+      window.location.hash = hashPath.replace('/#', '');
       window.scrollTo(0, 0);
   };
 
@@ -69,7 +70,7 @@ export const SEODirectory: React.FC = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
             
-            {/* COLUMN 1: JOBS BY CITY (The Geo-Trap) */}
+            {/* COLUMN 1: JOBS BY CITY */}
             <div className="space-y-4">
                 <h3 className="text-sm font-bold text-blue-400 flex items-center gap-2 border-b border-blue-900/30 pb-2">
                     <MapPin className="w-4 h-4"/> وظائف حسب المدينة
@@ -78,7 +79,7 @@ export const SEODirectory: React.FC = () => {
                     {CITIES.map((city, i) => (
                         <a 
                             key={i} 
-                            href={`/jobs?location=${encodeURIComponent(city)}`}
+                            href={`/#/jobs?location=${encodeURIComponent(city)}`}
                             onClick={(e) => handleNav(e, `/jobs?location=${city}`)}
                             className="text-[11px] text-gray-400 hover:text-white hover:translate-x-1 transition-transform block py-0.5"
                             title={`وظائف شاغرة في ${city}`}
@@ -98,7 +99,7 @@ export const SEODirectory: React.FC = () => {
                     {JOB_ROLES.map((role, i) => (
                         <a 
                             key={i} 
-                            href={`/jobs?role=${encodeURIComponent(role)}`}
+                            href={`/#/jobs?role=${encodeURIComponent(role)}`}
                             onClick={(e) => handleNav(e, `/jobs?search=${role}`)}
                             className="text-[11px] text-gray-400 hover:text-white hover:translate-x-1 transition-transform block py-0.5"
                             title={`فرص عمل ${role}`}
@@ -118,7 +119,7 @@ export const SEODirectory: React.FC = () => {
                     {COURSE_TOPICS.map((topic, i) => (
                         <a 
                             key={i} 
-                            href={`/academy?topic=${encodeURIComponent(topic)}`}
+                            href={`/#/academy?topic=${encodeURIComponent(topic)}`}
                             onClick={(e) => handleNav(e, `/academy?search=${topic}`)}
                             className="text-[11px] text-gray-400 hover:text-white hover:translate-x-1 transition-transform block py-0.5"
                             title={`دورة ${topic} معتمدة`}
@@ -138,7 +139,7 @@ export const SEODirectory: React.FC = () => {
                     {MARKET_CATEGORIES.map((cat, i) => (
                         <a 
                             key={i} 
-                            href={`/haraj?cat=${encodeURIComponent(cat)}`}
+                            href={`/#/haraj?cat=${encodeURIComponent(cat)}`}
                             onClick={(e) => handleNav(e, `/haraj?search=${cat}`)}
                             className="text-[11px] text-gray-400 hover:text-white hover:translate-x-1 transition-transform block py-0.5"
                             title={`حراج ${cat}`}
@@ -158,7 +159,7 @@ export const SEODirectory: React.FC = () => {
                     {CLOUD_TOPICS.map((topic, i) => (
                         <a 
                             key={i} 
-                            href={`/cloud?topic=${encodeURIComponent(topic)}`}
+                            href={`/#/cloud?topic=${encodeURIComponent(topic)}`}
                             onClick={(e) => handleNav(e, `/cloud?search=${topic}`)}
                             className="text-[11px] text-gray-400 hover:text-white hover:translate-x-1 transition-transform block py-0.5"
                             title={`مقالات عن ${topic}`}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Search, ShieldCheck, LifeBuoy, FileText, MessageSquare, CheckCircle2, AlertCircle, ArrowRight, Globe, Lock, Activity, Server, Database, Headset, ChevronLeft, Home } from 'lucide-react';
 import { SupportTicketWizard } from './SupportTicketWizard';
@@ -13,27 +14,25 @@ export const SupportPortal: React.FC<Props> = ({ onExit }) => {
     const [view, setView] = useState<'home' | 'ticket' | 'track' | 'kb'>('home');
     const [searchQuery, setSearchQuery] = useState('');
 
-    // --- DEEP LINKING HANDLER ---
+    // --- DEEP LINKING HANDLER (HASH ROUTER) ---
     useEffect(() => {
-        const handlePath = () => {
-            const path = window.location.pathname;
-            if (path.includes('/support/ticket')) setView('ticket');
-            else if (path.includes('/support/track')) setView('track');
-            else if (path.includes('/support/kb')) setView('kb');
+        const handleHash = () => {
+            const hash = window.location.hash;
+            if (hash.includes('/support/ticket')) setView('ticket');
+            else if (hash.includes('/support/track')) setView('track');
+            else if (hash.includes('/support/kb')) setView('kb');
             else setView('home');
         };
         
-        handlePath();
-        window.addEventListener('popstate', handlePath);
-        return () => window.removeEventListener('popstate', handlePath);
+        handleHash();
+        window.addEventListener('hashchange', handleHash);
+        return () => window.removeEventListener('hashchange', handleHash);
     }, []);
 
     // --- NAVIGATION HELPER ---
     const navigateTo = (subPath: string) => {
         const fullPath = subPath === 'home' ? '/support' : `/support/${subPath}`;
-        window.history.pushState({}, '', fullPath);
-        const event = new PopStateEvent('popstate');
-        window.dispatchEvent(event);
+        window.location.hash = fullPath;
     };
 
     // Simulated "System Status"
@@ -49,7 +48,7 @@ export const SupportPortal: React.FC<Props> = ({ onExit }) => {
             <SEOHelmet 
                 title={view === 'home' ? "مركز مساعدة مجموعة مراد" : view === 'ticket' ? "فتح تذكرة جديدة | مراد كير" : view === 'kb' ? "قاعدة المعرفة | مراد كير" : "متابعة الطلبات | مراد كير"} 
                 description="النظام الرسمي لاستقبال البلاغات والشكاوى والدعم الفني لمجموعة شركات ومنصات مراد. تتبع تذكرتك، تواصل مع الدعم، واطلع على قاعدة المعرفة."
-                path={window.location.pathname}
+                path={window.location.hash.slice(1)}
             />
 
             {/* TOP BAR: Corporate Identity */}

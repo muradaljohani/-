@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  ArrowRight, MoreHorizontal, MessageCircle, Repeat, Heart, Share2, 
-  Image as ImageIcon, BarChart2, MapPin, X, Calendar, Gift, Trash2
+  ArrowRight, MoreHorizontal, ArrowUpDown, Heart, 
+  Image as ImageIcon, MapPin, X, Calendar, Gift, Trash2, Eye, Upload, BarChart2
 } from 'lucide-react';
 import { doc, getDoc, collection, addDoc, query, onSnapshot, serverTimestamp, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -14,12 +14,30 @@ interface Props {
     onUserClick?: (userId: string) => void;
 }
 
+// --- Custom Icons ---
+const ReplyIconM = ({ className }: { className?: string }) => (
+    <svg 
+        viewBox="0 0 24 24" 
+        fill="none" 
+        stroke="currentColor" 
+        strokeWidth="2" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        className={className}
+    >
+        {/* Stylized M representing Message/Murad */}
+        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" strokeOpacity="0.5" />
+        <path d="M22 6l-10 7L2 6" />
+    </svg>
+);
+
 export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => {
     const { user } = useAuth();
     const [post, setPost] = useState<any>(null);
     const [replies, setReplies] = useState<any[]>([]);
     const [replyText, setReplyText] = useState('');
     const [isLiked, setIsLiked] = useState(false);
+    const [isLikeAnimating, setIsLikeAnimating] = useState(false);
     const [loading, setLoading] = useState(true);
 
     // Fetch Post & Real-time Replies
@@ -43,7 +61,7 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
 
         fetchPost();
 
-        // 2. Listen to Replies (No orderBy to avoid index error)
+        // 2. Listen to Replies
         try {
             const repliesRef = collection(db, 'posts', postId, 'replies');
             const q = query(repliesRef);
@@ -70,7 +88,8 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
     }, [postId]);
 
     const handleReply = async () => {
-        if (!replyText.trim() || !user) return;
+        if (!user) return alert("يجب تسجيل الدخول للرد على المنشور.");
+        if (!replyText.trim()) return;
         
         try {
             const repliesRef = collection(db, 'posts', postId, 'replies');
@@ -91,8 +110,17 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
         }
     };
 
-    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-[#71767b]">Loading...</div>;
-    if (!post) return <div className="min-h-screen bg-black flex items-center justify-center text-[#71767b]">Post not found</div>;
+    const handleLike = () => {
+        const newState = !isLiked;
+        setIsLiked(newState);
+        if(newState) {
+            setIsLikeAnimating(true);
+            setTimeout(() => setIsLikeAnimating(false), 300);
+        }
+    };
+
+    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-[#71767b]">جاري التحميل...</div>;
+    if (!post) return <div className="min-h-screen bg-black flex items-center justify-center text-[#71767b]">المنشور غير موجود</div>;
 
     return (
         <div className="min-h-screen bg-black text-[#e7e9ea] font-sans pb-32 relative" dir="rtl">
@@ -155,7 +183,7 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
                     <span>{new Date().toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'})}</span>
                     <span>·</span>
                     <span className="text-white font-bold">{post.views || '12K'}</span>
-                    <span>مشاهدة</span>
+                    <span className="flex items-center gap-1"><Eye className="w-3 h-3"/> مشاهدة</span>
                 </div>
 
                 {/* Stats Row */}
@@ -172,44 +200,50 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
 
                 {/* Action Icons Row */}
                 <div className="flex justify-around items-center py-2 border-b border-[#2f3336] text-[#71767b]">
-                    <button className="p-2 hover:bg-[#1d9bf0]/10 hover:text-[#1d9bf0] rounded-full transition-colors"><MessageCircle className="w-5 h-5" /></button>
-                    <button className="p-2 hover:bg-[#00ba7c]/10 hover:text-[#00ba7c] rounded-full transition-colors"><Repeat className="w-5 h-5" /></button>
-                    <button onClick={() => setIsLiked(!isLiked)} className={`p-2 hover:bg-[#f91880]/10 hover:text-[#f91880] rounded-full transition-colors ${isLiked ? 'text-[#f91880]' : ''}`}>
-                        <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
+                    <button className="p-2 hover:bg-[#1d9bf0]/10 hover:text-[#1d9bf0] rounded-full transition-colors"><ReplyIconM className="w-5 h-5" /></button>
+                    <button className="p-2 hover:bg-[#00ba7c]/10 hover:text-[#00ba7c] rounded-full transition-colors"><ArrowUpDown className="w-5 h-5" /></button>
+                    <button onClick={handleLike} className={`p-2 hover:bg-[#f91880]/10 hover:text-[#f91880] rounded-full transition-colors ${isLiked ? 'text-[#f91880]' : ''}`}>
+                        <Heart className={`w-5 h-5 transition-transform duration-300 ${isLiked ? 'fill-current scale-110' : ''} ${isLikeAnimating ? 'scale-150' : ''}`} />
                     </button>
-                    <button className="p-2 hover:bg-[#1d9bf0]/10 hover:text-[#1d9bf0] rounded-full transition-colors"><Share2 className="w-5 h-5" /></button>
+                    <button className="p-2 hover:bg-[#1d9bf0]/10 hover:text-[#1d9bf0] rounded-full transition-colors"><Upload className="w-5 h-5" /></button>
                 </div>
             </div>
 
-            {/* 3. Replies Feed */}
-            <div>
-                {replies.map((reply) => (
-                    <div key={reply.id} className="flex gap-3 p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors">
-                        <img 
-                            src={reply.user.avatar} 
-                            className="w-10 h-10 rounded-full object-cover border border-[#2f3336] cursor-pointer hover:opacity-80" 
-                            onClick={() => onUserClick && reply.user.uid && onUserClick(reply.user.uid)}
-                        />
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 text-[15px] mb-0.5">
-                                <span 
-                                    className="font-bold text-[#e7e9ea] cursor-pointer hover:underline"
-                                    onClick={() => onUserClick && reply.user.uid && onUserClick(reply.user.uid)}
-                                >
-                                    {reply.user.name}
-                                </span>
-                                <span className="text-[#71767b] dir-ltr text-sm">{reply.user.handle}</span>
-                                <span className="text-[#71767b] text-sm">· {formatRelativeTime(reply.timestamp)}</span>
-                            </div>
-                            <div className="text-[#e7e9ea] text-[15px] leading-relaxed">
-                                {reply.text}
+            {/* 3. Replies Feed - Enhanced Visibility */}
+            <div className="pb-20">
+                {replies.length > 0 ? (
+                    replies.map((reply) => (
+                        <div key={reply.id} className="flex gap-3 p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors">
+                            <img 
+                                src={reply.user.avatar} 
+                                className="w-10 h-10 rounded-full object-cover border border-[#2f3336] cursor-pointer hover:opacity-80" 
+                                onClick={() => onUserClick && reply.user.uid && onUserClick(reply.user.uid)}
+                            />
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2 text-[15px] mb-0.5">
+                                    <span 
+                                        className="font-bold text-[#e7e9ea] cursor-pointer hover:underline"
+                                        onClick={() => onUserClick && reply.user.uid && onUserClick(reply.user.uid)}
+                                    >
+                                        {reply.user.name}
+                                    </span>
+                                    <span className="text-[#71767b] dir-ltr text-sm">{reply.user.handle}</span>
+                                    <span className="text-[#71767b] text-sm">· {formatRelativeTime(reply.timestamp)}</span>
+                                </div>
+                                <div className="text-[#e7e9ea] text-[15px] leading-relaxed">
+                                    {reply.text}
+                                </div>
                             </div>
                         </div>
+                    ))
+                ) : (
+                    <div className="p-8 text-center text-[#71767b] text-sm">
+                        كن أول من يرد على هذا المنشور!
                     </div>
-                ))}
+                )}
             </div>
 
-            {/* 4. Fixed Reply Input */}
+            {/* 4. Fixed Reply Input - Accessible for any Member */}
             <div className="fixed bottom-0 left-0 right-0 bg-black border-t border-[#2f3336] px-4 py-2 pb-safe z-50">
                  <div className="flex gap-3 items-end">
                     <div className="flex flex-col items-center justify-end h-full pb-2">
@@ -225,8 +259,9 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
                             <textarea 
                                 value={replyText}
                                 onChange={(e) => setReplyText(e.target.value)}
-                                placeholder="انشر ردك"
-                                className="w-full bg-transparent text-xl text-white placeholder-[#71767b] outline-none resize-none min-h-[40px] max-h-32 py-3"
+                                placeholder={user ? "غرد ردك" : "سجل دخول للرد"}
+                                disabled={!user}
+                                className="w-full bg-transparent text-xl text-white placeholder-[#71767b] outline-none resize-none min-h-[40px] max-h-32 py-3 disabled:cursor-not-allowed"
                                 rows={1}
                             />
                         </div>
@@ -241,8 +276,12 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
                             </div>
                             <button 
                                 onClick={handleReply}
-                                disabled={!replyText.trim()}
-                                className="bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white font-bold rounded-full px-5 py-1.5 text-sm disabled:opacity-50 transition-colors"
+                                disabled={!replyText.trim() || !user}
+                                className={`font-bold rounded-full px-5 py-1.5 text-sm transition-colors ${
+                                    (!replyText.trim() || !user) 
+                                    ? 'bg-[#1d9bf0]/50 text-white/50 cursor-not-allowed' 
+                                    : 'bg-[#1d9bf0] hover:bg-[#1a8cd8] text-white'
+                                }`}
                             >
                                 رد
                             </button>

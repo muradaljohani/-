@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { MapPin, Link as LinkIcon, Calendar, CheckCircle2, Youtube } from 'lucide-react';
+import { MapPin, Link as LinkIcon, Calendar, CheckCircle2, Youtube, GraduationCap, Briefcase, Cpu } from 'lucide-react';
 import { User } from '../../types';
 import { EditProfileModal } from './EditProfileModal';
 
@@ -68,6 +68,33 @@ export const ProfileHeader: React.FC<Props> = ({ user, isOwnProfile }) => {
               {user.bio}
             </p>
           )}
+          
+          {/* --- NEW: Education, Experience, Skills Icons Row --- */}
+          <div className="flex flex-wrap gap-4 mb-4">
+              {user.education && user.education.length > 0 && (
+                  <div className="flex items-center gap-2 text-xs text-gray-400 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                      <GraduationCap className="w-4 h-4 text-purple-400"/>
+                      <span>{user.education[0].institution}</span>
+                      {user.education.length > 1 && <span className="bg-white/10 px-1.5 rounded text-[10px]">+{user.education.length - 1}</span>}
+                  </div>
+              )}
+              
+              {user.experience && user.experience.length > 0 && (
+                  <div className="flex items-center gap-2 text-xs text-gray-400 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                      <Briefcase className="w-4 h-4 text-blue-400"/>
+                      <span>{user.experience[0].company}</span>
+                      {user.experience.length > 1 && <span className="bg-white/10 px-1.5 rounded text-[10px]">+{user.experience.length - 1}</span>}
+                  </div>
+              )}
+
+              {user.skills && user.skills.length > 0 && (
+                  <div className="flex items-center gap-2 text-xs text-gray-400 bg-white/5 px-3 py-1.5 rounded-lg border border-white/5">
+                      <Cpu className="w-4 h-4 text-emerald-400"/>
+                      <span>{user.skills[0]}</span>
+                      {user.skills.length > 1 && <span className="bg-white/10 px-1.5 rounded text-[10px]">+{user.skills.length - 1}</span>}
+                  </div>
+              )}
+          </div>
 
           {/* Metadata Row */}
           <div className="flex flex-wrap gap-x-4 gap-y-2 text-slate-500 text-sm mb-4">

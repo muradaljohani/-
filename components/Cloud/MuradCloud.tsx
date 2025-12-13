@@ -58,26 +58,29 @@ export const MuradCloud: React.FC<Props> = ({ onExit }) => {
         }
     }, [searchQuery]);
 
-    // Routing / Deep Linking
+    // Routing / Deep Linking (HASH ROUTING UPDATE)
     useEffect(() => {
-        const handlePath = () => {
-            const path = window.location.pathname;
-            const segments = path.split('/').filter(Boolean);
-            if (segments.length >= 2 && segments[0] === 'cloud') {
-                const id = segments[1];
-                const article = engine.getArticleById(id);
-                if (article) {
-                    setSelectedArticle(article);
-                    scrollToTop();
+        const handleHash = () => {
+            const hash = window.location.hash; // e.g. #/cloud/doc-123
+            if (hash.includes('/cloud/')) {
+                const parts = hash.split('/cloud/');
+                if (parts.length > 1) {
+                    const id = parts[1];
+                    const article = engine.getArticleById(id);
+                    if (article) {
+                        setSelectedArticle(article);
+                        scrollToTop();
+                    }
                 }
-            } else if (segments.length === 1 && segments[0] === 'cloud') {
+            } else if (hash === '#/cloud' || hash === '#/cloud/') {
                 setSelectedArticle(null);
                 scrollToTop();
             }
         };
-        handlePath();
-        window.addEventListener('popstate', handlePath);
-        return () => window.removeEventListener('popstate', handlePath);
+        
+        handleHash();
+        window.addEventListener('hashchange', handleHash);
+        return () => window.removeEventListener('hashchange', handleHash);
     }, []);
 
     const loadMore = () => {
@@ -97,8 +100,7 @@ export const MuradCloud: React.FC<Props> = ({ onExit }) => {
             const article = engine.getArticleById(id);
             if (article) {
                 setSelectedArticle(article);
-                window.history.pushState({}, '', `/cloud/${id}`);
-                window.dispatchEvent(new PopStateEvent('popstate'));
+                window.location.hash = `/cloud/${id}`;
                 scrollToTop();
             }
             setLoading(false);
@@ -107,8 +109,7 @@ export const MuradCloud: React.FC<Props> = ({ onExit }) => {
 
     const closeArticle = () => {
         setSelectedArticle(null);
-        window.history.pushState({}, '', `/cloud`);
-        window.dispatchEvent(new PopStateEvent('popstate'));
+        window.location.hash = `/cloud`;
         scrollToTop();
     };
 
@@ -248,7 +249,7 @@ export const MuradCloud: React.FC<Props> = ({ onExit }) => {
             </div>
 
             {/* Categories Bar */}
-            <div className="bg-white border-b border-slate-200 sticky top-20 z-40 shadow-sm">
+            <div className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6">
                     <div className="flex items-center gap-2 h-14 overflow-x-auto no-scrollbar">
                         {engine.getAllCategories().map(cat => (
