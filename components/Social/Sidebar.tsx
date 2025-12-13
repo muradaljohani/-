@@ -2,7 +2,7 @@
 import React from 'react';
 import { 
     Home, Search, Bell, Mail, User, Gem, Briefcase, 
-    MoreHorizontal, LogIn, Plus, LogOut
+    MoreHorizontal, LogIn, Plus, LogOut, Film
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -47,6 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, onNavigate, onBack
                 {/* Nav Links */}
                 <SidebarLink icon={Home} label="الرئيسية" active={activeView==='feed'} onClick={() => onNavigate('feed')} />
                 <SidebarLink icon={Search} label="استكشف" active={activeView==='explore'} onClick={() => onNavigate('explore')} />
+                <SidebarLink icon={Film} label="شورتس" active={activeView==='shorts'} onClick={() => onNavigate('shorts')} />
                 
                 {user && (
                     <>

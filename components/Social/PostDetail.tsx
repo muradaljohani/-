@@ -2,11 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowRight, MoreHorizontal, ArrowUpDown, Heart, 
-  Image as ImageIcon, MapPin, X, Calendar, Gift, Trash2, Eye, Upload, BarChart2
+  Image as ImageIcon, MapPin, X, Calendar, Gift, Trash2, Eye, Upload, BarChart2, Bot
 } from 'lucide-react';
 import { doc, getDoc, collection, addDoc, query, onSnapshot, serverTimestamp, db } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { formatRelativeTime } from '../../utils';
+import { getGeminiResponse } from '../../services/geminiService';
 
 interface Props {
     postId: string;
@@ -30,6 +31,19 @@ const ReplyIconM = ({ className }: { className?: string }) => (
         <path d="M22 6l-10 7L2 6" />
     </svg>
 );
+
+// --- MURAD AI PROFILE CONSTANT ---
+const MURAD_AI_PROFILE_DATA = {
+    id: "murad-ai-bot-id",
+    name: "Murad AI",
+    username: "MURAD",
+    handle: "@MURAD",
+    email: "ai@murad-group.com",
+    avatar: "https://ui-avatars.com/api/?name=Murad+AI&background=000000&color=ffffff&size=512&bold=true&length=1&font-size=0.6", 
+    verified: true,
+    isGold: true,
+    role: 'bot'
+};
 
 export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => {
     const { user } = useAuth();
@@ -87,14 +101,54 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
         }
     }, [postId]);
 
+    // --- INSTANT BOT TRIGGER LOGIC ---
+    const handleBotTrigger = (content: string, userName: string) => {
+        // Run as non-blocking async (Fire & Forget)
+        (async () => {
+            try {
+                const aiResponse = await getGeminiResponse(
+                    `SYSTEM: You are "Murad AI", the intelligent assistant of the Milaf platform. 
+                     A user named "${userName}" mentioned you (@MURAD) in a comment.
+                     Comment: "${content}".
+                     
+                     Task: Reply immediately, briefly, and helpfully in Arabic.
+                     Context: Be witty, professional, and concise.`,
+                    'expert',
+                    userName
+                );
+
+                const repliesRef = collection(db, 'posts', postId, 'replies');
+                await addDoc(repliesRef, {
+                    text: aiResponse,
+                    user: {
+                        name: MURAD_AI_PROFILE_DATA.name,
+                        handle: MURAD_AI_PROFILE_DATA.handle,
+                        avatar: MURAD_AI_PROFILE_DATA.avatar,
+                        verified: true,
+                        isGold: true,
+                        uid: MURAD_AI_PROFILE_DATA.id
+                    },
+                    timestamp: serverTimestamp(),
+                    likes: 0,
+                    isBotReply: true
+                });
+            } catch (e) {
+                console.error("Bot failed:", e);
+            }
+        })();
+    };
+
     const handleReply = async () => {
         if (!user) return alert("يجب تسجيل الدخول للرد على المنشور.");
         if (!replyText.trim()) return;
         
+        const contentToSend = replyText;
+        setReplyText(''); // Clear UI immediately for speed perception
+
         try {
             const repliesRef = collection(db, 'posts', postId, 'replies');
             await addDoc(repliesRef, {
-                text: replyText,
+                text: contentToSend,
                 user: {
                     name: user.name,
                     handle: user.username ? `@${user.username}` : `@${user.id.slice(0,5)}`,
@@ -104,9 +158,15 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
                 timestamp: serverTimestamp(),
                 likes: 0
             });
-            setReplyText('');
+
+            // Trigger Bot if mentioned
+            if (/@murad/i.test(contentToSend)) {
+                handleBotTrigger(contentToSend, user.name);
+            }
+
         } catch (e) {
             console.error("Reply failed", e);
+            setReplyText(contentToSend); // Restore if failed
         }
     };
 
@@ -212,30 +272,35 @@ export const PostDetail: React.FC<Props> = ({ postId, onBack, onUserClick }) => 
             {/* 3. Replies Feed - Enhanced Visibility */}
             <div className="pb-20">
                 {replies.length > 0 ? (
-                    replies.map((reply) => (
-                        <div key={reply.id} className="flex gap-3 p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors">
-                            <img 
-                                src={reply.user.avatar} 
-                                className="w-10 h-10 rounded-full object-cover border border-[#2f3336] cursor-pointer hover:opacity-80" 
-                                onClick={() => onUserClick && reply.user.uid && onUserClick(reply.user.uid)}
-                            />
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 text-[15px] mb-0.5">
-                                    <span 
-                                        className="font-bold text-[#e7e9ea] cursor-pointer hover:underline"
-                                        onClick={() => onUserClick && reply.user.uid && onUserClick(reply.user.uid)}
-                                    >
-                                        {reply.user.name}
-                                    </span>
-                                    <span className="text-[#71767b] dir-ltr text-sm">{reply.user.handle}</span>
-                                    <span className="text-[#71767b] text-sm">· {formatRelativeTime(reply.timestamp)}</span>
-                                </div>
-                                <div className="text-[#e7e9ea] text-[15px] leading-relaxed">
-                                    {reply.text}
+                    replies.map((reply) => {
+                        const isBot = reply.user?.id === 'murad-ai-bot-id';
+                        
+                        return (
+                            <div key={reply.id} className={`flex gap-3 p-4 border-b border-[#2f3336] hover:bg-[#080808] transition-colors ${isBot ? 'bg-purple-900/10' : ''}`}>
+                                <img 
+                                    src={reply.user.avatar} 
+                                    className={`w-10 h-10 rounded-full object-cover border ${isBot ? 'border-purple-500' : 'border-[#2f3336]'} cursor-pointer hover:opacity-80`}
+                                    onClick={() => onUserClick && reply.user.uid && onUserClick(reply.user.uid)}
+                                />
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2 text-[15px] mb-0.5">
+                                        <span 
+                                            className={`font-bold cursor-pointer hover:underline ${isBot ? 'text-purple-400' : 'text-[#e7e9ea]'}`}
+                                            onClick={() => onUserClick && reply.user.uid && onUserClick(reply.user.uid)}
+                                        >
+                                            {reply.user.name}
+                                        </span>
+                                        {isBot && <Bot className="w-3 h-3 text-purple-400"/>}
+                                        <span className="text-[#71767b] dir-ltr text-sm">{reply.user.handle}</span>
+                                        <span className="text-[#71767b] text-sm">· {formatRelativeTime(reply.timestamp)}</span>
+                                    </div>
+                                    <div className="text-[#e7e9ea] text-[15px] leading-relaxed">
+                                        {reply.text}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))
+                        );
+                    })
                 ) : (
                     <div className="p-8 text-center text-[#71767b] text-sm">
                         كن أول من يرد على هذا المنشور!

@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-    Home, Search, Bell, Mail, Image as ImageIcon, Video, X, User, PlusCircle, MessageSquare, Plus, Feather, AlertTriangle
+    Home, Search, Bell, Mail, Image as ImageIcon, Video, X, User, PlusCircle, MessageSquare, Plus, Feather, AlertTriangle, Play
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -25,6 +25,7 @@ import { isContentSafe } from '../../utils/contentSafety';
 // IMPORT NEW SECONDARY PAGES
 import { ElitePage, CreatorStudioPage, CirclesPage, LiveRoomsPage, CollectionsPage, SavedPage } from './SecondaryPages';
 import { User as UserType } from '../../types';
+import { ShortsPage } from '../Shorts/ShortsPage';
 
 interface Props {
     onBack: () => void;
@@ -33,7 +34,7 @@ interface Props {
 
 export type ViewState = 
     'feed' | 'reels' | 'admin' | 'messages' | 'profile' | 'post-detail' | 'chat' | 'notifications' | 'explore' |
-    'elite' | 'creator-studio' | 'circles' | 'live' | 'collections' | 'saved' | 'user-profile' | string; 
+    'elite' | 'creator-studio' | 'circles' | 'live' | 'collections' | 'saved' | 'user-profile' | 'shorts' | string; 
 
 export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) => {
     const { user } = useAuth();
@@ -229,8 +230,6 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
         }
     };
 
-    const isDeepPage = false; 
-
     return (
         <div className="min-h-screen bg-white dark:bg-black text-black dark:text-[#e7e9ea] font-sans transition-colors duration-200" dir="rtl">
             
@@ -296,24 +295,27 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                 <main className="flex-grow w-full max-w-[600px] border-x border-gray-100 dark:border-[#2f3336] min-h-screen relative">
                     
                     {/* Mobile Top Header (Hidden on Desktop) */}
-                    <div className="md:hidden sticky top-0 z-50 bg-white/80 dark:bg-black/85 backdrop-blur-md border-b border-gray-200 dark:border-[#2f3336] px-4 py-3 flex justify-between items-center text-black dark:text-[#e7e9ea]">
-                        <div onClick={() => setIsSidebarOpen(true)} className="cursor-pointer relative">
-                            {user ? (
-                                <img 
-                                    src={user.avatar} 
-                                    className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-[#2f3336]" 
-                                    alt="Menu"
-                                />
-                            ) : (
-                                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-[#202327] flex items-center justify-center">
-                                    <User className="w-5 h-5 text-gray-500" />
-                                </div>
-                            )}
-                            {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white dark:border-black"></span>}
+                    {/* Hide top header on Shorts view mobile to be fully immersive if desired, or keep for consistency */}
+                    {view !== 'shorts' && (
+                        <div className="md:hidden sticky top-0 z-50 bg-white/80 dark:bg-black/85 backdrop-blur-md border-b border-gray-200 dark:border-[#2f3336] px-4 py-3 flex justify-between items-center text-black dark:text-[#e7e9ea]">
+                            <div onClick={() => setIsSidebarOpen(true)} className="cursor-pointer relative">
+                                {user ? (
+                                    <img 
+                                        src={user.avatar} 
+                                        className="w-8 h-8 rounded-full object-cover border border-gray-200 dark:border-[#2f3336]" 
+                                        alt="Menu"
+                                    />
+                                ) : (
+                                    <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-[#202327] flex items-center justify-center">
+                                        <User className="w-5 h-5 text-gray-500" />
+                                    </div>
+                                )}
+                                {unreadCount > 0 && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border border-white dark:border-black"></span>}
+                            </div>
+                            <div className="font-black text-lg tracking-wider">M</div>
+                            <div className="w-8"></div>
                         </div>
-                        <div className="font-black text-lg tracking-wider">M</div>
-                        <div className="w-8"></div>
-                    </div>
+                    )}
                     
                     {/* View Switcher */}
                     {view === 'feed' && (
@@ -324,6 +326,13 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                             onPostClick={handlePostClick}
                             onUserClick={handleVisitProfile}
                         />
+                    )}
+
+                    {view === 'shorts' && (
+                         <ShortsPage 
+                             onBack={() => handleNavigation('feed')} 
+                             onUserClick={handleVisitProfile}
+                         />
                     )}
 
                     {view.startsWith('settings') && (
@@ -428,50 +437,52 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                     )}
                 </main>
 
-                {/* 3. RIGHT COLUMN (Search & Trends) */}
-                <div className="hidden lg:block w-[350px] shrink-0 pl-8">
-                    <div className="sticky top-0 h-screen overflow-y-auto py-4 space-y-4 no-scrollbar">
-                        
-                        {/* Search Bar */}
-                        <div className="relative group">
-                            <input 
-                                type="text" 
-                                placeholder="بحث في مجتمع ميلاف..." 
-                                className="w-full bg-gray-100 dark:bg-[#202327] border-none focus:ring-1 focus:ring-[var(--accent-color)] rounded-full py-3 pr-12 pl-4 text-sm text-black dark:text-[#e7e9ea] placeholder-gray-500 dark:placeholder-[#71767b] outline-none transition-all"
-                            />
-                            <Search className="absolute right-4 top-3 w-5 h-5 text-gray-400 dark:text-[#71767b]"/>
-                        </div>
-
-                        {/* Trends */}
-                        <div className="bg-gray-50 dark:bg-[#16181c] rounded-2xl overflow-hidden border border-gray-100 dark:border-[#2f3336]">
-                            <div className="p-4">
-                                <h3 className="font-black text-lg text-black dark:text-[#e7e9ea]">المتداول لك</h3>
+                {/* 3. RIGHT COLUMN (Search & Trends) - Hidden on Shorts */}
+                {view !== 'shorts' && (
+                    <div className="hidden lg:block w-[350px] shrink-0 pl-8">
+                        <div className="sticky top-0 h-screen overflow-y-auto py-4 space-y-4 no-scrollbar">
+                            
+                            {/* Search Bar */}
+                            <div className="relative group">
+                                <input 
+                                    type="text" 
+                                    placeholder="بحث في مجتمع ميلاف..." 
+                                    className="w-full bg-gray-100 dark:bg-[#202327] border-none focus:ring-1 focus:ring-[var(--accent-color)] rounded-full py-3 pr-12 pl-4 text-sm text-black dark:text-[#e7e9ea] placeholder-gray-500 dark:placeholder-[#71767b] outline-none transition-all"
+                                />
+                                <Search className="absolute right-4 top-3 w-5 h-5 text-gray-400 dark:text-[#71767b]"/>
                             </div>
-                            <div>
-                                {[
-                                    { tag: '#مجتمع_ميلاف', posts: '15.4K' },
-                                    { tag: '#رؤية_2030', posts: '89.2K' },
-                                    { tag: '#موسم_الرياض', posts: '240K' },
-                                    { tag: '#الذكاء_الاصطناعي', posts: '12K' },
-                                    { tag: '#وظائف_شاغرة', posts: '5.2K' }
-                                ].map((trend, i) => (
-                                    <div key={i} className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer transition-colors">
-                                        <div className="font-bold text-black dark:text-[#e7e9ea] dir-ltr text-right">{trend.tag}</div>
-                                        <div className="text-xs text-gray-500 dark:text-[#71767b] mt-0.5">{trend.posts} منشور</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
 
-                        {/* Footer Links */}
-                        <div className="flex flex-wrap gap-2 text-[11px] text-gray-500 px-4">
-                             <a href="#" className="hover:underline">شروط الخدمة</a>
-                             <a href="#" className="hover:underline">سياسة الخصوصية</a>
-                             <a href="#" className="hover:underline">سياسة الكوكيز</a>
-                             <span>© 2025 Murad Group</span>
+                            {/* Trends */}
+                            <div className="bg-gray-50 dark:bg-[#16181c] rounded-2xl overflow-hidden border border-gray-100 dark:border-[#2f3336]">
+                                <div className="p-4">
+                                    <h3 className="font-black text-lg text-black dark:text-[#e7e9ea]">المتداول لك</h3>
+                                </div>
+                                <div>
+                                    {[
+                                        { tag: '#مجتمع_ميلاف', posts: '15.4K' },
+                                        { tag: '#رؤية_2030', posts: '89.2K' },
+                                        { tag: '#موسم_الرياض', posts: '240K' },
+                                        { tag: '#الذكاء_الاصطناعي', posts: '12K' },
+                                        { tag: '#وظائف_شاغرة', posts: '5.2K' }
+                                    ].map((trend, i) => (
+                                        <div key={i} className="px-4 py-3 hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer transition-colors">
+                                            <div className="font-bold text-black dark:text-[#e7e9ea] dir-ltr text-right">{trend.tag}</div>
+                                            <div className="text-xs text-gray-500 dark:text-[#71767b] mt-0.5">{trend.posts} منشور</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Footer Links */}
+                            <div className="flex flex-wrap gap-2 text-[11px] text-gray-500 px-4">
+                                <a href="#" className="hover:underline">شروط الخدمة</a>
+                                <a href="#" className="hover:underline">سياسة الخصوصية</a>
+                                <a href="#" className="hover:underline">سياسة الكوكيز</a>
+                                <span>© 2025 Murad Group</span>
+                            </div>
                         </div>
                     </div>
-                </div>
+                )}
 
             </div>
 
@@ -480,16 +491,13 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
                 <NavButton icon={Home} active={view === 'feed'} onClick={() => handleNavigation('feed')} />
                 <NavButton icon={Search} active={view === 'explore'} onClick={() => handleNavigation('explore')} />
                 
+                {/* Center Action Button (Now Shorts) */}
                 <button 
-                    onClick={() => setIsAIOpen(true)}
+                    onClick={() => handleNavigation('shorts')}
                     className="relative -top-4 bg-black dark:bg-white text-white dark:text-black p-1 rounded-full shadow-[0_0_15px_rgba(0,0,0,0.3)] dark:shadow-[0_0_15px_rgba(255,255,255,0.3)] border-[4px] border-white dark:border-black transition-transform active:scale-95"
                 >
                     <div className="w-10 h-10 bg-black dark:bg-black rounded-full flex items-center justify-center overflow-hidden">
-                        <img 
-                            src="https://ui-avatars.com/api/?name=Murad+AI&background=000000&color=ffffff&size=512&bold=true&length=1&font-size=0.6" 
-                            alt="AI" 
-                            className="w-full h-full object-cover"
-                        />
+                         <Play className="w-5 h-5 text-white ml-0.5 fill-white" />
                     </div>
                 </button>
                 
@@ -498,12 +506,14 @@ export const SocialLayout: React.FC<Props> = ({ onBack, initialView = 'feed' }) 
             </div>
 
             {/* Mobile Floating Post Button */}
-            <button
-                onClick={() => setIsComposeOpen(true)}
-                className="md:hidden fixed bottom-20 left-4 z-[90] bg-[#1d9bf0] text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:bg-[#1a8cd8] active:scale-90 transition-transform"
-            >
-                <Feather className="w-7 h-7" />
-            </button>
+            {view === 'feed' && (
+                <button
+                    onClick={() => setIsComposeOpen(true)}
+                    className="md:hidden fixed bottom-20 left-4 z-[90] bg-[#1d9bf0] text-white w-14 h-14 rounded-full shadow-2xl flex items-center justify-center hover:bg-[#1a8cd8] active:scale-90 transition-transform"
+                >
+                    <Feather className="w-7 h-7" />
+                </button>
+            )}
 
             {/* Compose Modal */}
             {isComposeOpen && (

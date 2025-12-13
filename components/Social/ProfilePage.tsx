@@ -5,9 +5,9 @@ import {
   CheckCircle2, MoreHorizontal, Crown, ShoppingBag, PlusCircle, 
   ShieldCheck, Phone, GraduationCap, Cpu, Globe, Lock, 
   Fingerprint, Database, Bot, Github, Facebook, AtSign, Users, Info,
-  ThumbsUp, ThumbsDown, MessageCircle, Clock, Flag, AlertTriangle, Loader2
+  ThumbsUp, ThumbsDown, MessageCircle, Clock, Flag, AlertTriangle, Loader2, Play
 } from 'lucide-react';
-import { doc, getDoc, collection, query, where, getDocs, db, addDoc, serverTimestamp } from '../../src/lib/firebase';
+import { doc, getDoc, collection, query, where, getDocs, db, addDoc, serverTimestamp, onSnapshot } from '../../src/lib/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { PostCard } from './PostCard';
 import { EditProfileModal } from './EditProfileModal';
@@ -83,6 +83,7 @@ const TAB_LABELS: Record<string, string> = {
     'store': 'المتجر',
     'replies': 'الردود',
     'media': 'الوسائط',
+    'shorts': 'فيديوهات قصيرة', // NEW: Added Shorts Tab Label
     'likes': 'الإعجابات'
 };
 
@@ -93,7 +94,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
     const [loading, setLoading] = useState(true);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isAddProductOpen, setIsAddProductOpen] = useState(false); 
-    const [activeTab, setActiveTab] = useState<'posts' | 'replies' | 'store' | 'media' | 'likes'>('posts');
+    const [activeTab, setActiveTab] = useState<'posts' | 'replies' | 'store' | 'media' | 'likes' | 'shorts'>('posts');
     const [userProducts, setUserProducts] = useState<Product[]>([]);
     const [showAdminTooltip, setShowAdminTooltip] = useState(false); 
     const [userListType, setUserListType] = useState<'followers' | 'following' | null>(null);
@@ -120,18 +121,20 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
     const ADMIN_BYPASS_IDS = ["admin-murad-id"];
     
     useEffect(() => {
+        let unsubscribeUser: any;
+
         const fetchData = async () => {
             setLoading(true);
             
-            let userData: User | null = null;
-
+            // 1. Handle Special Cases (Bot & Admin Mocks)
             if (userId === "murad-ai-bot-id" || userId.toLowerCase() === "murad") {
-                userData = MURAD_AI_PROFILE as unknown as User;
-                // Bot always online logic
-                userData.lastLogin = new Date().toISOString();
-                setProfileUser(userData);
-            } else if (ADMIN_BYPASS_IDS.includes(userId)) {
-                 // Mock admin data logic
+                const botData = { ...MURAD_AI_PROFILE, lastLogin: new Date().toISOString() } as unknown as User;
+                setProfileUser(botData);
+                setLoading(false);
+                return;
+            } 
+            
+            if (ADMIN_BYPASS_IDS.includes(userId)) {
                  const adminMock = {
                     id: userId,
                     name: "Murad Aljohani",
@@ -149,7 +152,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                     skills: ["Leadership", "Innovation", "Development", "AI Architecture"],
                     address: "Riyadh, Saudi Arabia",
                     createdAt: new Date(2025, 0, 1).toISOString(),
-                    lastLogin: new Date().toISOString(), // Admin always appears online
+                    lastLogin: new Date().toISOString(),
                     loginMethod: 'email',
                     linkedProviders: ['google.com', 'github.com'],
                     xp: 999999,
@@ -172,23 +175,34 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                  } as any;
                  setProfileUser(adminMock);
                  setCredibility({ likes: adminMock.credibilityLikes || 0, dislikes: adminMock.credibilityDislikes || 0 });
-            } else if (isOwnProfile && currentUser) {
-                setProfileUser(currentUser);
-                setCredibility({ likes: currentUser.credibilityLikes || 0, dislikes: currentUser.credibilityDislikes || 0 });
-            } else if (db) {
-                try {
-                    const userDoc = await getDoc(doc(db, 'users', userId));
-                    if (userDoc.exists()) {
-                        userData = { id: userDoc.id, ...userDoc.data() } as User;
-                        setProfileUser(userData);
-                        setCredibility({ likes: userData.credibilityLikes || 0, dislikes: userData.credibilityDislikes || 0 });
+                 setLoading(false);
+                 // Don't listen to DB for hardcoded admin
+            } else {
+                // 2. Real Firestore Listen (Live Update)
+                if (db) {
+                    try {
+                        const userRef = doc(db, 'users', userId);
+                        
+                        // Use onSnapshot for Real-Time Updates
+                        unsubscribeUser = onSnapshot(userRef, (docSnap) => {
+                            if (docSnap.exists()) {
+                                const userData = { id: docSnap.id, ...docSnap.data() } as User;
+                                setProfileUser(userData);
+                                setCredibility({ 
+                                    likes: userData.credibilityLikes || 0, 
+                                    dislikes: userData.credibilityDislikes || 0 
+                                });
+                            }
+                            setLoading(false);
+                        });
+                    } catch (error) {
+                        console.error("Error fetching user doc:", error);
+                        setLoading(false);
                     }
-                } catch (error) {
-                    console.error("Error fetching user doc:", error);
                 }
             }
             
-            // Posts loading logic...
+            // 3. Fetch Posts (Standard Fetch)
             if (db) {
                 try {
                     const postsRef = collection(db, 'posts');
@@ -206,12 +220,15 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                     console.error("Error loading user posts", e);
                 }
             }
-
-            setLoading(false);
         };
 
         fetchData();
-    }, [userId, currentUser]); 
+
+        return () => {
+            if (unsubscribeUser) unsubscribeUser();
+        };
+
+    }, [userId]); 
 
     // ... (Handlers) ...
     const handleBuyProduct = (product: Product) => {
@@ -327,16 +344,28 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
     };
     
     // --- LAST SEEN LOGIC ---
-    const getLastSeenLabel = (dateString?: string) => {
-        if (!dateString) return 'غير معروف';
-        const date = new Date(dateString);
+    const getLastSeenLabel = (val: any) => {
+        if (!val) return 'غير معروف';
+        
+        let date: Date;
+
+        // Check if Firestore Timestamp (has toDate method)
+        if (val && typeof val === 'object' && typeof val.toDate === 'function') {
+            date = val.toDate();
+        } else {
+            // Try standard Date parsing for ISO strings or Date objects
+            date = new Date(val);
+        }
+
+        if (isNaN(date.getTime())) return 'غير معروف';
+
         const now = new Date();
         const diffMs = now.getTime() - date.getTime();
         const diffMin = Math.floor(diffMs / 60000);
         const diffHours = Math.floor(diffMin / 60);
         const diffDays = Math.floor(diffHours / 24);
 
-        if (diffMin < 10) return 'متصل الآن';
+        if (diffMin < 2) return 'متصل الآن';
         if (diffMin < 60) return `آخر تواجد قبل ${diffMin} دقيقة`;
         if (diffHours < 24) return `آخر تواجد قبل ${diffHours} ساعة`;
         if (diffDays === 1) return 'آخر تواجد الأمس';
@@ -641,7 +670,7 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
 
             {/* Tabs */}
             <div className="flex border-b border-[#2f3336] mt-2 sticky top-[53px] bg-black/95 z-30 backdrop-blur-sm overflow-x-auto no-scrollbar">
-                {['posts', 'store', 'replies', 'media', 'likes'].map(tab => (
+                {['posts', 'store', 'replies', 'media', 'shorts', 'likes'].map(tab => (
                     <button key={tab} onClick={() => setActiveTab(tab as any)} className="flex-1 min-w-[80px] hover:bg-[#18191c] transition-colors relative h-[53px] flex items-center justify-center">
                         <span className={`font-bold text-[15px] capitalize whitespace-nowrap ${activeTab === tab ? 'text-white' : 'text-[#71767b]'}`}>
                             {TAB_LABELS[tab]}
@@ -653,7 +682,9 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
 
             {/* Content */}
             <div className="min-h-[200px]">
-                {loading ? <div className="p-8 text-center text-[#71767b]">جاري التحميل...</div> : activeTab === 'store' ? (
+                {loading ? (
+                    <div className="p-8 text-center text-[#71767b]">جاري التحميل...</div>
+                ) : activeTab === 'store' ? (
                      <div className="p-4">
                         {isOwnProfile && (
                             <div className="mb-4">
@@ -677,6 +708,36 @@ export const ProfilePage: React.FC<Props> = ({ userId, onBack, onStartChat }) =>
                                 <p className="text-[#71767b] text-sm">هذا المستخدم لم يقم بإضافة أي منتجات للمتجر بعد.</p>
                             </div>
                         )}
+                     </div>
+                ) : activeTab === 'shorts' ? (
+                     /* SHORTS GRID VIEW */
+                     <div className="grid grid-cols-3 gap-1 animate-fade-in-up">
+                         {posts.filter(p => p.type === 'video' || (p.images && p.images.some((u:string) => u.includes('.mp4') || u.includes('.webm')))).map(post => {
+                             const videoSrc = post.images?.[0] || post.image || post.videoUrl;
+                             return (
+                                 <div 
+                                    key={post.id} 
+                                    className="aspect-[9/16] bg-gray-900 relative cursor-pointer group overflow-hidden"
+                                    onClick={() => { window.location.hash = `/social/shorts`; }} // Simple navigation to shorts feed
+                                 >
+                                     <video src={videoSrc} className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" muted loop playsInline />
+                                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-transparent transition-all">
+                                         <Play className="w-8 h-8 text-white opacity-80 fill-white" />
+                                     </div>
+                                     <div className="absolute bottom-2 right-2 flex items-center gap-1 text-white text-xs font-bold drop-shadow-md">
+                                         <Play className="w-3 h-3 fill-current" /> {post.views || 0}
+                                     </div>
+                                 </div>
+                             );
+                         })}
+                         {posts.filter(p => p.type === 'video' || (p.images && p.images.some((u:string) => u.includes('.mp4') || u.includes('.webm')))).length === 0 && (
+                             <div className="col-span-3 py-20 text-center text-[#71767b]">
+                                 <div className="w-16 h-16 bg-[#16181c] rounded-full flex items-center justify-center mx-auto mb-4">
+                                     <Play className="w-8 h-8 text-[#71767b] opacity-50"/>
+                                 </div>
+                                 <p>لا توجد مقاطع فيديو قصيرة.</p>
+                             </div>
+                         )}
                      </div>
                 ) : activeTab === 'posts' ? (
                     posts.length === 0 ? (
